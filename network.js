@@ -1,5 +1,10 @@
 
 class HTTPRequest {
+	static getHttpHeaders() {
+		httpHeaders['Authorization'] = 'Bearer ' + JwtSession.getToken();
+		return httpHeaders;
+	}
+	
 	static get(url, data, successCallback, errorCallback) {
 		if (data == null) {
 			data = '';
@@ -13,7 +18,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url : url+(!url.includes('?')?'?':'')+data,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHttpHeaders(),
 			dataType: 'json',
 			cache: false,
 			success: (data) => successCallback(data),
@@ -42,7 +47,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url : url+(!url.includes('?')?'?':'')+data,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHttpHeaders(),
 			cache: false,
 			xhrFields: {
 				responseType: 'blob'
@@ -67,7 +72,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'POST',
 			url : url,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHttpHeaders(),
 			dataType: 'json', // 22/09/2020 : à voir si cette ligne pose pb (utilisé pour requete import et peut être d'autres
 			data: formData,
 			cache: false,
