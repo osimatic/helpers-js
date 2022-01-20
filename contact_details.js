@@ -52,10 +52,11 @@ class Email {
 }
 
 class TelephoneNumber {
-
+	//this class works with libphonenumber-max.min.js
+	
 	static getCountryIsoCode(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.parse(phoneNumber, localCountryIsoCode).country || '';
+		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).country || '';
 	}
 	static getCountryName(phoneNumber, localCountryIsoCode) {
 		return Country.getCountryName(this.getCountryIsoCode(phoneNumber, localCountryIsoCode));
@@ -65,11 +66,11 @@ class TelephoneNumber {
 	}
 	static formatNational(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.format(phoneNumber, this.getCountryIsoCode(phoneNumber, localCountryIsoCode), 'National');
+		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatNational();
 	}
 	static formatInternational(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.format(phoneNumber, this.getCountryIsoCode(phoneNumber, localCountryIsoCode), 'International');
+		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatInternational();
 	}
 	static formatNationalWithFlagImg(phoneNumber, localCountryIsoCode) {
 		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;'+TelephoneNumber.formatNational(phoneNumber);
@@ -81,17 +82,18 @@ class TelephoneNumber {
 	static parse(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
 		try {
-			var numberObject = libphonenumber.parse(phoneNumber, localCountryIsoCode);
-			return libphonenumber.format(numberObject.phone, numberObject.country, 'E.164');
-		}
-		catch (error) {
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			return number != null ? number.formatInternational() : null;
+		} catch (error) {
+			console.log(error);
 		}
 		return '';
 	}
 
 	static check(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.isValidNumber(phoneNumber, localCountryIsoCode);
+		const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+		return number != null ? number.isValid() : false;
 		//var numberObject = libphonenumber.parse(phoneNumber, localCountryIsoCode);
 		//return (typeof numberObject.country !== 'undefined');
 	}
@@ -110,6 +112,38 @@ class TelephoneNumber {
 		//console.log(verifPhoneInt);
 		// console.log('"'+phoneNumber+'" not valid');
 		return false;
+	}
+	
+	static getType(phoneNumber, localCountryIsoCode) {
+		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
+
+		if (phoneNumber == null || phoneNumber.length === 0) {
+			return 'MASKED';
+		}
+		
+		let number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+		return number != null ? number.getType() : null;
+	}
+
+	static getTypeLabelList() {
+		return {
+			FIXED_LINE: 'Fixe',
+			MOBILE: 'Mobile',
+			FIXED_LINE_OR_MOBILE: 'Fixe ou Mobile',
+			TOLL_FREE: 'Vert',
+			PREMIUM_RATE: 'Surtaxé',
+			SHARED_COST: 'Coût partagé',
+			VOIP: 'VOIP',
+			PERSONAL_NUMBER: 'Personnel',
+			PAGER: 'Pager',
+			UAN: 'UAN',
+			UNKNOWN: 'Inconnu',
+			MASKED: 'Masqué',
+		};
+	}
+
+	static getTypeLabel(phoneNumberType) {
+		return TelephoneNumber.getTypeLabelList()[phoneNumberType] || 'Inconnu';
 	}
 
 	static setIntlTelInput(input, placeholderNumberType) {
