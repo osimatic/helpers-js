@@ -1,7 +1,10 @@
 
 class HTTPRequest {
 	static getHttpHeaders() {
-		httpHeaders['Authorization'] = 'Bearer ' + JwtSession.getToken();
+		if (!JwtSession.isAnonymous()) { //on ne définit pas ce header si on ne trouve pas d'access_token
+			httpHeaders['Authorization'] = 'Bearer ' + JwtSession.getToken();
+		}
+
 		return httpHeaders;
 	}
 	
@@ -73,7 +76,7 @@ class HTTPRequest {
 			type: 'POST',
 			url : url,
 			headers: HTTPRequest.getHttpHeaders(),
-			dataType: 'json', // 22/09/2020 : à voir si cette ligne pose pb (utilisé pour requete import et peut être d'autres
+			dataType: 'json',
 			data: formData,
 			cache: false,
 			contentType: false,
@@ -94,17 +97,25 @@ class HTTPRequest {
 	static refreshToken(url, onCompleteCallback) {
 		let payload = new FormData();
 		payload.append('refresh_token', JwtSession.getRefreshToken());
-
-		HTTPRequest.post(url, payload,
-			(data) => {
+		
+		//pas d'utilisation de la méthode post car on pourrait avoir un header Auth contenant un bearer expiré ce qui ferait échouer le refresh
+		$.ajax({
+			type: 'POST',
+			url : url,
+			dataType: 'json',
+			data: payload,
+			cache: false,
+			contentType: false,
+			processData: false,
+			success: (data) => {
 				JwtSession.setToken(data.token);
 				JwtSession.setRefreshToken(data.refresh_token);
 				onCompleteCallback();
-			}, (jqxhr, status, exception) => {
+			}, error: (jqxhr, status, exception) => {
 				console.log(exception);
 				JwtSession.logout();
 			}
-		);
+		});
 	}
 
 	static doRequest(url, strParam, methode, formatRetour, callback) {
@@ -352,80 +363,4 @@ class UrlAndQueryString {
 		buildStringFromParam(object);
 		return params.join('&');
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// deprecated
-
-	static parseQueryString(string) {
-		if (string === "" || string == null) return {};
-		if (string.charAt(0) === "?") string = string.slice(1);
-		var entries = string.split("&"), counters = {}, data0 = {};
-		for (var i = 0; i < entries.length; i++) {
-			var entry = entries[i].split("=");
-			var key5 = decodeURIComponent(entry[0]);
-			var value2 = entry.length === 2 ? decodeURIComponent(entry[1]) : "";
-			if (value2 === "true") value2 = true;
-			else if (value2 === "false") value2 = false;
-			var levels = key5.split(/\]\[?|\[/);
-			var cursor = data0;
-			if (key5.indexOf("[") > -1) levels.pop();
-			for (var j0 = 0; j0 < levels.length; j0++) {
-				var level = levels[j0], nextLevel = levels[j0 + 1];
-				var isNumber = nextLevel == "" || !isNaN(parseInt(nextLevel, 10));
-				if (level === "") {
-					var key5 = levels.slice(0, j0).join();
-					if (counters[key5] == null) {
-						counters[key5] = Array.isArray(cursor) ? cursor.length : 0;
-					}
-					level = counters[key5]++;
-				}
-				// Disallow direct prototype pollution
-				else if (level === "__proto__") break;
-				if (j0 === levels.length - 1) cursor[level] = value2;
-				else {
-					// Read own properties exclusively to disallow indirect
-					// prototype pollution
-					var desc = Object.getOwnPropertyDescriptor(cursor, level);
-					if (desc != null) desc = desc.value;
-					if (desc == null) cursor[level] = desc = isNumber ? [] : {};
-					cursor = desc;
-				}
-			}
-		}
-		return data0;
-	}
-
-	static getQuery(url) {
-		var str = url;
-		var strpos = str.indexOf('?');
-		// Si on ne trouve pas de queryString on retourne une chaine vide
-		if (strpos === -1) {
-			return '';
-		}
-		str = str.substr(strpos + 1, str.length);
-		// Maintenant on verifie si on a une anchor ou pas (#) et si c'est le cas on arrete la querystring avant
-		strpos = str.indexOf('#');
-		if (strpos === -1) {
-			return str;
-		}
-		return str.substr(0, strpos);
-	}
-
 }
