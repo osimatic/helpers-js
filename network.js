@@ -27,7 +27,7 @@ class HTTPRequest {
 			success: (data) => successCallback(data),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback));
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback), errorCallback);
 				} else if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
 					formErrorCallback(jqxhr, status, exception);
 				} else {
@@ -58,7 +58,7 @@ class HTTPRequest {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback));
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback), errorCallback);
 				} else if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(jqxhr, status, exception);
 				}
@@ -83,8 +83,8 @@ class HTTPRequest {
 			processData: false,
 			success: (data) => successCallback(data),
 			error: (jqxhr, status, exception) => {
-				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") { //todo trad
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));	
+				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback), errorCallback);	
 				} else if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
 					formErrorCallback(jqxhr, status, exception);
 				} else {
@@ -94,7 +94,7 @@ class HTTPRequest {
 		});
 	}
 	
-	static refreshToken(url, onCompleteCallback) {
+	static refreshToken(url, onCompleteCallback, onErrorCallback) {
 		let payload = new FormData();
 		payload.append('refresh_token', JwtSession.getRefreshToken());
 		
@@ -112,8 +112,8 @@ class HTTPRequest {
 				JwtSession.setRefreshToken(data.refresh_token);
 				onCompleteCallback();
 			}, error: (jqxhr, status, exception) => {
-				console.log(exception);
 				JwtSession.logout();
+				onErrorCallback(jqxhr, status, exception);
 			}
 		});
 	}
