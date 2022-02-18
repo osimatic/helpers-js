@@ -13,7 +13,7 @@ class AudioMedia {
 		// Affiche un lecteur audio
 		div.find('.play_link').off('click').click(function() {
 			let audio = $(AudioMedia.getPlayer($(this).data('play_url')));
-			audio.play();
+			audio[0].play();
 			$(this).after(audio);
 			$(this).remove();
 			return false;
