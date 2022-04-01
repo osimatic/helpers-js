@@ -92,3 +92,6 @@ class JwtSession {
 		return payload.roles.indexOf(role) !== -1;
 	}
 }
+
+exports.JwtToken = JwtToken;
+exports.JwtSession = JwtSession;

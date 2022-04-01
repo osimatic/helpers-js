@@ -384,3 +384,8 @@ class Location {
 		return /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/.test(str);
 	}
 }
+
+exports.COUNTRIES_LIST = COUNTRIES_LIST;
+exports.Country = Country;
+exports.PostalAddress = PostalAddress;
+exports.Location = Location;

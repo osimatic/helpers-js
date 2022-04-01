@@ -99,3 +99,5 @@ class CountDown {
 	}
 
 }
+
+exports.CountDown = CountDown;

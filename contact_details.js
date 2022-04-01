@@ -166,3 +166,7 @@ class TelephoneNumber {
 		return number;
 	}
 }
+
+exports.PersonName = PersonName;
+exports.Email = Email;
+exports.TelephoneNumber = TelephoneNumber;

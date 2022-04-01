@@ -8,7 +8,7 @@ class HTTPRequest {
 		return httpHeaders;
 	}
 	
-	static get(url, data, successCallback, errorCallback) {
+	static async get(url, data, successCallback, errorCallback) {
 		if (data == null) {
 			data = '';
 		}
@@ -16,20 +16,53 @@ class HTTPRequest {
 			data = UrlAndQueryString.buildQuery(data);
 		}
 		if (data !== '' && data.substring(0, 1) !== '&') {
-			data = '&'+data;
+			data = '&' + data;
 		}
+
+		if (window.fetch) {
+			let requestInit = {
+				method: 'GET',
+				headers: _httpHeaders,		
+				mode: 'cors',
+				cache: 'no-cache'
+			}
+
+			let jsonData = {};
+			const response = await fetch(url + (!url.includes('?') ? '?' : '') + data, requestInit);
+			try {
+				jsonData = await response.json();
+				//console.log(url, jsonData);
+
+				if (response.status == 401 && response.statusText == "Expired JWT Token") {
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback));
+					return;
+				}
+
+				if (response.ok) {
+					successCallback(jsonData);
+					return;
+				}
+			}
+			catch (e) {
+				errorCallback(response, response.status, e);
+				return;
+			}
+			errorCallback(response, response.status, null, jsonData);
+			return;
+		}
+
+		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
+		console.error('fetch\'s polyfill used');
 		$.ajax({
 			type: 'GET',
-			url : url+(!url.includes('?')?'?':'')+data,
+			url: url + (!url.includes('?') ? '?' : '') + data,
 			headers: HTTPRequest.getHttpHeaders(),
 			dataType: 'json',
 			cache: false,
 			success: (data) => successCallback(data),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback), errorCallback);
-				} else if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
-					formErrorCallback(jqxhr, status, exception);
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback));
 				} else {
 					errorCallback(jqxhr, status, exception);
 				}
@@ -37,7 +70,7 @@ class HTTPRequest {
 		});
 	}
 
-	static download(url, data, errorCallback, completeCallback) {
+	static async download(url, data, errorCallback, completeCallback) {
 		if (data == null) {
 			data = '';
 		}
@@ -45,11 +78,52 @@ class HTTPRequest {
 			data = UrlAndQueryString.buildQuery(data);
 		}
 		if (data !== '' && data.substring(0, 1) !== '&') {
-			data = '&'+data;
+			data = '&' + data;
 		}
+
+
+		if (window.fetch) {
+			let requestInit = {
+				method: 'GET',
+				headers: _httpHeaders,
+				mode: 'cors',
+				cache: 'no-cache'
+			}
+
+			const response = await fetch(url + (!url.includes('?') ? '?' : '') + data, requestInit);
+			try {
+				const blobData = await response.blob();
+				/*console.log(url);
+				console.log(blobData);*/
+
+				if (response.status == 401 && response.statusText == "Expired JWT Token") {
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback));
+					return;
+				}
+
+				if (response.ok) {
+					File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition'));
+				}
+				else if (typeof errorCallback != 'undefined' && errorCallback != null) {
+					errorCallback(response, response.status, null);
+				}
+			}
+			catch (e) {
+				if (typeof errorCallback != 'undefined' && errorCallback != null) {
+					errorCallback(response, response.status, e);
+				}
+			}
+			if (typeof completeCallback != 'undefined' && completeCallback != null) {
+				completeCallback(response, response.status);
+			}
+			return;
+		}
+
+		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
+		console.error('fetch\'s polyfill used');
 		$.ajax({
 			type: 'GET',
-			url : url+(!url.includes('?')?'?':'')+data,
+			url: url + (!url.includes('?') ? '?' : '') + data,
 			headers: HTTPRequest.getHttpHeaders(),
 			cache: false,
 			xhrFields: {
@@ -58,7 +132,7 @@ class HTTPRequest {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback), errorCallback);
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback));
 				} else if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(jqxhr, status, exception);
 				}
@@ -71,12 +145,54 @@ class HTTPRequest {
 		});
 	}
 
-	static post(url, formData, successCallback, errorCallback, formErrorCallback) {
+	static async post(url, formData, successCallback, errorCallback, formErrorCallback) {
+		if (window.fetch && false) {
+			let requestInit = {
+				method: 'POST',
+				body: formData,
+				headers: _httpHeaders,		
+				mode: 'cors',
+				cache: 'no-cache'
+			};
+
+			let jsonData = {};
+			const response = await fetch(url, requestInit);
+
+			try {
+				jsonData = await response.json();
+				//console.log(url, jsonData);
+
+				if (response.status == 401 && response.statusText == "Expired JWT Token") {
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
+					return;
+				}
+
+				if (response.ok) {
+					successCallback(jsonData);
+					return;
+				}
+
+				if (response.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
+					formErrorCallback(response, response.status, jsonData);
+					return;
+				}
+			}
+			catch (e) {
+				errorCallback(response, response.status, e);
+				return;
+			}
+
+			errorCallback(response, response.status, null, jsonData);
+			return;
+		}
+
+		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
+		console.error('fetch\'s polyfill used');
 		$.ajax({
 			type: 'POST',
-			url : url,
+			url: url,
 			headers: HTTPRequest.getHttpHeaders(),
-			dataType: 'json',
+			dataType: 'json', // 22/09/2020 : à voir si cette ligne pose pb (utilisé pour requete import et peut être d'autres
 			data: formData,
 			cache: false,
 			contentType: false,
@@ -84,7 +200,7 @@ class HTTPRequest {
 			success: (data) => successCallback(data),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback), errorCallback);	
+					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 				} else if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
 					formErrorCallback(jqxhr, status, exception);
 				} else {
@@ -93,29 +209,21 @@ class HTTPRequest {
 			}
 		});
 	}
-	
-	static refreshToken(url, onCompleteCallback, onErrorCallback) {
+
+	static refreshToken(url, onCompleteCallback) {
 		let payload = new FormData();
 		payload.append('refresh_token', JwtSession.getRefreshToken());
-		
-		//pas d'utilisation de la méthode post car on pourrait avoir un header Auth contenant un bearer expiré ce qui ferait échouer le refresh
-		$.ajax({
-			type: 'POST',
-			url : url,
-			dataType: 'json',
-			data: payload,
-			cache: false,
-			contentType: false,
-			processData: false,
-			success: (data) => {
+
+		HTTPRequest.post(url, payload,
+			(data) => {
 				JwtSession.setToken(data.token);
 				JwtSession.setRefreshToken(data.refresh_token);
 				onCompleteCallback();
-			}, error: (jqxhr, status, exception) => {
+			}, (jqxhr, status, exception) => {
+				console.log(exception);
 				JwtSession.logout();
-				onErrorCallback(jqxhr, status, exception);
 			}
-		});
+		);
 	}
 
 	static doRequest(url, strParam, methode, formatRetour, callback) {
@@ -125,7 +233,7 @@ class HTTPRequest {
 			if (window.ActiveXObject) {
 				try {
 					xhr = new ActiveXObject('Msxml2.XMLHTTP');
-				} catch(e) {
+				} catch (e) {
 					xhr = new ActiveXObject('Microsoft.XMLHTTP');
 				}
 			} else {
@@ -136,13 +244,13 @@ class HTTPRequest {
 			return null;
 		}
 
-		xhr.onreadystatechange = function() {
+		xhr.onreadystatechange = function () {
 			if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0)) {
 				if (formatRetour == 'xml') {
 					var data = xhr.responseXML;
 				}
 				else {
-					var data = eval('('+xhr.responseText+')');
+					var data = eval('(' + xhr.responseText + ')');
 				}
 				callback(data);
 			}
@@ -163,8 +271,8 @@ class HTTPRequest {
 class Cookie {
 	static set(cname, cvalue, exdays) {
 		var d = new Date();
-		d.setTime(d.getTime() + (exdays*24*60*60*1000));
-		var expires = "expires="+ d.toUTCString();
+		d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+		var expires = "expires=" + d.toUTCString();
 		document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 	}
 
@@ -172,7 +280,7 @@ class Cookie {
 		var name = cname + "=";
 		var decodedCookie = decodeURIComponent(document.cookie);
 		var ca = decodedCookie.split(';');
-		for(var i = 0; i <ca.length; i++) {
+		for (var i = 0; i < ca.length; i++) {
 			var c = ca[i];
 			while (c.charAt(0) == ' ') {
 				c = c.substring(1);
@@ -185,7 +293,7 @@ class Cookie {
 	}
 
 	static erase(name) {
-		Cookie.set(name,"",-1);
+		Cookie.set(name, "", -1);
 	}
 }
 
@@ -252,37 +360,37 @@ class UrlAndQueryString {
 			var p = decodeURIComponent(param);
 			var strpos = p.indexOf('=');
 			// Si on trouve pas de signe =, on met la valeur ''
-			if (strpos === -1 ) {
+			if (strpos === -1) {
 				params[p] = '';
 				//params.length++;
 				return true;
 			}
 			var name = p.substr(0, strpos);
-			var value = p.substr(strpos+1, p.length);
+			var value = p.substr(strpos + 1, p.length);
 			var openBracket = name.indexOf('[');
 			var closeBracket = name.indexOf(']');
 			// On traite les paramètre qui ne sont pas sous forme de tableau
 			if (openBracket === -1 || closeBracket === -1) {
 				if (!(openBracket === -1 && closeBracket === -1)) {
-					name = name.replace(new RegExp('[\\[\\]]'),'_');
+					name = name.replace(new RegExp('[\\[\\]]'), '_');
 				}
 				params[name] = value;
 				return true;
 			}
-			var matches = name.match(new RegExp('\\[.*?\\]','g'));
-			name = name.substr(0,openBracket);
+			var matches = name.match(new RegExp('\\[.*?\\]', 'g'));
+			name = name.substr(0, openBracket);
 			p = 'params';
 			var key = name;
 			for (let i in matches) {
-				if (typeof(matches[i]) == 'function') {
+				if (typeof (matches[i]) == 'function') {
 					continue;
 				}
 
-				p += '[\''+key+'\']';
-				if (eval(p) == undefined || typeof(eval(p)) != 'object') {
-					eval(p +'= new Array();');
+				p += '[\'' + key + '\']';
+				if (eval(p) == undefined || typeof (eval(p)) != 'object') {
+					eval(p + '= new Array();');
 				}
-				key = matches[i].substr(1,matches[i].length-2);
+				key = matches[i].substr(1, matches[i].length - 2);
 				// si la clé est null on met la longueur du tableau
 				if (key == '') {
 					key = eval(p).length;
@@ -305,8 +413,8 @@ class UrlAndQueryString {
 				}
 				*/
 			}
-			p += '[\''+key+'\']';
-			eval(p +'= \''+value+'\';');
+			p += '[\'' + key + '\']';
+			eval(p + '= \'' + value + '\';');
 		}
 
 		var str = queryString;
@@ -336,25 +444,25 @@ class UrlAndQueryString {
 
 		function buildStringFromParam(object, prefix) {
 			var p = '';
-			var value ='';
+			var value = '';
 			if (prefix !== undefined) {
 				p = prefix;
 			}
-			if (typeof(object) == 'object') {
+			if (typeof (object) == 'object') {
 				for (var name in object) {
 					value = object[name];
 					// 14/01/2020 : les tableaux avec param[0], param[1] en query string fonctionne pas, il faut mettre param[]=x&param[]=y
 					//name = p == '' ? name : '['+name+']';
 					name = p == '' ? name : '[]';
-					if (typeof(value) == 'object') {
-						buildStringFromParam(value,p+name);
+					if (typeof (value) == 'object') {
+						buildStringFromParam(value, p + name);
 					}
-					else if (typeof(value) != 'function' && name != '') {
+					else if (typeof (value) != 'function' && name != '') {
 						// 27/01/2020 : correction bug boolean affiché en string true/false
-						if (typeof(value) == 'boolean') {
-							value = (value?1:0);
+						if (typeof (value) == 'boolean') {
+							value = (value ? 1 : 0);
 						}
-						params[params.length] = p+name+'='+value;
+						params[params.length] = p + name + '=' + value;
 					}
 				}
 			}
@@ -363,4 +471,84 @@ class UrlAndQueryString {
 		buildStringFromParam(object);
 		return params.join('&');
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// deprecated
+
+	static parseQueryString(string) {
+		if (string === "" || string == null) return {};
+		if (string.charAt(0) === "?") string = string.slice(1);
+		var entries = string.split("&"), counters = {}, data0 = {};
+		for (var i = 0; i < entries.length; i++) {
+			var entry = entries[i].split("=");
+			var key5 = decodeURIComponent(entry[0]);
+			var value2 = entry.length === 2 ? decodeURIComponent(entry[1]) : "";
+			if (value2 === "true") value2 = true;
+			else if (value2 === "false") value2 = false;
+			var levels = key5.split(/\]\[?|\[/);
+			var cursor = data0;
+			if (key5.indexOf("[") > -1) levels.pop();
+			for (var j0 = 0; j0 < levels.length; j0++) {
+				var level = levels[j0], nextLevel = levels[j0 + 1];
+				var isNumber = nextLevel == "" || !isNaN(parseInt(nextLevel, 10));
+				if (level === "") {
+					var key5 = levels.slice(0, j0).join();
+					if (counters[key5] == null) {
+						counters[key5] = Array.isArray(cursor) ? cursor.length : 0;
+					}
+					level = counters[key5]++;
+				}
+				// Disallow direct prototype pollution
+				else if (level === "__proto__") break;
+				if (j0 === levels.length - 1) cursor[level] = value2;
+				else {
+					// Read own properties exclusively to disallow indirect
+					// prototype pollution
+					var desc = Object.getOwnPropertyDescriptor(cursor, level);
+					if (desc != null) desc = desc.value;
+					if (desc == null) cursor[level] = desc = isNumber ? [] : {};
+					cursor = desc;
+				}
+			}
+		}
+		return data0;
+	}
+
+	static getQuery(url) {
+		var str = url;
+		var strpos = str.indexOf('?');
+		// Si on ne trouve pas de queryString on retourne une chaine vide
+		if (strpos === -1) {
+			return '';
+		}
+		str = str.substr(strpos + 1, str.length);
+		// Maintenant on verifie si on a une anchor ou pas (#) et si c'est le cas on arrete la querystring avant
+		strpos = str.indexOf('#');
+		if (strpos === -1) {
+			return str;
+		}
+		return str.substr(0, strpos);
+	}
+
 }
+
+exports.HTTPRequest = HTTPRequest;
+exports.Cookie = Cookie;
+exports.UrlAndQueryString = UrlAndQueryString;

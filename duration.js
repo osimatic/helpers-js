@@ -174,3 +174,4 @@ class Duration {
 
 }
 
+exports.Duration = Duration;

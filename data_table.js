@@ -415,3 +415,5 @@ class DataTable {
 	}
 
 }
+
+exports.DataTable = DataTable;

@@ -270,3 +270,5 @@ class ImportFromCsv {
 	}
 
 }
+
+exports.ImportFromCsv = ImportFromCsv;

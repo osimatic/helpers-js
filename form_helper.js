@@ -233,3 +233,5 @@ class FormHelper {
 		errorsParentDiv.prepend(errorDiv);
 	}
 }
+
+exports.FormHelper = FormHelper;

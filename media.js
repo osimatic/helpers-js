@@ -1,8 +1,3 @@
-
-function hasGetUserMedia() {
-	return !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
-}
-
 class AudioMedia {
 
 	static getPlayer(playUrl) {
@@ -77,4 +72,11 @@ class AudioMedia {
 		}
 	}
 
+}
+
+exports.AudioMedia = AudioMedia;
+
+//deprecated
+function hasGetUserMedia() {
+	return !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
 }

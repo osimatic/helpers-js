@@ -141,6 +141,9 @@ class GoogleMap {
 	}
 }
 
+exports.GoogleMap = GoogleMap;
+
+//deprecated
 /*
 google.maps.Map.prototype.markers = new Array();
 

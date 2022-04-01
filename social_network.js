@@ -106,3 +106,5 @@ class SocialNetwork {
 	}
 
 }
+
+exports.SocialNetwork = SocialNetwork;

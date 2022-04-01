@@ -34,3 +34,5 @@ class FlashMessage {
 		}
 	}
 }
+
+exports.FlashMessage = FlashMessage;
