@@ -100,4 +100,4 @@ class CountDown {
 
 }
 
-exports.CountDown = CountDown;
+module.exports = { CountDown };

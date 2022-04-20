@@ -74,7 +74,7 @@ class AudioMedia {
 
 }
 
-exports.AudioMedia = AudioMedia;
+module.exports = { AudioMedia };
 
 //deprecated
 function hasGetUserMedia() {

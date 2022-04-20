@@ -234,4 +234,4 @@ class FormHelper {
 	}
 }
 
-exports.FormHelper = FormHelper;
+module.exports = { FormHelper };

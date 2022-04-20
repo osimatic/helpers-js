@@ -416,4 +416,4 @@ class DataTable {
 
 }
 
-exports.DataTable = DataTable;
+module.exports = { DataTable };

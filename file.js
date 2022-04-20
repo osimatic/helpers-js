@@ -123,6 +123,4 @@ class Img {
 	}
 }
 
-exports.File = File;
-exports.CSV = CSV;
-exports.Img = Img;
+module.exports = { File, CSV, Img };

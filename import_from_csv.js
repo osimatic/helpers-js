@@ -271,4 +271,4 @@ class ImportFromCsv {
 
 }
 
-exports.ImportFromCsv = ImportFromCsv;
+module.exports = { ImportFromCsv };

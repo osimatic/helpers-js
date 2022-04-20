@@ -174,4 +174,4 @@ class Duration {
 
 }
 
-exports.Duration = Duration;
+module.exports = { Duration };

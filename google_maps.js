@@ -141,7 +141,7 @@ class GoogleMap {
 	}
 }
 
-exports.GoogleMap = GoogleMap;
+module.exports = { GoogleMap };
 
 //deprecated
 /*

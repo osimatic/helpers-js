@@ -107,4 +107,4 @@ class SocialNetwork {
 
 }
 
-exports.SocialNetwork = SocialNetwork;
+module.exports = { SocialNetwork };

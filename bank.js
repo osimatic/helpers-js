@@ -4,4 +4,4 @@ class IBAN {
 	}
 }
 
-exports.IBAN = IBAN;
+module.exports = { IBAN };

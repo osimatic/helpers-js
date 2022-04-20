@@ -549,6 +549,4 @@ class UrlAndQueryString {
 
 }
 
-exports.HTTPRequest = HTTPRequest;
-exports.Cookie = Cookie;
-exports.UrlAndQueryString = UrlAndQueryString;
+module.exports = { HTTPRequest, Cookie, UrlAndQueryString };

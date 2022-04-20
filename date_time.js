@@ -543,9 +543,4 @@ class InputPeriod {
 	
 }
 
-exports.DateTime = DateTime;
-exports.TimestampUnix = TimestampUnix;
-exports.SqlDate = SqlDate;
-exports.SqlTime = SqlTime;
-exports.SqlDateTime = SqlDateTime;
-exports.InputPeriod = InputPeriod;
+module.exports = { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod };

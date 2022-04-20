@@ -167,6 +167,4 @@ class TelephoneNumber {
 	}
 }
 
-exports.PersonName = PersonName;
-exports.Email = Email;
-exports.TelephoneNumber = TelephoneNumber;
+module.exports = { PersonName, Email, TelephoneNumber };

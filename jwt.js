@@ -93,5 +93,4 @@ class JwtSession {
 	}
 }
 
-exports.JwtToken = JwtToken;
-exports.JwtSession = JwtSession;
+module.exports = { JwtToken, JwtSession };

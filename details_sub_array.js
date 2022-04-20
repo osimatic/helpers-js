@@ -123,4 +123,4 @@ class DetailsSubArray {
 
 }
 
-exports.DetailsSubArray = DetailsSubArray;
+module.exports = { DetailsSubArray };

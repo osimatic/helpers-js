@@ -385,7 +385,4 @@ class Location {
 	}
 }
 
-exports.COUNTRIES_LIST = COUNTRIES_LIST;
-exports.Country = Country;
-exports.PostalAddress = PostalAddress;
-exports.Location = Location;
+module.exports = { COUNTRIES_LIST, Country, PostalAddress, Location };

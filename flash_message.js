@@ -35,4 +35,4 @@ class FlashMessage {
 	}
 }
 
-exports.FlashMessage = FlashMessage;
+module.exports = { FlashMessage };
