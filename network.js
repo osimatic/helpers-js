@@ -540,3 +540,5 @@ class UrlAndQueryString {
 	}
 
 }
+
+module.exports = { HTTPRequest, Cookie, UrlAndQueryString };
