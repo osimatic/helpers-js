@@ -24,11 +24,12 @@ const { NumberValue } = require('./number');
 const { selectionnerContenuNode, copierTexte } = require('./string');
 const { addBookmark, sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
+const { Pagination, activateTab } = require('./paging');
 
 module.exports = {
     HTTPRequest, Cookie, UrlAndQueryString, IBAN, AudioMedia, PersonName, Email, TelephoneNumber, CountDown, DataTable,
     DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, DetailsSubArray, Duration, File, CSV, Img,
     FlashMessage, FormHelper, GoogleMap, ImportFromCsv, JwtToken, JwtSession, ListBox, COUNTRIES_LIST, Country, PostalAddress, 
     Location, SocialNetwork, Array, Object, getValuesByKeyInArrayOfArrays, renameKeys, renameKeysByCallback, Number, NumberValue,
-    String, selectionnerContenuNode, copierTexte, addBookmark, sleep, refresh, chr, ord, trim, empty
+    String, selectionnerContenuNode, copierTexte, addBookmark, sleep, refresh, chr, ord, trim, empty, Pagination, activateTab
 };
