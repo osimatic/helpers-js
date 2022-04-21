@@ -21,3 +21,5 @@ function refresh() {
 	// history.go(0);
 	window.location.reload(true);
 }
+
+module.exports = { addBookmark, sleep, refresh };

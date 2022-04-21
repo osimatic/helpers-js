@@ -82,3 +82,5 @@ function renameKeysByCallback(obj, callback) {
 		{}
 	);
 }
+
+module.exports = { getValuesByKeyInArrayOfArrays, renameKeys, renameKeysByCallback };

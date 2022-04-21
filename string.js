@@ -116,3 +116,5 @@ if (!String.format) {
 		return format.replace(/{(\d+)}/g, (match, number) => (typeof args[number] != 'undefined' ? args[number] : match));
 	};
 }
+
+module.exports = { selectionnerContenuNode, copierTexte };

@@ -88,3 +88,5 @@ Number.prototype.formatAsPercent = function(locale, minimumFractionDigits) {
 	minimumFractionDigits = (typeof minimumFractionDigits != 'undefined'?minimumFractionDigits:0);
 	return new Intl.NumberFormat(locale, {style: 'percent', minimumFractionDigits:minimumFractionDigits}).format(this);
 };
+
+module.exports = { NumberValue };

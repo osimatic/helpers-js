@@ -118,6 +118,8 @@ function activateTab(a) {
 	tabContent.find(a.attr('href')).addClass('active').addClass('show');
 }
 
+module.exports = { Pagination, activateTab };
+
 // deprecated
 function paginationAsList(nbResultatsTotal, nbResultatsParPage, urlPage, nomParamPage) {
 	var currentUrl = urlPage || window.location.href;
