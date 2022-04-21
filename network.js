@@ -1,13 +1,5 @@
 
 class HTTPRequest {
-	static getHttpHeaders() {
-		if (!JwtSession.isAnonymous()) { //on ne définit pas ce header si on ne trouve pas d'access_token
-			httpHeaders['Authorization'] = 'Bearer ' + JwtSession.getToken();
-		}
-
-		return httpHeaders;
-	}
-	
 	static async get(url, data, successCallback, errorCallback) {
 		if (data == null) {
 			data = '';
@@ -56,7 +48,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url: url + (!url.includes('?') ? '?' : '') + data,
-			headers: HTTPRequest.getHttpHeaders(),
+			headers: httpHeaders,
 			dataType: 'json',
 			cache: false,
 			success: (data) => successCallback(data),
@@ -124,7 +116,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url: url + (!url.includes('?') ? '?' : '') + data,
-			headers: HTTPRequest.getHttpHeaders(),
+			headers: httpHeaders,
 			cache: false,
 			xhrFields: {
 				responseType: 'blob'
@@ -191,7 +183,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'POST',
 			url: url,
-			headers: HTTPRequest.getHttpHeaders(),
+			headers: httpHeaders,
 			dataType: 'json', // 22/09/2020 : à voir si cette ligne pose pb (utilisé pour requete import et peut être d'autres
 			data: formData,
 			cache: false,
@@ -548,5 +540,3 @@ class UrlAndQueryString {
 	}
 
 }
-
-module.exports = { HTTPRequest, Cookie, UrlAndQueryString };
