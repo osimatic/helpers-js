@@ -1,11 +1,3 @@
-function addBookmark(anchor) {
-	if (navigator.appName != 'Microsoft Internet Explorer') {
-		window.sidebar.addPanel(anchor.get('title'), anchor.get('href'),"");
-	}
-	else {
-		window.external.AddFavorite(anchor.get('href'), anchor.get('title'));
-	}
-}
 
 function sleep(milliseconds) {
 	var start = new Date().getTime();

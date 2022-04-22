@@ -96,31 +96,31 @@ class Pagination {
 		update();
 	}
 
+	static activateTab(a) {
+		//console.log(a);
+		//a.click();
+		let ulNav = a.closest('.nav');
+		let tabContent = ulNav.parent().find('.tab-content');
+
+		// déselection éventuel des onglets
+		ulNav.find('a.nav-link').each(function(idx, navLink) {
+			$(navLink).removeClass('active');
+			let id = $(navLink).attr('href');
+			if (id.substr(0, 1) === '#') {
+				tabContent.find(id).removeClass('active').removeClass('show');
+			}
+		});
+
+		// sélection de l'onglet correspondant au navLink passé en paramètre
+		a.addClass('active');
+		tabContent.find(a.attr('href')).addClass('active').addClass('show');
+	}
 }
 
-function activateTab(a) {
-	//console.log(a);
-	//a.click();
-	let ulNav = a.closest('.nav');
-	let tabContent = ulNav.parent().find('.tab-content');
-
-	// déselection éventuel des onglets
-	ulNav.find('a.nav-link').each(function(idx, navLink) {
-		$(navLink).removeClass('active');
-		let id = $(navLink).attr('href');
-		if (id.substr(0, 1) === '#') {
-			tabContent.find(id).removeClass('active').removeClass('show');
-		}
-	});
-
-	// sélection de l'onglet correspondant au navLink passé en paramètre
-	a.addClass('active');
-	tabContent.find(a.attr('href')).addClass('active').addClass('show');
-}
-
-module.exports = { Pagination, activateTab };
+module.exports = { Pagination };
 
 // deprecated
+/*
 function paginationAsList(nbResultatsTotal, nbResultatsParPage, urlPage, nomParamPage) {
 	var currentUrl = urlPage || window.location.href;
 	var afficherLienFirstLastPage = true;
@@ -237,3 +237,4 @@ function paginationAsList(nbResultatsTotal, nbResultatsParPage, urlPage, nomPara
 
 	return strPagination;
 }
+*/

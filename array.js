@@ -42,7 +42,7 @@ Array.prototype.filterUnique = function() {
 	return this.filter((v, i, a) => a.indexOf(v) === i);
 };
 
-function getValuesByKeyInArrayOfArrays(array, key) {
+Array.getValuesByKeyInArrayOfArrays = function(array, key) {
 	let listeValues = [];
 	for (let i in array) {
 		let subArray = array[i];
@@ -63,7 +63,7 @@ Object.filter = (obj, predicate) => {
 		.reduce( (res, key) => (res[key] = obj[key], res), {} );
 };
 
-function renameKeys(obj, keysMap) {
+Object.renameKeys = function(obj, keysMap) {
 	return Object.keys(obj).reduce(
 		(acc, key) => ({
 			...acc,
@@ -71,9 +71,9 @@ function renameKeys(obj, keysMap) {
 		}),
 		{}
 	);
-}
+};
 
-function renameKeysByCallback(obj, callback) {
+Object.renameKeysByCallback = function(obj, callback) {
 	return Object.keys(obj).reduce(
 		(acc, key) => ({
 			...acc,
@@ -82,5 +82,3 @@ function renameKeysByCallback(obj, callback) {
 		{}
 	);
 }
-
-module.exports = { getValuesByKeyInArrayOfArrays, renameKeys, renameKeysByCallback };

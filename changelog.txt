@@ -1,0 +1,25 @@
+
+1.0.9 :
+copierTexte(str) -> str.copyToClipboard()
+truncateString(str, ...) -> str.truncateString(...)
+
+NumberValue.isNumeric(str) -> str.isNumeric()
+NumberValue.format(number, nbDecimal, locale) -> number.format(nbDecimal, locale)
+NumberValue.formatCurrency(montant, currency, nbDecimal, locale) -> montant.formatCurrency(currency, nbDecimal, locale)
+NumberValue.formatPercent(number, nbDecimal, locale) -> number.formatPercent(nbDecimal, locale)
+NumberValue.random(min, max) -> Number.random(min, max)
+NumberValue.padLeft2(n) -> n.padLeft2()
+NumberValue.roundDecimal(nombre, precision) -> nombre.roundDecimal(precision)
+
+nombre.formatAsString(locale, minimumFractionDigits) -> nombre.format(nbDecimal, locale)
+montant.formatAsCurrency(locale, currency, nbFractionDigits) -> montant.formatCurrency(currency, nbDecimal, locale)
+number.formatAsPercent(locale, minimumFractionDigits) -> number.formatPercent(nbDecimal, locale)
+
+constante COUNTRIES_LIST -> Country.getCountryList()
+activateTab(...) -> Pagination.activateTab(...)
+
+renameKeys(...) -> Object.renameKeys(...)
+renameKeysByCallback(...) -> Object.renameKeysByCallback(...)
+getValuesByKeyInArrayOfArrays(...) -> Array.getValuesByKeyInArrayOfArrays(...)
+getValuesByKeyInArrayOfArrays(array, ...) -> array.getValuesByKeyInArrayOfArrays(...)
+
