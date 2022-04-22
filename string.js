@@ -1,4 +1,3 @@
-
 function selectionnerContenuNode(node) {
 	if (window.getSelection) {
 		var selection = window.getSelection();
@@ -117,4 +116,4 @@ if (!String.format) {
 	};
 }
 
-module.exports = { selectionnerContenuNode, copierTexte };
+module.exports = { selectionnerContenuNode, copierTexte, truncateString };

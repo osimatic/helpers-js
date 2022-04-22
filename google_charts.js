@@ -1,12 +1,14 @@
+class GoogleCharts {
+	static init(onLoadCallback) {
+		// google.load("visualization", "1", {packages:["corechart"]});
+		google.charts.load('current', {'packages':['bar','line','corechart']});
+		// google.charts.load('current', {packages:['corechart']});
+		
+		if (onLoadCallback !== 'undefined') {
+			google.charts.setOnLoadCallback(onLoadCallback);
+		} 
+	}
 
-// google.load("visualization", "1", {packages:["corechart"]});
-google.charts.load('current', {'packages':['bar','line','corechart']});
-// google.charts.load('current', {packages:['corechart']});
-
-google.charts.setOnLoadCallback(drawAllCharts);
-
-class GoogleCharts
-{
 	static drawCharts(chartsList, onComplete) {
 		// on supprime du tableau la liste des graphiques dont l'id div n'a pas été trouvé (le graphique ne pourra pas être généré)
 		chartsList = chartsList.filter(chartData => typeof chartData.div_id != 'undefined' && $('#'+chartData.div_id).length);
@@ -342,3 +344,4 @@ class GoogleCharts
 
 }
 
+module.exports = { GoogleCharts };
