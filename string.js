@@ -93,12 +93,17 @@ String.prototype.escapeHtml = String.prototype.escapeHtml || function() {
 };
 
 String.prototype.normalizeBreaks = String.prototype.normalizeBreaks || function(breaktype) {
-	return this.replace('/(\r\n|\r|\n)/ms', breaktype);
+	// 20/01/2022 : modifié car ne fonctionnait pas pour les string en provenance de textarea, enregistrée en bd puis réaffiché depuis bd
+	//return this.replace(/$/mg, breaktype).replace(new RegExp('/'+breaktype.escapeRegExp()+'$/'), '');
+	return this.replace(/(?:\r\n|\r|\n)/g, breaktype);
+	//return this.replace('/(\r\n|\r|\n)/ms', breaktype);
 	//return this.replace('/(?:\r\n|\r|\n)/g', breaktype);
 	//console.log(breaktype);
 	//return this.replace(new RegExp('\r?\n','g'), breaktype);
 };
-
+String.prototype.escapeRegExp = String.prototype.escapeRegExp || function() {
+	return this.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+};
 String.prototype.format = String.prototype.format || function() {
 	var args = arguments;
 	return this.replace(/{(\d+)}/g, (match, number) => (typeof args[number] != 'undefined' ? args[number] : match));

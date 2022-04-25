@@ -14,4 +14,4 @@ function refresh() {
 	window.location.reload(true);
 }
 
-module.exports = { addBookmark, sleep, refresh };
+module.exports = { sleep, refresh };

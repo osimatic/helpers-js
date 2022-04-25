@@ -19,7 +19,7 @@ class GoogleMap {
 	}
 
 	static getUrl(latitude, longitude) {
-		return 'http://maps.google.com/?q='+latitude+','+longitude+'';
+		return 'https://maps.google.com/?q='+latitude+','+longitude+'';
 	}
 
 	static getUrlFromCoordinates(locationCoordinates) {

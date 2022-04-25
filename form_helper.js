@@ -161,6 +161,26 @@ class FormHelper {
 	// Messages
 	// ------------------------------------------------------------
 
+	static extractErrorKeyOfJson(json, onlyIfUniqueError) {
+		if (typeof json == 'undefined' || json == null) {
+			return null;
+		}
+
+		if (typeof json.error != 'undefined') {
+			return json.error;
+		}
+
+		if (typeof onlyIfUniqueError != 'undefined' && onlyIfUniqueError && !json.length || json.length > 1) {
+			return null;
+		}
+
+		if (typeof json[0] != 'undefined' && typeof json[0].error != 'undefined') {
+			return json[0].error;
+		}
+
+		return null;
+	}
+
 	static hideFormErrors(form) {
 		form.find('div.form_errors').remove();
 		return form;

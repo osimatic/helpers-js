@@ -4,7 +4,7 @@ copierTexte(str) -> str.copyToClipboard()
 truncateString(str, ...) -> str.truncateString(...)
 
 NumberValue.isNumeric(str) -> str.isNumeric()
-NumberValue.format(number, nbDecimal, locale) -> number.format(nbDecimal, locale)
+NumberValue.format(number, nbDecimal, locale) -> number.format(nbDecimal, locale) OU Number.format(number, nbDecimal, locale)
 NumberValue.formatCurrency(montant, currency, nbDecimal, locale) -> montant.formatCurrency(currency, nbDecimal, locale)
 NumberValue.formatPercent(number, nbDecimal, locale) -> number.formatPercent(nbDecimal, locale)
 NumberValue.random(min, max) -> Number.random(min, max)
@@ -23,3 +23,6 @@ renameKeysByCallback(...) -> Object.renameKeysByCallback(...)
 getValuesByKeyInArrayOfArrays(...) -> Array.getValuesByKeyInArrayOfArrays(...)
 getValuesByKeyInArrayOfArrays(array, ...) -> array.getValuesByKeyInArrayOfArrays(...)
 
+hasGetUserMedia() -> non remplacé
+
+paginationAsList(...) -> Pagination.paginate(...)

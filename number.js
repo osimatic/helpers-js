@@ -71,6 +71,16 @@ Number.prototype.format = Number.prototype.format || function(nbDecimal, locale)
 	}).format(this);
 }
 
+if (!Number.format) {
+	Number.format = function(number, nbDecimal, locale) {
+		nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
+		return new Intl.NumberFormat(locale, {
+			minimumFractionDigits: nbDecimal,
+			maximumFractionDigits: nbDecimal
+		}).format(number);
+	};
+}
+
 /**
  * Number.prototype.format(n, x, s, c)
  *

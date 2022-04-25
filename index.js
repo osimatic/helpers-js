@@ -10,33 +10,38 @@ const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
 const { IBAN } = require('./bank');
 const { AudioMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
-const { CountDown } = require('./count_down');
-const { DataTable } = require('./data_table');
 const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod } = require('./date_time');
-const { DetailsSubArray } = require('./details_sub_array');
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
-const { FlashMessage } = require('./flash_message');
 const { FormHelper } = require('./form_helper');
-const { GoogleMap } = require('./google_maps');
+const { Country, PostalAddress, Location } = require('./location');
+const { SocialNetwork } = require('./social_network');
+const { sleep, refresh } = require('./util');
+const { chr, ord, trim, empty } = require('./php.min');
+
+// exports plugins "maison"
+const { DataTable } = require('./data_table');
+const { Pagination, activateTab } = require('./paging');
+const { FlashMessage } = require('./flash_message');
+const { CountDown } = require('./count_down');
+const { DetailsSubArray } = require('./details_sub_array');
 const { ImportFromCsv } = require('./import_from_csv');
 const { JwtToken, JwtSession } = require('./jwt');
 const { ListBox } = require('./list_box');
-const { Country, PostalAddress, Location } = require('./location');
-const { SocialNetwork } = require('./social_network');
-const { NumberValue } = require('./number');
-const { sleep, refresh } = require('./util');
-const { chr, ord, trim, empty } = require('./php.min');
-const { Pagination, activateTab } = require('./paging');
+
+// exports surcouche lib externe
 const { GoogleCharts } = require('./google_charts');
 const { GoogleRecaptcha } = require('./google_recaptcha');
+const { GoogleMap } = require('./google_maps');
+const { OpenStreetMap } = require('./open_street_map');
+
+// deprecated
+const { NumberValue } = require('./number');
 
 module.exports = {
     Array, Object, Number, String,
-    HTTPRequest, Cookie, UrlAndQueryString, IBAN, AudioMedia, PersonName, Email, TelephoneNumber, CountDown, DataTable,
-    DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, DetailsSubArray, Duration, File, CSV, Img,
-    FlashMessage, FormHelper, GoogleMap, ImportFromCsv, JwtToken, JwtSession, ListBox, Country, PostalAddress,
-    Location, SocialNetwork, NumberValue, Pagination,
+    HTTPRequest, Cookie, UrlAndQueryString, IBAN, AudioMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
+    DataTable, Pagination, FlashMessage, CountDown, DetailsSubArray, ImportFromCsv, JwtToken, JwtSession, ListBox,
     sleep, refresh, chr, ord, trim, empty,
-    GoogleCharts, GoogleRecaptcha
+    GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };
