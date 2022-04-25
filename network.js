@@ -36,6 +36,7 @@ class HTTPRequest {
 				}
 			}
 			catch (e) {
+				console.log(e);
 				errorCallback(response, response.status, e);
 				return;
 			}
@@ -101,6 +102,7 @@ class HTTPRequest {
 				}
 			}
 			catch (e) {
+				console.log(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response, response.status, e);
 				}
@@ -170,6 +172,7 @@ class HTTPRequest {
 				}
 			}
 			catch (e) {
+				console.log(e);
 				errorCallback(response, response.status, e);
 				return;
 			}
