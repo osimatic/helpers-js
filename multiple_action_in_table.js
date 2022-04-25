@@ -111,11 +111,7 @@ class MultipleActionInTable {
 
 }
 
-$(function() {
-	$('table.table-action_multiple').each(function(idx, table) {
-		MultipleActionInTable.init($(table));
-	});
-});
+module.exports = { MultipleActionInTable };
 
 /*
 // init checkbox

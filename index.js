@@ -7,7 +7,7 @@ require('./array');
 
 // exports d'ojets non natif
 const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
-const { IBAN } = require('./bank');
+const { IBAN, BankCard } = require('./bank');
 const { AudioMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
 const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod } = require('./date_time');
@@ -22,9 +22,12 @@ const { chr, ord, trim, empty } = require('./php.min');
 // exports plugins "maison"
 const { DataTable } = require('./data_table');
 const { Pagination, Navigation } = require('./paging');
+const { DetailsSubArray } = require('./details_sub_array');
+const { SelectAll } = require('./select_all');
+const { MultipleActionInTable } = require('./multiple_action_in_table');
+const { ShoppingCart } = require('./shopping_cart');
 const { FlashMessage } = require('./flash_message');
 const { CountDown } = require('./count_down');
-const { DetailsSubArray } = require('./details_sub_array');
 const { ImportFromCsv } = require('./import_from_csv');
 const { JwtToken, JwtSession } = require('./jwt');
 const { ListBox } = require('./list_box');
@@ -40,8 +43,8 @@ const { NumberValue } = require('./number');
 
 module.exports = {
     Array, Object, Number, String,
-    HTTPRequest, Cookie, UrlAndQueryString, IBAN, AudioMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
-    DataTable, Pagination, Navigation, FlashMessage, CountDown, DetailsSubArray, ImportFromCsv, JwtToken, JwtSession, ListBox,
+    HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
+    DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox,
     sleep, refresh, chr, ord, trim, empty,
     GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };

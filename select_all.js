@@ -114,19 +114,4 @@ class SelectAll {
 	}
 }
 
-$(function() {
-	// Dans un form-group
-	$('a.check_all').each(function(idx, link) {
-		SelectAll.initLinkInFormGroup($(link));
-	});
-
-	// Dans tableau
-	$('table tr input.check_all').each(function(idx, inputCheckAll) {
-		SelectAll.initInTable($(inputCheckAll).closest('table'));
-	});
-
-	// Dans un div
-	$('div.checkbox_with_check_all').each(function(idx, div) {
-		SelectAll.initDiv($(div));
-	});
-});
+module.exports = { SelectAll };
