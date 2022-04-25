@@ -16,7 +16,7 @@ montant.formatAsCurrency(locale, currency, nbFractionDigits) -> montant.formatCu
 number.formatAsPercent(locale, minimumFractionDigits) -> number.formatPercent(nbDecimal, locale)
 
 constante COUNTRIES_LIST -> Country.getCountryList()
-activateTab(...) -> Pagination.activateTab(...)
+activateTab(...) -> Navigation.activateTab(...)
 
 renameKeys(...) -> Object.renameKeys(...)
 renameKeysByCallback(...) -> Object.renameKeysByCallback(...)

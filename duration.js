@@ -1,8 +1,12 @@
 
 class Duration {
 
-	static formatNbDays(nbDays) {
-		return NumberValue.format(nbDays, 2, locale);
+	static formatNbDays(nbDays, locale) {
+		locale = (typeof locale != 'undefined'?locale:'fr-FR');
+		return new Intl.NumberFormat(locale, {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2
+		}).format(nbDays);
 	}
 	static formatNbDaysIfPositive(nbDays) {
 		return nbDays < 0 ? '-' : this.formatNbDays(nbDays);
@@ -12,11 +16,11 @@ class Duration {
 	}
 
 	static convertToDurationAsCentieme(durationInSeconds) {
-		var hour = Math.floor(durationInSeconds / 3600);
-		var minutes = durationInSeconds % 3600;
+		let hour = Math.floor(durationInSeconds / 3600);
+		let minutes = durationInSeconds % 3600;
 		minutes = Math.floor(minutes / 60);
 		// minutes = minutes - (minutes % 60);
-		var minCentieme = Math.round( (minutes / 60 ) * 100 );
+		let minCentieme = Math.round( (minutes / 60 ) * 100 );
 		return parseFloat(hour+'.'+minCentieme);
 	}
 
@@ -27,17 +31,17 @@ class Duration {
 	static convertToDurationInHourChronoDisplay(durationInSeconds, displayMode) {
 		displayMode = typeof displayMode != 'undefined' ? displayMode : 'chrono';
 
-		var durationInSecondsOriginal = durationInSeconds;
+		let durationInSecondsOriginal = durationInSeconds;
 		durationInSeconds = Math.abs(durationInSeconds);
-		var seconds = ( durationInSeconds % 60 );
-		var remander = ( durationInSeconds % 3600 ) - seconds;
-		var minutes = ( remander / 60 );
+		let seconds = ( durationInSeconds % 60 );
+		let remander = ( durationInSeconds % 3600 ) - seconds;
+		let minutes = ( remander / 60 );
 		remander = ( durationInSeconds ) - ( durationInSeconds % 3600 );
-		var hours = ( remander / 3600 );
+		let hours = ( remander / 3600 );
 		if(hours.toString().length < 2) hours = '0'+hours;
-		if(hours.toString().charAt(0) == "-") hours[0] = '0';
+		if(hours.toString().charAt(0) === "-") hours[0] = '0';
 		if(minutes.toString().length < 2) minutes = '0'+minutes;
-		if(minutes.toString().charAt(0) == "-") minutes[0] = '0';
+		if(minutes.toString().charAt(0) === "-") minutes[0] = '0';
 		if(seconds.toString().length < 2) seconds = '0'+seconds;
 		return (durationInSecondsOriginal < 0 ? '- ' : '')+hours+':'+minutes+(displayMode==='input_time'?':':'.')+seconds;
 	}
@@ -49,8 +53,8 @@ class Duration {
 		if (libelleEntier == null) libelleEntier = false;
 		
 		// Heures
-		var strHeure = '';
-		var nbHeures = this.getNbHoursOfDurationInSeconds(durationInSeconds);
+		let strHeure = '';
+		let nbHeures = this.getNbHoursOfDurationInSeconds(durationInSeconds);
 		strHeure += nbHeures;
 		if (libelleEntier) {
 			strHeure += ' heure'+(nbHeures>1?'s':'');
@@ -60,8 +64,8 @@ class Duration {
 		}
 		
 		// Minutes
-		var strMinute = '';
-		var nbMinutes = 0;
+		let strMinute = '';
+		let nbMinutes = 0;
 		if (withMinutes) {
 			nbMinutes = this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
 			strMinute += ' ';
@@ -78,9 +82,9 @@ class Duration {
 		}
 		
 		// Secondes
-		var strSeconde = '';
+		let strSeconde = '';
 		if (withSecondes) {
-			var nbSecondes = this.getNbSecondsRemainingOfDurationInSeconds(durationInSeconds);
+			let nbSecondes = this.getNbSecondsRemainingOfDurationInSeconds(durationInSeconds);
 			strSeconde += ' ';
 			//strSeconde += sprintf('%02d', nbSecondes);
 			strSeconde += nbSecondes.toString().padStart(2, '0');
@@ -96,25 +100,25 @@ class Duration {
 	}
 
 	static roundNbSeconds(durationInSeconds, roundPrecision, roundMode) {
-		var hours = Math.floor(durationInSeconds / 3600);
-		var minutes = Math.floor((durationInSeconds % 3600) / 60);
-		var seconds = durationInSeconds % 60;
+		let hours = Math.floor(durationInSeconds / 3600);
+		let minutes = Math.floor((durationInSeconds % 3600) / 60);
+		let seconds = durationInSeconds % 60;
 
-		var hoursRounded = hours;
-		var minutesRounded = minutes;
-		var secondsRounded = seconds;
+		let hoursRounded = hours;
+		let minutesRounded = minutes;
+		let secondsRounded = seconds;
 
 		if (roundPrecision > 0) {
-			var minutesRemaining = minutes % roundPrecision;
-			var minutesRemainingAndSecondsAsCentieme = minutesRemaining + seconds/60;
-			if (minutesRemainingAndSecondsAsCentieme == 0) {
+			let minutesRemaining = minutes % roundPrecision;
+			let minutesRemainingAndSecondsAsCentieme = minutesRemaining + seconds/60;
+			if (minutesRemainingAndSecondsAsCentieme === 0) {
 				// pas d'arrondissement
 			}
 			else {
 				var halfRoundPrecision = roundPrecision / 2;
 				hoursRounded = hours;
 				secondsRounded = 0;
-				if (roundMode == 'up' || (roundMode == 'close' && minutesRemainingAndSecondsAsCentieme > halfRoundPrecision)) {
+				if (roundMode === 'up' || (roundMode === 'close' && minutesRemainingAndSecondsAsCentieme > halfRoundPrecision)) {
 					// Arrondissement au dessus
 					if (minutes > (60-roundPrecision)) {
 						minutesRounded = 0;

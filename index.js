@@ -21,7 +21,7 @@ const { chr, ord, trim, empty } = require('./php.min');
 
 // exports plugins "maison"
 const { DataTable } = require('./data_table');
-const { Pagination, activateTab } = require('./paging');
+const { Pagination, Navigation } = require('./paging');
 const { FlashMessage } = require('./flash_message');
 const { CountDown } = require('./count_down');
 const { DetailsSubArray } = require('./details_sub_array');
@@ -41,7 +41,7 @@ const { NumberValue } = require('./number');
 module.exports = {
     Array, Object, Number, String,
     HTTPRequest, Cookie, UrlAndQueryString, IBAN, AudioMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
-    DataTable, Pagination, FlashMessage, CountDown, DetailsSubArray, ImportFromCsv, JwtToken, JwtSession, ListBox,
+    DataTable, Pagination, Navigation, FlashMessage, CountDown, DetailsSubArray, ImportFromCsv, JwtToken, JwtSession, ListBox,
     sleep, refresh, chr, ord, trim, empty,
     GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };

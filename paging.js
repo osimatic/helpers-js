@@ -95,7 +95,9 @@ class Pagination {
 
 		update();
 	}
+}
 
+class Navigation {
 	static activateTab(a) {
 		//console.log(a);
 		//a.click();
@@ -117,7 +119,7 @@ class Pagination {
 	}
 }
 
-module.exports = { Pagination };
+module.exports = { Pagination, Navigation };
 
 // deprecated
 /*
