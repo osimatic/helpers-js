@@ -8,7 +8,7 @@ require('./array');
 // exports d'ojets non natif
 const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
 const { IBAN, BankCard } = require('./bank');
-const { AudioMedia } = require('./media');
+const { AudioMedia, UserMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
 const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod } = require('./date_time');
 const { Duration } = require('./duration');
@@ -43,7 +43,7 @@ const { NumberValue } = require('./number');
 
 module.exports = {
     Array, Object, Number, String,
-    HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
+    HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
     DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox,
     sleep, refresh, chr, ord, trim, empty,
     GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap

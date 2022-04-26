@@ -83,33 +83,18 @@ class UserMedia {
 
 	static requestMediaPermissions(constraints) {
 		return new Promise((resolve, reject) => {	
-			let userAgent = navigator.userAgent;
-			let browser;
-			
-			if (userAgent.match(/chrome|chromium|crios/i)) {
-				browser = "Chrome";
-			} else if (userAgent.match(/firefox|fxios/i)) {
-				browser = "firefox";
-			} else if (userAgent.match(/safari/i)) {
-				browser = "Safari";
-			} else if(userAgent.match(/opr\//i)) {
-				browser = "Opera";
-			} else if (userAgent.match(/edg/i)) {
-				browser = "Edge";
-			} else {
-				browser = "No browser detection";
-			}
-			
+			const bowser = require('bowser');
+			const browser = bowser.getParser(window.navigator.userAgent);
+            const browserName = browser.getBrowserName();
+
 			navigator.mediaDevices.getUserMedia(constraints !== 'undefined' ? constraints : { audio: true, video: true })
-			.then((stream) => {
-				stream.getTracks().forEach((track) => track.stop());
-				resolve();
-			}).catch((error) => {
+			.then((stream) => resolve(stream))
+			.catch((error) => {
 				const errName = error.name;
 				const errMessage = error.message;
 				let errorType = "Generic";
 
-				if (browser === 'Chrome') {
+				if (browserName === 'Chrome') {
 					if (errName === 'NotAllowedError') {
 						if (errMessage === 'Permission denied by system') {
 							errorType = "SystemPermissionDenied";
@@ -119,17 +104,17 @@ class UserMedia {
 					} else if (errName === 'NotReadableError') {
 						errorType = "CouldNotStartVideoSource";
 					}
-				} else if (browser === 'Safari') {
+				} else if (browserName === 'Safari') {
 					if (errName === 'NotAllowedError') {
 						errorType = "UserPermissionDenied";
 					}
-				} else if (browser === 'Microsoft Edge') {
+				} else if (browserName === 'Microsoft Edge') {
 					if (errName === 'NotAllowedError') {
 						errorType = "UserPermissionDenied";
 					} else if (errName === 'NotReadableError') {
 						errorType = "CouldNotStartVideoSource";
 					}
-				} else if (browser === 'Firefox') {
+				} else if (browserName === 'Firefox') {
 					// https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#exceptions
 					if (errName === 'NotFoundError') {
 						errorType = "SystemPermissionDenied";
