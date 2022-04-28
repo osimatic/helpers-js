@@ -72,7 +72,7 @@ class FormHelper {
 
 			var input = form.find('[name="'+key+'"]');
 
-			if (input.prop('type') == 'radio' || input.prop('type') == 'checkbox') {
+			if (input.prop('type') === 'radio' || input.prop('type') === 'checkbox') {
 				input.prop('checked', false);
 				input.filter('[value="'+value+'"]').prop('checked', true);
 				return;
@@ -187,8 +187,8 @@ class FormHelper {
 	}
 
 	static getFormErrorText(errors) {
-		var errorLabels = '';
-		for (var property in errors) {
+		let errorLabels = '';
+		for (let property in errors) {
 			if (typeof errors[property] != 'function') {
 				errorLabels += '<span>' + errors[property] + '</span><br>';
 			}
@@ -197,8 +197,8 @@ class FormHelper {
 	}
 
 	static getFormErrorTextBis(errors) {
-		var errorLabels = '';
-		for (var property in errors) {
+		let errorLabels = '';
+		for (let property in errors) {
 			// console.log(property);
 			if (typeof errors[property] != 'function') {
 				if (typeof errors[property]['error_description'] === 'undefined') {
@@ -211,8 +211,8 @@ class FormHelper {
 		return errorLabels;
 	}
 
-	static displayFormErrors(form, btnSubmit, errors) {
-		this.displayFormErrorsFromText(form, this.getFormErrorTextBis(errors));
+	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv) {
+		this.displayFormErrorsFromText(form, this.getFormErrorTextBis(errors), errorWrapperDiv);
 		if (btnSubmit != null) {
 			if (btnSubmit.buttonLoader != null) {
 				btnSubmit.buttonLoader('reset');
@@ -226,20 +226,25 @@ class FormHelper {
 		this.displayFormErrors(form, btnSubmit, xhr.responseJSON);
 	}
 
-	static displayFormErrorsFromText(form, errorLabels) {
-		var errorDiv = '<div class="alert alert-danger form_errors">'+errorLabels+'</div>';
-		var errorsParentDiv = form;
+	static displayFormErrorsFromText(form, errorLabels, errorWrapperDiv) {
+		let errorDiv = '<div class="alert alert-danger form_errors">'+errorLabels+'</div>';
+
+		if (typeof errorWrapperDiv != 'undefined' && errorWrapperDiv != null) {
+			errorWrapperDiv.append(errorDiv);
+			return;
+		}
 
 		if (form.find('.form_errors_content').length) {
 			form.find('.form_errors_content').append(errorDiv);
 			return;
 		}
 
+		let errorsParentDiv = form;
 		if (form.find('.modal-body').length) {
 			errorsParentDiv = form.find('.modal-body');
 		}
 
-		var firstFormGroup = errorsParentDiv.find('.form-group:first');
+		let firstFormGroup = errorsParentDiv.find('.form-group:first');
 		if (firstFormGroup.length) {
 			if (firstFormGroup.parent().parent().hasClass('row')) {
 				firstFormGroup.parent().parent().before(errorDiv);
