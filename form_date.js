@@ -1,5 +1,131 @@
 ﻿const {Object} = require('./index');
 
+// input period de type : Du <input type="date" name="start_date" /> au <input type="date" name="end_date" />
+class InputPeriod {
+
+	static addLinks(form) {
+		let divParent = form.find('input[type="date"][data-add_period_select_links]').parent();
+		if (divParent.hasClass('input-group')) {
+			divParent = divParent.parent();
+		}
+		divParent.append(''
+			+'<div class="select_period_links">'
+			+'<a href="#" class="period_select_yesterday">Hier</a> - '
+			+'<a href="#" class="period_select_current_week">Cette semaine</a> - '
+			+'<a href="#" class="period_select_last_week">La semaine dernière</a> - '
+			+'<a href="#" class="period_select_current_month">Ce mois-ci</a> - '
+			+'<a href="#" class="period_select_last_month">Le mois dernier</a> - '
+			+'<a href="#" class="period_select_current_year">Cette année</a>'
+			+'</div>'
+		);
+		this.init(form);
+	}
+
+	static init(form) {
+		let link;
+		//console.log(form.find('a.period_select_current_week'));
+
+		if ((link = form.find('a.period_select_today')).length) {
+			link.click(function() { InputPeriod.selectToday($(this)); return false; });
+		}
+		if ((link = form.find('a.period_select_yesterday')).length) {
+			link.click(function() { InputPeriod.selectPreviousDay($(this), 1); return false; });
+		}
+		if ((link = form.find('a.period_select_tomorrow')).length) {
+			link.click(function() { InputPeriod.selectFollowingDay($(this), 1); return false; });
+		}
+		if ((link = form.find('a.period_select_current_week')).length) {
+			link.click(function() { InputPeriod.selectCurrentWeek($(this)); return false; });
+		}
+		if ((link = form.find('a.period_select_last_week')).length) {
+			link.click(function() { InputPeriod.selectPreviousWeek($(this), 1); return false; });
+		}
+		if ((link = form.find('a.period_select_current_month')).length) {
+			link.click(function() { InputPeriod.selectCurrentMonth($(this)); return false; });
+		}
+		if ((link = form.find('a.period_select_last_month')).length) {
+			link.click(function() { InputPeriod.selectPreviousMonth($(this), 1); return false; });
+		}
+		if ((link = form.find('a.period_select_current_year')).length) {
+			link.click(function() { InputPeriod.selectCurrentYear($(this)); return false; });
+		}
+		if ((link = form.find('a.period_select_last_year')).length) {
+			link.click(function() { InputPeriod.selectCurrentYear($(this), 1); return false; });
+		}
+	}
+
+
+	static selectToday(link) {
+		let date = new Date();
+		this.selectPeriod(link, date, date);
+	}
+
+	static selectPreviousDay(lien, nbDays) {
+		this.selectFollowingDay(lien, -nbDays);
+	}
+	static selectFollowingDay(lien, nbDays) {
+		let date = new Date();
+		date.setDate(date.getDate() + nbDays);
+		this.selectPeriod(lien, date, date);
+	}
+
+	static selectCurrentWeek(lien) {
+		let date = new Date();
+		this.selectPeriod(lien, DateTime.getFirstDayOfWeek(date), DateTime.getLastDayOfWeek(date));
+	}
+	static selectPreviousWeek(lien, nbWeeks) {
+		this.selectFollowingWeek(lien, -nbWeeks);
+	}
+	static selectFollowingWeek(lien, nbWeeks) {
+		let date = new Date();
+		date.setDate(date.getDate() + (7*nbWeeks));
+		this.selectPeriod(lien, DateTime.getFirstDayOfWeek(date), DateTime.getLastDayOfWeek(date));
+	}
+
+	static selectCurrentMonth(lien) {
+		let date = new Date();
+		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date));
+	}
+	static selectPreviousMonth(lien, nbMonths) {
+		this.selectFollowingMonth(lien, -nbMonths);
+	}
+	static selectFollowingMonth(lien, nbMonths) {
+		let date = new Date();
+		date.setDate(1);
+		date.setMonth(date.getMonth() + nbMonths);
+		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date));
+	}
+
+	static selectCurrentYear(lien) {
+		this.selectFollowingYear(lien, 0);
+	}
+	static selectPreviousYear(lien, nbAnneesMoins) {
+		this.selectFollowingYear(lien, -nbAnneesMoins);
+	}
+	static selectFollowingYear(lien, nbAnneesMoins) {
+		let date = new Date();
+		date.setFullYear(date.getFullYear() + nbAnneesMoins);
+		this.selectPeriod(lien, DateTime.getFirstDayOfYear(date), DateTime.getLastDayOfYear(date));
+	}
+
+
+	static selectPeriod(link, startDate, endDate) {
+		let inputPeriodStart = link.parent().parent().find('input[type="date"]').filter('[name="date_start"], [name="start_date"], [name="start_period"], [name="period_start_date"]');
+		let inputPeriodEnd = link.parent().parent().find('input[type="date"]').filter('[name="date_end"], [name="end_date"], [name="end_period"], [name="period_end_date"]');
+		if (inputPeriodStart.length == 0 || inputPeriodEnd.length == 0) {
+			console.log('no period input found');
+			return;
+		}
+
+		//console.log(startDate);
+		//console.log(endDate);
+		inputPeriodStart.val(DateTime.getSqlDate(startDate));
+		inputPeriodEnd.val(DateTime.getSqlDate(endDate));
+	}
+
+}
+
+// input period de type : <select class="period">Aujourd'hui / Ce mois-ci / etc. / Personnalisé</select>
 class FormDate {
 	static initForm(form) {
 		// ---------- Choix période (new) ----------
@@ -384,4 +510,4 @@ class FormDate {
 
 }
 
-module.exports = { FormDate };
+module.exports = { FormDate, InputPeriod };
