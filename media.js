@@ -75,13 +75,23 @@ class AudioMedia {
 }
 
 //Source : https://www.npmjs.com/package/mic-check
-class UserMedia { 
+class UserMedia {
+	static hasGetUserMedia() {
+		return !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+	}
+
 	/** SystemPermissionDenied => (macOS) browser does not have permission to access cam/mic */
     /** UserPermissionDenied => user denied permission for site to access cam/mic */
     /** CouldNotStartVideoSource = > (Windows) browser does not have permission to access cam/mic OR camera is in use by another application or browser tab */
     /** Generic => all other errors */
 
 	static requestMediaPermissions(constraints) {
+		/*try {
+			console.log(require.resolve("bowser"));
+		} catch(e) {
+			return;
+		}*/
+
 		return new Promise((resolve, reject) => {	
 			const bowser = require('bowser');
 			const browser = bowser.getParser(window.navigator.userAgent);
@@ -146,8 +156,3 @@ class UserMedia {
 }
 
 module.exports = { AudioMedia, UserMedia };
-
-//deprecated
-function hasGetUserMedia() {
-	return !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
-}
