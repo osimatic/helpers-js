@@ -12,9 +12,9 @@ class File {
 		}
 		var type = contentType;
 
-        var blob = new Blob([data], {
-            type: type
-        });
+		var blob = new Blob([data], {
+			type: type
+		});
 
 		//console.log('disposition: '+disposition+' ; filename: '+filename+' ; type: '+type);
 		//console.log('blob: %o', blob);
@@ -37,30 +37,30 @@ class File {
 				a.click();
 			}
 
-            setTimeout(function () {
-                URL.revokeObjectURL(downloadUrl);
-            }, 100); // cleanup
+			setTimeout(function () {
+				URL.revokeObjectURL(downloadUrl);
+			}, 100); // cleanup
 		}
 	}
 
-    static formatFileSize(fileSizeInBytes, fractionDigits, locale) {
-        fractionDigits = (typeof fractionDigits != 'undefined' ? fractionDigits : 2);
-        var i = -1;
-        var byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        if (fileSizeInBytes === 0) {
-            return '0 ' + byteUnits[0];
-        }
-        do {
-            fileSizeInBytes = fileSizeInBytes / 1024;
-            i++;
-        }
-        while (fileSizeInBytes > 1024);
-        //var size = Math.max(fileSizeInBytes, 0.1).toFixed(fractionDigits);
-        var size = Math.max(fileSizeInBytes, 0.1);
-        return (new Intl.NumberFormat(locale, {
-            maximumFractionDigits: fractionDigits
-        }).format(size)) + ' ' + byteUnits[i];
-    }
+	static formatFileSize(fileSizeInBytes, fractionDigits, locale) {
+		fractionDigits = (typeof fractionDigits != 'undefined' ? fractionDigits : 2);
+		var i = -1;
+		var byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+		if (fileSizeInBytes === 0) {
+			return '0 ' + byteUnits[0];
+		}
+		do {
+			fileSizeInBytes = fileSizeInBytes / 1024;
+			i++;
+		}
+		while (fileSizeInBytes > 1024);
+		//var size = Math.max(fileSizeInBytes, 0.1).toFixed(fractionDigits);
+		var size = Math.max(fileSizeInBytes, 0.1);
+		return (new Intl.NumberFormat(locale, {
+			maximumFractionDigits: fractionDigits
+		}).format(size)) + ' ' + byteUnits[i];
+	}
 }
 
 const CSV_FILE_EXTENSION = "csv";

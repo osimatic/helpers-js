@@ -11,7 +11,7 @@ const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
 const { IBAN, BankCard } = require('./bank');
 const { AudioMedia, UserMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
-const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod } = require('./date_time');
+const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
 const { FormHelper } = require('./form_helper');
@@ -19,7 +19,6 @@ const { Country, PostalAddress, Location } = require('./location');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
-const { FormDate } = require('./form_date');
 
 // exports plugins "maison"
 const { DataTable } = require('./data_table');
@@ -27,6 +26,7 @@ const { Pagination, Navigation } = require('./paging');
 const { DetailsSubArray } = require('./details_sub_array');
 const { SelectAll } = require('./select_all');
 const { MultipleActionInTable } = require('./multiple_action_in_table');
+const { FormDate, InputPeriod } = require('./form_date');
 const { ShoppingCart } = require('./shopping_cart');
 const { FlashMessage } = require('./flash_message');
 const { CountDown } = require('./count_down');
@@ -43,9 +43,9 @@ const { OpenStreetMap } = require('./open_street_map');
 // deprecated
 
 module.exports = {
-    Array, Object, Number, String,
-    HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, FormDate,
-    DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox,
-    sleep, refresh, chr, ord, trim, empty,
-    GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
+	Array, Object, Number, String,
+	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork,
+	DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox,
+	sleep, refresh, chr, ord, trim, empty,
+	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };

@@ -81,9 +81,9 @@ class UserMedia {
 	}
 
 	/** SystemPermissionDenied => (macOS) browser does not have permission to access cam/mic */
-    /** UserPermissionDenied => user denied permission for site to access cam/mic */
-    /** CouldNotStartVideoSource = > (Windows) browser does not have permission to access cam/mic OR camera is in use by another application or browser tab */
-    /** Generic => all other errors */
+	/** UserPermissionDenied => user denied permission for site to access cam/mic */
+	/** CouldNotStartVideoSource = > (Windows) browser does not have permission to access cam/mic OR camera is in use by another application or browser tab */
+	/** Generic => all other errors */
 
 	static requestMediaPermissions(constraints) {
 		/*try {
@@ -95,7 +95,7 @@ class UserMedia {
 		return new Promise((resolve, reject) => {	
 			const bowser = require('bowser');
 			const browser = bowser.getParser(window.navigator.userAgent);
-            const browserName = browser.getBrowserName();
+			const browserName = browser.getBrowserName();
 
 			navigator.mediaDevices.getUserMedia(constraints !== 'undefined' ? constraints : { audio: true, video: true })
 			.then((stream) => resolve(stream))
