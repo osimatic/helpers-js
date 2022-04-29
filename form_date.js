@@ -1,5 +1,113 @@
-﻿
-$(function() {
+﻿class FormDate {
+	static majSelectPeriode(select) {
+		if (select.find(':selected').attr('value') == 'perso') {
+			select.parent().parent().next().removeClass('hide');
+		}
+		else {
+			select.parent().parent().next().addClass('hide');
+		}
+	}
+	
+	static majSelectCompare() {
+		if ($('form select#periodeCompare').length == 0) {
+			return;
+		}
+	
+		var listValues = [];
+		periodeSelected = $('form select.periode :selected').attr('value');
+		selectCompare = $('form select#periodeCompare');
+		periodeCompareSelected = selectCompare.find(':selected').attr('value');
+	
+		selectCompare.find('option').removeAttr('disabled');
+	
+		$.each(listePeriodeCompare, function (idx, tabListPeriode) {
+			if (idx != 0) {
+				listKeyPeriode = array_keys(tabListPeriode.list);
+				if (in_array(periodeSelected, listKeyPeriode)) {
+					listValues = listKeyPeriode;
+					valueDefault = listKeyPeriode[1];
+				}
+				else {
+					selectCompare.find('option[value="' + listKeyPeriode[0] + '"]').parent().children().attr('disabled', 'disabled');
+				}
+			}
+		});
+	
+		if (periodeSelected == 'perso') {
+			valueDefault = 'perso';
+		}
+		else if (periodeCompareSelected != 'perso' && in_array(periodeCompareSelected, listValues)) {
+			valueDefault = periodeCompareSelected;
+		}
+		selectCompare.find('option[value="' + valueDefault + '"]').attr('selected', 'selected');
+	
+		majSelectPeriode(selectCompare);
+	}
+	
+	static selectFormDateToday(lien) {
+		date = new Date();
+		selectFormDate(lien, date.getDate(), (date.getMonth() + 1), date.getFullYear());
+	}
+	
+	static selectFormDateDayMoinsNb(lien, nbJoursMoins) {
+		date = new Date();
+		date.setDate(date.getDate() - nbJoursMoins);
+		selectFormDate(lien, date.getDate(), (date.getMonth() + 1), date.getFullYear());
+	}
+	
+	static selectFormDateCurrentMonth(lien) {
+		date = new Date();
+		selectFormDate(lien, -1, (date.getMonth() + 1), date.getFullYear());
+	}
+	
+	static selectFormDateMonthMoinsNb(lien, nbMoisMoins) {
+		date = new Date();
+		date.setDate(1);
+		date.setMonth(date.getMonth() - nbMoisMoins);
+		selectFormDate(lien, -1, (date.getMonth() + 1), date.getFullYear());
+	}
+	
+	static selectFormDateCurrentYear(lien) {
+		today = new Date();
+		selectFormDate(lien, -1, -1, today.getFullYear());
+	}
+	
+	static selectFormDateYearMoinsNb(lien, nbAnneesMoins) {
+		today = new Date();
+		selectFormDate(lien, -1, -1, today.getFullYear() - nbAnneesMoins);
+	}
+	
+	static selectFormDateAddDayFromSelectedDay(lien, nbDaysAdded) {
+		date = getDateObjectSelected(lien);
+		date.setDate(date.getDate() + nbDaysAdded);
+		selectFormDate(lien, date.getDate(), (date.getMonth() + 1), date.getFullYear());
+	}
+	
+	static getDateObjectSelected(lien) {
+		selectorDay = '#' + (lien.parent().prev().prev().prev().prev().attr('id')) + ' option:selected';
+		selectorMonth = '#' + (lien.parent().prev().prev().prev().attr('id')) + ' option:selected';
+		selectorYear = '#' + (lien.parent().prev().prev().attr('id')) + ' option:selected';
+		if ($(selectorDay).length > 0 && $(selectorMonth).length > 0 && $(selectorYear).length > 0) {
+			return new Date($(selectorYear).attr('value'), $(selectorMonth).attr('value') - 1, $(selectorDay).attr('value'));
+		}
+		return new Date();
+	}
+	
+	static selectFormDate(lien, day, month, year) {
+		selectorDay = '#' + (lien.parent().prev().prev().prev().prev().attr('id')) + ' option[value=' + day + ']';
+		selectorMonth = '#' + (lien.parent().prev().prev().prev().attr('id')) + ' option[value=' + month + ']';
+		selectorYear = '#' + (lien.parent().prev().prev().attr('id')) + ' option[value=' + year + ']';
+		if ($(selectorDay).length > 0) $(selectorDay).prop('selected', 'selected');
+		if ($(selectorMonth).length > 0) $(selectorMonth).prop('selected', 'selected');
+		if ($(selectorYear).length > 0) $(selectorYear).prop('selected', 'selected');
+	}
+}
+
+module.exports = { FormDate };
+
+
+//A DEPLACER DANS LE PROJET MYTIME
+/*$(function() {
 	// ---------- Choix période (new) ----------
 
 	// Formulaire de sélection de période
@@ -12,53 +120,8 @@ $(function() {
 				majSelectCompare();
 			}
 		});
-	}
-	
-	function majSelectPeriode(select) {
-		if (select.find(':selected').attr('value') == 'perso') {
-			select.parent().parent().next().removeClass('hide');
-		}
-		else {
-			select.parent().parent().next().addClass('hide');
-		}
-	}
-	
-	function majSelectCompare() {
-		if ($('form select#periodeCompare').length == 0) {
-			return;
-		}
-		
-		var listValues = [];
-		periodeSelected = $('form select.periode :selected').attr('value');
-		selectCompare = $('form select#periodeCompare');
-		periodeCompareSelected = selectCompare.find(':selected').attr('value');
-		
-		selectCompare.find('option').removeAttr('disabled');
-		
-		$.each(listePeriodeCompare, function(idx, tabListPeriode) {
-			if (idx != 0) {
-				listKeyPeriode = array_keys(tabListPeriode.list);
-				if (in_array(periodeSelected, listKeyPeriode)) {
-					listValues = listKeyPeriode;
-					valueDefault = listKeyPeriode[1];
-				}
-				else {
-					selectCompare.find('option[value="'+listKeyPeriode[0]+'"]').parent().children().attr('disabled', 'disabled');
-				}
-			}
-		});
-		
-		if (periodeSelected == 'perso') {
-			valueDefault = 'perso';
-		}
-		else if (periodeCompareSelected != 'perso' && in_array(periodeCompareSelected, listValues)) {
-			valueDefault = periodeCompareSelected;
-		}
-		selectCompare.find('option[value="'+valueDefault+'"]').attr('selected', 'selected');
-		
-		majSelectPeriode(selectCompare);
-	}
-	
+	}	
+
 	majSelectCompare();
 	// majSelectPeriode($('form select#periodeCompare'));
 	
@@ -187,76 +250,16 @@ $(function() {
 		});
 	}
 
-	/*
-	if ($('form select[name=select_date_fastly]').length > 0) {
-		$('form select[name=select_date_fastly]').change(function() {
-			valueOptionSelected = $('form select[name=select_date_fastly] option:selected').attr('value');
-			if (valueOptionSelected == 'today') {
-				selectFormDateToday();
-			}
-			else if (valueOptionSelected == 'current_month') {
-				selectFormDateCurrentMonth();
-			}
-		});
-	}
-	*/
-
-	function selectFormDateToday(lien) {
-		date = new Date();
-		selectFormDate(lien, date.getDate(), (date.getMonth()+1), date.getFullYear());
-	}
+	//if ($('form select[name=select_date_fastly]').length > 0) {
+	//	$('form select[name=select_date_fastly]').change(function() {
+	//		valueOptionSelected = $('form select[name=select_date_fastly] option:selected').attr('value');
+	//		if (valueOptionSelected == 'today') {
+	//			selectFormDateToday();
+	//		}
+	//		else if (valueOptionSelected == 'current_month') {
+	//			selectFormDateCurrentMonth();
+	//		}
+	//	});
+	//}
 	
-	function selectFormDateDayMoinsNb(lien, nbJoursMoins) {
-		date = new Date();
-		date.setDate(date.getDate() - nbJoursMoins);
-		selectFormDate(lien, date.getDate(), (date.getMonth()+1), date.getFullYear());
-	}
-	
-	function selectFormDateCurrentMonth(lien) {
-		date = new Date();
-		selectFormDate(lien, -1, (date.getMonth()+1), date.getFullYear());
-	}
-	
-	function selectFormDateMonthMoinsNb(lien, nbMoisMoins) {
-		date = new Date();
-		date.setDate(1);
-		date.setMonth(date.getMonth() - nbMoisMoins);
-		selectFormDate(lien, -1, (date.getMonth()+1), date.getFullYear());
-	}
-	
-	function selectFormDateCurrentYear(lien) {
-		today = new Date();
-		selectFormDate(lien, -1, -1, today.getFullYear());
-	}
-	
-	function selectFormDateYearMoinsNb(lien, nbAnneesMoins) {
-		today = new Date();
-		selectFormDate(lien, -1, -1, today.getFullYear()-nbAnneesMoins);
-	}
-	
-	function selectFormDateAddDayFromSelectedDay(lien, nbDaysAdded) {
-		date = getDateObjectSelected(lien);
-		date.setDate(date.getDate() + nbDaysAdded);
-		selectFormDate(lien, date.getDate(), (date.getMonth()+1), date.getFullYear());
-	}
-
-	function getDateObjectSelected(lien) {
-		selectorDay = '#'+(lien.parent().prev().prev().prev().prev().attr('id'))+' option:selected';
-		selectorMonth = '#'+(lien.parent().prev().prev().prev().attr('id'))+' option:selected';
-		selectorYear = '#'+(lien.parent().prev().prev().attr('id'))+' option:selected';
-		if ($(selectorDay).length > 0 && $(selectorMonth).length > 0 && $(selectorYear).length > 0) {
-			return new Date($(selectorYear).attr('value'), $(selectorMonth).attr('value')-1, $(selectorDay).attr('value'));
-		}
-		return new Date();
-	}
-
-	function selectFormDate(lien, day, month, year) {
-		selectorDay = '#'+(lien.parent().prev().prev().prev().prev().attr('id'))+' option[value='+day+']';
-		selectorMonth = '#'+(lien.parent().prev().prev().prev().attr('id'))+' option[value='+month+']';
-		selectorYear = '#'+(lien.parent().prev().prev().attr('id'))+' option[value='+year+']';
-		if ($(selectorDay).length > 0) 		$(selectorDay).prop('selected', 'selected');
-		if ($(selectorMonth).length > 0) 	$(selectorMonth).prop('selected', 'selected');
-		if ($(selectorYear).length > 0) 	$(selectorYear).prop('selected', 'selected');
-	}
-	
-});
+});*/
