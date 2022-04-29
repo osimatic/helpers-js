@@ -1,68 +1,4 @@
 
-/** @deprecated */
-class NumberValue {
-	/** @deprecated */
-	static isNumeric(sText) {
-		var ValidChars = "0123456789.";
-		var IsNumber=true;
-		var Char;
-		for (i = 0; i < sText.length && IsNumber == true; i++){
-			Char = sText.charAt(i);
-			if (ValidChars.indexOf(Char) == -1){
-				IsNumber = false;
-			}
-		}
-		return IsNumber;
-	}
-
-	/** @deprecated */
-	static format(number, nbDecimal, locale) {
-		nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
-		return new Intl.NumberFormat(locale, {
-			minimumFractionDigits: nbDecimal,
-			maximumFractionDigits: nbDecimal
-		}).format(number);
-	}
-
-	/** @deprecated */
-	static formatCurrency(montant, currency, nbDecimal, locale) {
-		nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
-		return new Intl.NumberFormat(locale, {
-			style: 'currency',
-			currency: currency,
-			minimumFractionDigits: nbDecimal,
-			maximumFractionDigits: nbDecimal
-		}).format(montant);
-	}
-
-	/** @deprecated */
-	static formatPercent(number, nbDecimal, locale) {
-		nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
-		return new Intl.NumberFormat(locale, {
-			style: 'percent',
-			minimumFractionDigits: nbDecimal,
-			maximumFractionDigits: nbDecimal
-		}).format(number);
-	}
-
-	/** @deprecated */
-	static random(min, max) {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-	}
-
-	/** @deprecated */
-	static padLeft2(n) {
-		return n > 9 ? "" + n: "0" + n;
-	}
-
-	/** @deprecated */
-	static roundDecimal(nombre, precision) {
-		precision = precision || 2;
-		var tmp = Math.pow(10, precision);
-		return Math.round(nombre*tmp) / tmp;
-	}
-}
-
 Number.prototype.format = Number.prototype.format || function(nbDecimal, locale) {
 	nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
 	return new Intl.NumberFormat(locale, {
@@ -150,5 +86,3 @@ Number.prototype.formatAsPercent = function(locale, minimumFractionDigits) {
 	minimumFractionDigits = (typeof minimumFractionDigits != 'undefined'?minimumFractionDigits:0);
 	return new Intl.NumberFormat(locale, {style: 'percent', minimumFractionDigits:minimumFractionDigits}).format(this);
 };
-
-module.exports = { NumberValue };

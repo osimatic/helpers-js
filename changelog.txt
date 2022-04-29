@@ -26,3 +26,8 @@ getValuesByKeyInArrayOfArrays(array, ...) -> array.getValuesByKeyInArrayOfArrays
 hasGetUserMedia() -> non remplacé
 
 paginationAsList(...) -> Pagination.paginate(...)
+
+getDateObjectSelected(lien) -> getSelectedDate(lien.closest('.form-group')
+selectFormDate(lien) -> setSelectedDate(lien.closest('.form-group')
+majSelectPeriode() / majSelectCompare() -> updatePeriodSelect(form)
+
