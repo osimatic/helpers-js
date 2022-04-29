@@ -18,6 +18,7 @@ const { Country, PostalAddress, Location } = require('./location');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
+const { FormDate } = require('./form_date');
 
 // exports plugins "maison"
 const { DataTable } = require('./data_table');
@@ -43,7 +44,7 @@ const { NumberValue } = require('./number');
 
 module.exports = {
     Array, Object, Number, String,
-    HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue,
+    HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, InputPeriod, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork, NumberValue, FormDate,
     DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox,
     sleep, refresh, chr, ord, trim, empty,
     GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
