@@ -1,5 +1,35 @@
 
 class HTTPRequest {
+	static setRefreshTokenUrl(url) {
+		this.refreshTokenUrl = url;
+	}
+	static setRefreshTokenCallback(callback) {
+		this.refreshTokenCallback = callback;
+	}
+
+	static setHeader(key, value) {
+		if (typeof this.headers == 'undefined') {
+			this.headers = {};
+		}
+		this.headers[key] = value;
+	}
+
+	static getHeaders() {
+		//if (typeof httpHeaders != 'undefined') {
+		//	return httpHeaders;
+		//}
+
+		if (typeof this.headers == 'undefined') {
+			this.headers = {};
+		}
+
+		let httpHeaders = new Headers();
+		Object.entries(this.headers).forEach(([key, value]) => {
+			httpHeaders.append(key, value);
+		});
+		return httpHeaders;
+	}
+
 	static async get(url, data, successCallback, errorCallback) {
 		if (data == null) {
 			data = '';
@@ -14,7 +44,7 @@ class HTTPRequest {
 		if (window.fetch) {
 			let requestInit = {
 				method: 'GET',
-				headers: _httpHeaders,		
+				headers: HTTPRequest.getHeaders(),
 				mode: 'cors',
 				cache: 'no-cache'
 			}
@@ -24,9 +54,10 @@ class HTTPRequest {
 			try {
 				jsonData = await response.json();
 				//console.log(url, jsonData);
+				//console.log(response.status, response.statusText, jsonData['error']);
 
-				if (response.status == 401 && response.statusText == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback));
+				if (response.status == 401 && (response.statusText == "Expired JWT Token" || typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token')) {
+					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 					return;
 				}
 
@@ -49,13 +80,13 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url: url + (!url.includes('?') ? '?' : '') + data,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHeaders(),
 			dataType: 'json',
 			cache: false,
 			success: (data) => successCallback(data),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.get(url, data, successCallback, errorCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 				} else {
 					errorCallback(jqxhr, status, exception);
 				}
@@ -78,7 +109,7 @@ class HTTPRequest {
 		if (window.fetch) {
 			let requestInit = {
 				method: 'GET',
-				headers: _httpHeaders,
+				headers: HTTPRequest.getHeaders(),
 				mode: 'cors',
 				cache: 'no-cache'
 			}
@@ -90,7 +121,7 @@ class HTTPRequest {
 				console.log(blobData);*/
 
 				if (response.status == 401 && response.statusText == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback));
 					return;
 				}
 
@@ -118,7 +149,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url: url + (!url.includes('?') ? '?' : '') + data,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHeaders(),
 			cache: false,
 			xhrFields: {
 				responseType: 'blob'
@@ -126,7 +157,7 @@ class HTTPRequest {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.download(url, data, errorCallback, completeCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback));
 				} else if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(jqxhr, status, exception);
 				}
@@ -144,7 +175,7 @@ class HTTPRequest {
 			let requestInit = {
 				method: 'POST',
 				body: formData,
-				headers: _httpHeaders,		
+				headers: HTTPRequest.getHeaders(),
 				mode: 'cors',
 				cache: 'no-cache'
 			};
@@ -156,8 +187,8 @@ class HTTPRequest {
 				jsonData = await response.json();
 				//console.log(url, jsonData);
 
-				if (response.status == 401 && response.statusText == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
+				if (response.status == 401 && (response.statusText == "Expired JWT Token" || typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token')) {
+					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
 
@@ -186,7 +217,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'POST',
 			url: url,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHeaders(),
 			dataType: 'json', // 22/09/2020 : à voir si cette ligne pose pb (utilisé pour requete import et peut être d'autres
 			data: formData,
 			cache: false,
@@ -195,7 +226,7 @@ class HTTPRequest {
 			success: (data) => successCallback(data),
 			error: (jqxhr, status, exception) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && jqxhr.responseJSON.message == "Expired JWT Token") {
-					HTTPRequest.refreshToken(URL_REFRESH, () => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 				} else if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
 					formErrorCallback(jqxhr, status, exception);
 				} else {
@@ -205,16 +236,27 @@ class HTTPRequest {
 		});
 	}
 
-	static refreshToken(url, onCompleteCallback) {
+	static refreshToken(onCompleteCallback) {
+		if (typeof this.refreshTokenCallback == 'function') {
+			this.refreshTokenCallback(onCompleteCallback);
+			return;
+		}
+
+		if (typeof this.refreshTokenUrl == 'undefined') {
+			console.error('URL refresh token non définie. Appeler HTTPRequest.setRefreshTokenUrl(url)');
+			return;
+		}
+
 		let payload = new FormData();
 		payload.append('refresh_token', JwtSession.getRefreshToken());
 
-		HTTPRequest.post(url, payload,
+		HTTPRequest.post(this.refreshTokenUrl, payload,
 			(data) => {
 				JwtSession.setToken(data.token);
 				JwtSession.setRefreshToken(data.refresh_token);
 				onCompleteCallback();
-			}, (jqxhr, status, exception) => {
+			}, 
+			(jqxhr, status, exception) => {
 				console.log(exception);
 				JwtSession.logout();
 			}

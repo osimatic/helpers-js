@@ -31,3 +31,6 @@ getDateObjectSelected(lien) -> getSelectedDate(lien.closest('.form-group')
 selectFormDate(lien) -> setSelectedDate(lien.closest('.form-group')
 majSelectPeriode() / majSelectCompare() -> updatePeriodSelect(form)
 
+let URL_REFRESH = ... -> HTTPRequest.setRefreshTokenUrl(URL_REFRESH)
+let _httpHeaders = {...} -> HTTPRequest.setHeader(key, value);
+let httpHeaders = {...} -> HTTPRequest.setHeader(key, value);
