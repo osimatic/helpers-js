@@ -34,3 +34,4 @@ majSelectPeriode() / majSelectCompare() -> updatePeriodSelect(form)
 let URL_REFRESH = ... -> HTTPRequest.setRefreshTokenUrl(URL_REFRESH)
 let _httpHeaders = {...} -> HTTPRequest.setHeader(key, value);
 let httpHeaders = {...} -> HTTPRequest.setHeader(key, value);
+remplacer l'utilisation des variables httpHeaders / _httpHeaders par HTTPRequest.getHeaders()
