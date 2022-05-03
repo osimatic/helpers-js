@@ -43,6 +43,15 @@ class HTTPRequest {
 		return data;
 	}
 
+	static formatFormData(data) {
+		if (!(data instanceof FormData)) {
+			let formData = new FormData();
+			Object.entries(data).forEach(([key, value]) => formData.append(key, value));
+			return formData;
+		}
+		return data;
+	}
+
 	static logRequestFailure(response, json) {
 		console.error('Request failure. Status: '+response.statusText+' ; HTTP Code : '+response.status, json);
 	}
@@ -52,18 +61,18 @@ class HTTPRequest {
 	}
 
 	static async get(url, data, successCallback, errorCallback) {
-		data = this.formatQueryString(data);
+		url += (!url.includes('?') ? '?' : '') + this.formatQueryString(data);
+		data = null;
 
 		if (window.fetch) {
-			let requestInit = {
+			const response = await fetch(url, {
 				method: 'GET',
 				headers: HTTPRequest.getHeaders(),
 				mode: 'cors',
 				cache: 'no-cache'
-			}
+			});
 
 			let jsonData = {};
-			const response = await fetch(url + (!url.includes('?') ? '?' : '') + data, requestInit);
 			try {
 				jsonData = await response.json();
 				//console.log(url, jsonData);
@@ -98,7 +107,7 @@ class HTTPRequest {
 		console.error('fetch\'s polyfill used');
 		$.ajax({
 			type: 'GET',
-			url: url + (!url.includes('?') ? '?' : '') + data,
+			url: url,
 			headers: HTTPRequest.getHeaders(),
 			dataType: 'json',
 			cache: false,
@@ -117,8 +126,13 @@ class HTTPRequest {
 		});
 	}
 
-	static async download(url, data, errorCallback, completeCallback) {
-		data = this.formatQueryString(data);
+	static async download(url, data, errorCallback, completeCallback, method) {
+		method = typeof method == 'undefined' || null == method ? 'GET' : method;
+
+		if ('POST' !== method) {
+			url += (!url.includes('?') ? '?' : '') + this.formatQueryString(data);
+			data = null;
+		}
 
 		if (window.fetch) {
 			let requestInit = {
@@ -128,14 +142,19 @@ class HTTPRequest {
 				cache: 'no-cache'
 			}
 
-			const response = await fetch(url + (!url.includes('?') ? '?' : '') + data, requestInit);
+			if ('POST' === method) {
+				requestInit['method'] = 'POST';
+				requestInit['body'] = this.formatFormData(data);
+			}
+
+			const response = await fetch(url, requestInit);
 			try {
 				const blobData = await response.blob();
 				/*console.log(url);
 				console.log(blobData);*/
 
 				if (response.status == 401 && response.statusText === "Expired JWT Token") {
-					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method));
 					return;
 				}
 
@@ -163,18 +182,29 @@ class HTTPRequest {
 
 		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
 		console.error('fetch\'s polyfill used');
-		$.ajax({
+
+
+		let ajaxOptions = {
 			type: 'GET',
-			url: url + (!url.includes('?') ? '?' : '') + data,
+			url: url,
 			headers: HTTPRequest.getHeaders(),
 			cache: false,
 			xhrFields: {
 				responseType: 'blob'
 			},
+		};
+		if ('POST' === method) {
+			ajaxOptions['type'] = 'POST';
+			ajaxOptions['data'] = this.formatFormData(data);
+			ajaxOptions['contentType'] = false;
+			ajaxOptions['processData'] = false;
+		}
+
+		$.ajax(Object.assign({...ajaxOptions}, {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, errorThrown) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
-					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method));
 					return;
 				}
 
@@ -188,28 +218,22 @@ class HTTPRequest {
 					completeCallback(jqxhr, status);
 				}
 			}
-		});
+		}));
 	}
 
 	static async post(url, formData, successCallback, errorCallback, formErrorCallback) {
-		if (!(formData instanceof FormData)) {
-			let formDataObject = new FormData();
-			Object.entries(formData).forEach(([key, value]) => formDataObject.append(key, value));
-			formData = formDataObject;
-		}
+		formData = this.formatFormData(formData);
 
 		if (window.fetch && false) {
-			let requestInit = {
+			const response = await fetch(url, {
 				method: 'POST',
 				body: formData,
 				headers: HTTPRequest.getHeaders(),
 				mode: 'cors',
 				cache: 'no-cache'
-			};
+			});
 
 			let jsonData = {};
-			const response = await fetch(url, requestInit);
-
 			try {
 				jsonData = await response.json();
 				//console.log(url, jsonData);
