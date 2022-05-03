@@ -103,7 +103,7 @@ class Img {
 		$.ajax({
 			type: 'GET',
 			url: url,
-			headers: httpHeaders,
+			headers: HTTPRequest.getHeaders(),
 			cache: false,
 			xhrFields: {responseType: 'blob'},
 			success: (data) => {

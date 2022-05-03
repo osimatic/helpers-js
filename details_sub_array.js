@@ -78,7 +78,7 @@ class DetailsSubArray {
 			$.ajax({
 				url: link.data("url_details"),
 				method: 'GET',
-				headers: httpHeaders,
+				headers: HTTPRequest.getHeaders(),
 				cache: false,
 				dataType: 'json',
 				success: function (jsonObj) {
