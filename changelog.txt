@@ -35,3 +35,6 @@ let URL_REFRESH = ... -> HTTPRequest.setRefreshTokenUrl(URL_REFRESH)
 let _httpHeaders = {...} -> HTTPRequest.setHeader(key, value);
 let httpHeaders = {...} -> HTTPRequest.setHeader(key, value);
 remplacer l'utilisation des variables httpHeaders / _httpHeaders par HTTPRequest.getHeaders()
+
+FlashMessage.displayRequestFailure(status, exception, modal) -> FlashMessage.displayError(labelErrorOccured, modal)
+FormHelper.logRequestFailure(status, exception) -> HTTPRequest.logJqueryRequestFailure(jqxhr, status, exception) (le log de l'erreur est devenu inutile car fait de base dans la classe HTTPRequest)

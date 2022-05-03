@@ -1,8 +1,4 @@
 class FormHelper {
-	static logRequestFailure(status, exception) {
-		console.log('request failure. Status: '+status+' ; Exception: '+exception);
-	}
-
 	static resetSelectOption(form, selectName) {
 		form.find('select[name="'+selectName+'"] option').prop('disabled', false).prop('selected', false);
 	}
@@ -257,6 +253,14 @@ class FormHelper {
 
 		errorsParentDiv.prepend(errorDiv);
 	}
+
+
+
+	/** @deprecated **/
+	static logRequestFailure(status, exception) {
+		console.log('request failure. Status: '+status+' ; Exception: '+exception);
+	}
+
 }
 
 module.exports = { FormHelper };

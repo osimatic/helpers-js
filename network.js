@@ -43,6 +43,14 @@ class HTTPRequest {
 		return data;
 	}
 
+	static logRequestFailure(response, json) {
+		console.error('Request failure. Status: '+response.statusText+' ; HTTP Code : '+response.status, json);
+	}
+
+	static logJqueryRequestFailure(jqxhr, status, errorThrown) {
+		console.error('Request failure. Status: '+status+' ; HTTP Code: '+jqxhr.responseJSON.code+(null!=errorThrown && ''!==errorThrown ? ' ; Error message: '+errorThrown : ''), jqxhr.responseJSON);
+	}
+
 	static async get(url, data, successCallback, errorCallback) {
 		data = this.formatQueryString(data);
 
@@ -72,12 +80,14 @@ class HTTPRequest {
 				}
 			}
 			catch (e) {
-				console.log(e);
+				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response, response.status, e);
 				}
 				return;
 			}
+
+			HTTPRequest.logRequestFailure(response, jsonData);
 			if (typeof errorCallback != 'undefined' && errorCallback != null) {
 				errorCallback(response, response.status, null, jsonData);
 			}
@@ -93,13 +103,15 @@ class HTTPRequest {
 			dataType: 'json',
 			cache: false,
 			success: (data) => successCallback(data),
-			error: (jqxhr, status, exception) => {
+			error: (jqxhr, status, errorThrown) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 					return;
 				}
+
+				HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(jqxhr, status, exception);
+					errorCallback(jqxhr, status, errorThrown);
 				}
 			}
 		});
@@ -130,12 +142,15 @@ class HTTPRequest {
 				if (response.ok) {
 					File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition'));
 				}
-				else if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(response, response.status, null);
+				else {
+					HTTPRequest.logRequestFailure(response, null);
+					if (typeof errorCallback != 'undefined' && errorCallback != null) {
+						errorCallback(response, response.status, null);
+					}
 				}
 			}
 			catch (e) {
-				console.log(e);
+				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response, response.status, e);
 				}
@@ -157,13 +172,15 @@ class HTTPRequest {
 				responseType: 'blob'
 			},
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
-			error: (jqxhr, status, exception) => {
+			error: (jqxhr, status, errorThrown) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback));
 					return;
 				}
+
+				HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(jqxhr, status, exception);
+					errorCallback(jqxhr, status, errorThrown);
 				}
 			},
 			complete: (jqxhr, status) => {
@@ -203,7 +220,9 @@ class HTTPRequest {
 				}
 
 				if (response.ok) {
-					successCallback(jsonData);
+					if (typeof successCallback != 'undefined' && successCallback != null) {
+						successCallback(jsonData);
+					}
 					return;
 				}
 
@@ -213,13 +232,14 @@ class HTTPRequest {
 				}
 			}
 			catch (e) {
-				console.log(e);
+				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response, response.status, e);
 				}
 				return;
 			}
 
+			HTTPRequest.logRequestFailure(response, jsonData);
 			if (typeof errorCallback != 'undefined' && errorCallback != null) {
 				errorCallback(response, response.status, null, jsonData);
 			}
@@ -237,18 +257,24 @@ class HTTPRequest {
 			cache: false,
 			contentType: false,
 			processData: false,
-			success: (data) => successCallback(data),
-			error: (jqxhr, status, exception) => {
+			success: (data) => {
+				if (typeof successCallback != 'undefined' && successCallback != null) {
+					successCallback(data);
+				}
+			},
+			error: (jqxhr, status, errorThrown) => {
 				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
 				if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
-					formErrorCallback(jqxhr, status, exception);
+					formErrorCallback(jqxhr, status, errorThrown);
 					return;
 				}
+
+				HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(jqxhr, status, exception);
+					errorCallback(jqxhr, status, errorThrown);
 				}
 			}
 		});
