@@ -284,7 +284,7 @@ class DataTable {
 		}
 
 		if (error == null) {
-			return this.displayErrorMessage(div, (typeof defaultMessage != 'undefined' ? defaultMessage : labelErrorOccured));
+			return this.displayErrorMessage(div, (typeof defaultMessage != 'undefined' ? defaultMessage : (typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  'Une erreur s’est produite.')));
 		}
 		return this.displayErrorMessage(div, 'Critères sélectionnés incorrect.');
 	}

@@ -5,7 +5,7 @@ class DetailsSubArray {
 			return tr.closest('table').find('thead tr').children().length;
 		}
 		function displayErrorRow(tr) {
-			tr.after($('<tr class="text-error"><td colspan="'+getNbColumns(tr)+'">'+labelErrorOccured+'</td></tr>'));
+			tr.after($('<tr class="text-error"><td colspan="'+getNbColumns(tr)+'">'+(typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  'Une erreur s’est produite.')+'</td></tr>'));
 		}
 		function displayDetailsRow(tr, content) {
 			var trContent = $(''
@@ -74,14 +74,15 @@ class DetailsSubArray {
 				return;
 			}
 
+			function onComplete() {
+				hideLoading(link);
+				setHideDetailsLink(link);
+				//link.attr('disabled', false).button('reset');
+			}
+
 			//link.attr('disabled', true).button('loading');
-			$.ajax({
-				url: link.data("url_details"),
-				method: 'GET',
-				headers: HTTPRequest.getHeaders(),
-				cache: false,
-				dataType: 'json',
-				success: function (jsonObj) {
+			HTTPRequest.get(link.data('url_details'), {},
+				(jsonObj) => {
 					if (jsonObj == null) {
 						if (typeof callbackOnDetailsActionRequestError != 'undefined' && callbackOnDetailsActionRequestError != null) {
 							callbackOnDetailsActionRequestError(link);
@@ -94,24 +95,21 @@ class DetailsSubArray {
 					if (typeof callbackOnDetailsActionRequestSuccess != 'undefined' && callbackOnDetailsActionRequestSuccess != null) {
 						displayDetailsRow(link.closest('tr'), callbackOnDetailsActionRequestSuccess(jsonObj, link));
 					}
-				},
-				error: function (jqxhr, status, exception) {
-					console.log('Detail request failure. Status: '+status+' ; Exception: '+exception);
 
+					onComplete();
+				},
+				() => {
 					if (typeof callbackOnDetailsActionRequestError != 'undefined' && callbackOnDetailsActionRequestError != null) {
 						callbackOnDetailsActionRequestError(link);
 						return;
 					}
 
-					link.closest('tr').after($('<tr class="error"><td colspan="6" class="center">'+labelErrorOccured+'</td></tr>'));
+					link.closest('tr').after($('<tr class="error"><td colspan="6" class="center">'+(typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  'Une erreur s’est produite.')+'</td></tr>'));
+
+					onComplete();
 					//window.location.replace(decodeURIComponent(urlRetour));
 				},
-				complete: function() {
-					hideLoading(link);
-					setHideDetailsLink(link);
-					//link.attr('disabled', false).button('reset');
-				}
-			});
+			);
 		}
 
 		table.find('a.details_link').each(function(idx, link) {

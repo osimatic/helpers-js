@@ -14,13 +14,17 @@ class HTTPRequest {
 		this.headers[key] = value;
 	}
 
-	static getHeaders() {
+	static getHeaders(asObject) {
 		//if (typeof httpHeaders != 'undefined') {
 		//	return httpHeaders;
 		//}
 
 		if (typeof this.headers == 'undefined') {
 			this.headers = {};
+		}
+
+		if (typeof asObject != 'undefined' && asObject) {
+			return this.headers;
 		}
 
 		let httpHeaders = new Headers();
@@ -108,7 +112,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'GET',
 			url: url,
-			headers: HTTPRequest.getHeaders(),
+			headers: HTTPRequest.getHeaders(true),
 			dataType: 'json',
 			cache: false,
 			success: (data) => successCallback(data),
@@ -187,7 +191,7 @@ class HTTPRequest {
 		let ajaxOptions = {
 			type: 'GET',
 			url: url,
-			headers: HTTPRequest.getHeaders(),
+			headers: HTTPRequest.getHeaders(true),
 			cache: false,
 			xhrFields: {
 				responseType: 'blob'
@@ -275,7 +279,7 @@ class HTTPRequest {
 		$.ajax({
 			type: 'POST',
 			url: url,
-			headers: HTTPRequest.getHeaders(),
+			headers: HTTPRequest.getHeaders(true),
 			dataType: 'json', // 22/09/2020 : à voir si cette ligne pose pb (utilisé pour requete import et peut être d'autres
 			data: formData,
 			cache: false,
