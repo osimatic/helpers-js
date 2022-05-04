@@ -238,7 +238,7 @@ class HTTPRequest {
 				jsonData = await response.json();
 				//console.log(url, jsonData);
 
-				if (response.status == 401 && (response.statusText === "Expired JWT Token" || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
+				if (response.status == 401 && url !== HTTPRequest.refreshTokenUrl && (response.statusText === "Expired JWT Token" || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
@@ -287,7 +287,7 @@ class HTTPRequest {
 				}
 			},
 			error: (jqxhr, status, errorThrown) => {
-				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && url !== HTTPRequest.refreshTokenUrl && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
@@ -324,8 +324,7 @@ class HTTPRequest {
 				JwtSession.setRefreshToken(data.refresh_token);
 				onCompleteCallback();
 			}, 
-			(jqxhr, status, exception) => {
-				console.log(exception);
+			() => {
 				JwtSession.logout();
 			}
 		);
@@ -351,11 +350,12 @@ class HTTPRequest {
 
 		xhr.onreadystatechange = function () {
 			if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0)) {
+				let data;
 				if (formatRetour == 'xml') {
-					var data = xhr.responseXML;
+					data = xhr.responseXML;
 				}
 				else {
-					var data = eval('(' + xhr.responseText + ')');
+					data = eval('(' + xhr.responseText + ')');
 				}
 				callback(data);
 			}
@@ -597,6 +597,7 @@ class UrlAndQueryString {
 
 	// deprecated
 
+	/** @deprecated **/
 	static parseQueryString(string) {
 		if (string === "" || string == null) return {};
 		if (string.charAt(0) === "?") string = string.slice(1);
@@ -636,6 +637,7 @@ class UrlAndQueryString {
 		return data0;
 	}
 
+	/** @deprecated **/
 	static getQuery(url) {
 		var str = url;
 		var strpos = str.indexOf('?');

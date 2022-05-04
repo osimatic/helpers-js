@@ -8,19 +8,19 @@ class Country {
 	}
 
 	static fillCountrySelect(select, defaultValue) {
-		Object.entries(Country.getCountryList()).forEach(([countryCode, countryName]) => select.append('<option value="'+countryCode+'">'+countryName+'</option>'));
+		Object.entries(Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="'+countryCode+'">'+countryName+'</option>'));
 		if (typeof defaultValue != 'undefined') {
 			select.val(defaultValue);
 		}
 		select.selectpicker('refresh');
 	}
 	static getCountryName(countryCode) {
-		if (Country.getCountryList().hasOwnProperty(countryCode)) {
-			return Country.getCountryList()[countryCode];
+		if (Country.getCountries().hasOwnProperty(countryCode)) {
+			return Country.getCountries()[countryCode];
 		}
 		return countryCode;
 	}
-	static getCountryList() {
+	static getCountries() {
 		return {
 			AF:'Afghanistan',
 			AX:'Åland Islands',
@@ -267,6 +267,23 @@ class Country {
 			ZM:'Zambia',
 			ZW:'Zimbabwe',
 		};
+	}
+
+	static getContinents() {
+		return {
+			1: "Europe",
+			2: "Moyen-Orient",
+			3: "Afrique",
+			4: "Amérique du Nord",
+			5: "Amérique du Sud",
+			6: "Asie",
+			7: "Océanie",
+		};
+	}
+
+	/** @deprecated **/
+	static getCountryList() {
+		return Country.getCountries();
 	}
 }
 

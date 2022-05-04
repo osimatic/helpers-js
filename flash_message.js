@@ -33,7 +33,6 @@ class FlashMessage {
 		console.log('request failure. Status: ', status, ' Exception: ', exception);
 		this.display('danger', typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  "Une erreur s'est produite.", false, modal);
 	}
-
 }
 
 module.exports = { FlashMessage };

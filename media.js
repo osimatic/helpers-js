@@ -72,6 +72,49 @@ class AudioMedia {
 		}
 	}
 
+	static initAudioVisualization(canvas, audioStream) {
+		let canvasCtx = canvas.getContext("2d");
+		let canvasWidth = canvas.width;
+		let canvasHeight = canvas.height;
+		let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		let analyser = audioCtx.createAnalyser();
+
+		let distortion = audioCtx.createWaveShaper();
+		let source = audioCtx.createMediaStreamSource(audioStream);
+		source.connect(analyser);
+		analyser.connect(distortion);
+		distortion.connect(audioCtx.destination);
+
+		analyser.fftSize = 256;
+		let bufferLength = analyser.frequencyBinCount;
+		console.log(bufferLength);
+		let dataArray = new Uint8Array(bufferLength);
+
+		canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+		function draw() {
+			let drawVisual = requestAnimationFrame(draw);
+
+			analyser.getByteFrequencyData(dataArray);
+
+			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+			canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+			let barWidth = (canvasWidth / bufferLength) * 2.5;
+			let barHeight;
+			let x = 0;
+			for (let i = 0; i < bufferLength; i++) {
+				barHeight = dataArray[i] / 2;
+
+				canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ',50,50)';
+				canvasCtx.fillRect(x, canvasHeight - barHeight / 2, barWidth, barHeight);
+
+				x += barWidth + 1;
+			}
+		}
+
+		draw();
+	}
 }
 
 //Source : https://www.npmjs.com/package/mic-check
