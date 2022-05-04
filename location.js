@@ -394,10 +394,10 @@ class PostalAddress {
 	}
 }
 
-class Location {
-	static checkCoordinates(str) {
+class GeographicCoordinates {
+	static check(str) {
 		return /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/.test(str);
 	}
 }
 
-module.exports = { Country, PostalAddress, Location };
+module.exports = { Country, PostalAddress, GeographicCoordinates };

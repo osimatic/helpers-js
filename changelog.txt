@@ -38,3 +38,5 @@ remplacer l'utilisation des variables httpHeaders / _httpHeaders par HTTPRequest
 
 FlashMessage.displayRequestFailure(status, exception, modal) -> FlashMessage.displayError(labelErrorOccured, modal)
 FormHelper.logRequestFailure(status, exception) -> HTTPRequest.logJqueryRequestFailure(jqxhr, status, exception) (le log de l'erreur est devenu inutile car fait de base dans la classe HTTPRequest)
+
+Location.checkCoordinates(...) -> GeographicCoordinates.check(...) (car Location est déjà défini en javascript natif)

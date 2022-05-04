@@ -255,6 +255,37 @@ class FormHelper {
 	}
 
 
+	static buttonLoader(button, action) {
+		button = $(button);
+		if (action === 'start' || action === 'loading') {
+			if (button.attr('disabled')) {
+				return self;
+			}
+			button.attr('disabled', true);
+			button.attr('data-btn-text', button.html());
+			//let text = '<span class="spinner"><i class=\'fa fa-circle-notch fa-spin\'></i></span>Traitement en cours…';
+			let text = '<i class=\'fa fa-circle-notch fa-spin\'></i> Traitement en cours…';
+			if (button.data('load-text') != undefined && button.data('load-text') != null && button.data('load-text') != '') {
+				text = button.data('load-text');
+			}
+			if (button.data('loading-text') != undefined && button.data('loading-text') != null && button.data('loading-text') != '') {
+				text = button.data('loading-text');
+			}
+			button.html(text);
+			button.addClass('disabled');
+		}
+		if (action === 'stop' || action === 'reset') {
+			button.html(button.attr('data-btn-text'));
+			button.removeClass('disabled');
+			button.attr('disabled', false);
+			//button.removeAttr("disabled");
+		}
+		return button;
+	}
+	
+	
+	
+	
 
 	/** @deprecated **/
 	static logRequestFailure(status, exception) {

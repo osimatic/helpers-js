@@ -15,7 +15,7 @@ const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./da
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
 const { FormHelper } = require('./form_helper');
-const { Country, PostalAddress, Location } = require('./location');
+const { Country, PostalAddress, GeographicCoordinates } = require('./location');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
@@ -40,11 +40,9 @@ const { GoogleRecaptcha } = require('./google_recaptcha');
 const { GoogleMap } = require('./google_maps');
 const { OpenStreetMap } = require('./open_street_map');
 
-// deprecated
-
 module.exports = {
 	Array, Object, Number, String,
-	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, Location, SocialNetwork,
+	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
 	DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
