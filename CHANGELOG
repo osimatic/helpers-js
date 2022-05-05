@@ -43,3 +43,6 @@ Location.checkCoordinates(...) -> GeographicCoordinates.check(...) (car Location
 
 FormHelper.getFormErrorTextBis(...) -> FormHelper.getFormErrorText(...)
 FormHelper.displayFormErrorsFromXhr(form, btnSubmit, xhr) -> FormHelper.displayFormErrors(form, btnSubmit, xhr.responseJSON)
+
+1.0.34 :
+ajout méthode HTTPRequest.init() (charge le polyfill de fetch)

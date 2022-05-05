@@ -1,8 +1,13 @@
 
 class HTTPRequest {
+	static init(){
+		require('whatwg-fetch'); //fetch polyfill loaded in window.fetch
+	}
+
 	static setRefreshTokenUrl(url) {
 		this.refreshTokenUrl = url;
 	}
+
 	static setRefreshTokenCallback(callback) {
 		this.refreshTokenCallback = callback;
 	}
@@ -107,8 +112,7 @@ class HTTPRequest {
 			return;
 		}
 
-		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
-		console.error('fetch\'s polyfill used');
+		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé dans la méthode init
 		$.ajax({
 			type: 'GET',
 			url: url,
@@ -188,9 +192,7 @@ class HTTPRequest {
 			return;
 		}
 
-		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
-		console.error('fetch\'s polyfill used');
-
+		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé dans la méthode init
 		let ajaxOptions = {
 			type: 'GET',
 			url: url,
@@ -279,8 +281,7 @@ class HTTPRequest {
 			return;
 		}
 
-		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
-		console.error('fetch\'s polyfill used');
+		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé dans la méthode init
 		$.ajax({
 			type: 'POST',
 			url: url,
