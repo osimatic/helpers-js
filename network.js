@@ -1,6 +1,6 @@
 
 class HTTPRequest {
-	static init(){
+	static init() {
 		require('whatwg-fetch'); //fetch polyfill loaded in window.fetch
 	}
 
@@ -12,18 +12,7 @@ class HTTPRequest {
 		this.refreshTokenCallback = callback;
 	}
 
-	static setHeader(key, value) {
-		if (typeof this.headers == 'undefined') {
-			this.headers = {};
-		}
-		this.headers[key] = value;
-	}
-
 	static getHeaders(asObject) {
-		//if (typeof httpHeaders != 'undefined') {
-		//	return httpHeaders;
-		//}
-
 		if (typeof this.headers == 'undefined') {
 			this.headers = {};
 		}
@@ -36,7 +25,32 @@ class HTTPRequest {
 		Object.entries(this.headers).forEach(([key, value]) => {
 			httpHeaders.append(key, value);
 		});
+
 		return httpHeaders;
+	}
+
+	static getHeader(key) {
+		if (typeof this.headers == 'undefined') {
+			this.headers = {};
+		}
+
+		return this.headers[key];
+	}
+
+	static setHeader(key, value) {
+		if (typeof this.headers == 'undefined') {
+			this.headers = {};
+		}
+		
+		this.headers[key] = value;
+	}
+
+	static setAuthorizationHeader(accessToken) {
+		if (typeof this.headers == 'undefined') {
+			this.headers = {};
+		}
+
+		this.headers['Authorization'] = 'Bearer ' + accessToken;
 	}
 
 	static formatQueryString(data) {
