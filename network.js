@@ -88,21 +88,21 @@ class HTTPRequest {
 				}
 
 				if (response.ok) {
-					successCallback(jsonData);
+					successCallback(jsonData, response);
 					return;
 				}
 			}
 			catch (e) {
 				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(response, response.status, e);
+					errorCallback(response);
 				}
 				return;
 			}
 
 			HTTPRequest.logRequestFailure(response, jsonData);
 			if (typeof errorCallback != 'undefined' && errorCallback != null) {
-				errorCallback(response, response.status, null, jsonData);
+				errorCallback(response, jsonData);
 			}
 			return;
 		}
@@ -115,16 +115,20 @@ class HTTPRequest {
 			headers: HTTPRequest.getHeaders(true),
 			dataType: 'json',
 			cache: false,
-			success: (data) => successCallback(data),
+			success: (data, status, jqxhr) => {
+				if (typeof successCallback != 'undefined' && successCallback != null) {
+					successCallback(data, jqxhr);
+				}
+			},
 			error: (jqxhr, status, errorThrown) => {
-				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (jqxhr.status == 401 && (jqxhr.statusText === "Expired JWT Token"  || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === "Expired JWT Token") || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 					return;
 				}
 
 				HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(jqxhr, status, errorThrown);
+					errorCallback(jqxhr, jqxhr.responseJSON);
 				}
 			}
 		});
@@ -168,25 +172,24 @@ class HTTPRequest {
 				else {
 					HTTPRequest.logRequestFailure(response, null);
 					if (typeof errorCallback != 'undefined' && errorCallback != null) {
-						errorCallback(response, response.status, null);
+						errorCallback(response);
 					}
 				}
 			}
 			catch (e) {
 				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(response, response.status, e);
+					errorCallback(response);
 				}
 			}
 			if (typeof completeCallback != 'undefined' && completeCallback != null) {
-				completeCallback(response, response.status);
+				completeCallback(response);
 			}
 			return;
 		}
 
 		//l'api fetch n'est pas dispo pour ce navigateur => normalement ce cas ne devrait pas arriver car le polyfill est chargé
 		console.error('fetch\'s polyfill used');
-
 
 		let ajaxOptions = {
 			type: 'GET',
@@ -207,19 +210,19 @@ class HTTPRequest {
 		$.ajax(Object.assign({...ajaxOptions}, {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, errorThrown) => {
-				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (jqxhr.status == 401 && (jqxhr.statusText === "Expired JWT Token" || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === "Expired JWT Token") || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method));
 					return;
 				}
 
 				HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(jqxhr, status, errorThrown);
+					errorCallback(jqxhr);
 				}
 			},
-			complete: (jqxhr, status) => {
+			complete: (jqxhr) => {
 				if (typeof completeCallback != 'undefined' && completeCallback != null) {
-					completeCallback(jqxhr, status);
+					completeCallback(jqxhr);
 				}
 			}
 		}));
@@ -249,27 +252,27 @@ class HTTPRequest {
 
 				if (response.ok) {
 					if (typeof successCallback != 'undefined' && successCallback != null) {
-						successCallback(jsonData);
+						successCallback(jsonData, response);
 					}
 					return;
 				}
 
 				if (response.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
-					formErrorCallback(response, response.status, jsonData);
+					formErrorCallback(jsonData, response);
 					return;
 				}
 			}
 			catch (e) {
 				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(response, response.status, e);
+					errorCallback(response);
 				}
 				return;
 			}
 
 			HTTPRequest.logRequestFailure(response, jsonData);
 			if (typeof errorCallback != 'undefined' && errorCallback != null) {
-				errorCallback(response, response.status, null, jsonData);
+				errorCallback(response, jsonData);
 			}
 			return;
 		}
@@ -285,24 +288,24 @@ class HTTPRequest {
 			cache: false,
 			contentType: false,
 			processData: false,
-			success: (data) => {
+			success: (data, status, jqxhr) => {
 				if (typeof successCallback != 'undefined' && successCallback != null) {
-					successCallback(data);
+					successCallback(data, jqxhr);
 				}
 			},
 			error: (jqxhr, status, errorThrown) => {
-				if (typeof jqxhr.responseJSON != 'undefined' && jqxhr.responseJSON.code == 401 && url !== HTTPRequest.refreshTokenUrl && (jqxhr.responseJSON.message === "Expired JWT Token"  || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (url !== HTTPRequest.refreshTokenUrl && jqxhr.status == 401 && (jqxhr.statusText === "Expired JWT Token" || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === "Expired JWT Token") || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
 				if (jqxhr.status == 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
-					formErrorCallback(jqxhr, status, errorThrown);
+					formErrorCallback(jqxhr.responseJSON, jqxhr);
 					return;
 				}
 
 				HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
-					errorCallback(jqxhr, status, errorThrown);
+					errorCallback(jqxhr, jqxhr.responseJSON);
 				}
 			}
 		});

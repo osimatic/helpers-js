@@ -185,16 +185,6 @@ class FormHelper {
 	static getFormErrorText(errors) {
 		let errorLabels = '';
 		for (let property in errors) {
-			if (typeof errors[property] != 'function') {
-				errorLabels += '<span>' + errors[property] + '</span><br>';
-			}
-		}
-		return errorLabels;
-	}
-
-	static getFormErrorTextBis(errors) {
-		let errorLabels = '';
-		for (let property in errors) {
 			// console.log(property);
 			if (typeof errors[property] != 'function') {
 				if (typeof errors[property]['error_description'] === 'undefined') {
@@ -208,7 +198,7 @@ class FormHelper {
 	}
 
 	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv) {
-		this.displayFormErrorsFromText(form, this.getFormErrorTextBis(errors), errorWrapperDiv);
+		this.displayFormErrorsFromText(form, this.getFormErrorText(errors), errorWrapperDiv);
 		if (btnSubmit != null) {
 			if (btnSubmit.buttonLoader != null) {
 				btnSubmit.buttonLoader('reset');
@@ -216,10 +206,6 @@ class FormHelper {
 				btnSubmit.attr('disabled', false).button('reset');
 			}
 		}
-	}
-
-	static displayFormErrorsFromXhr(form, btnSubmit, xhr) {
-		this.displayFormErrors(form, btnSubmit, xhr.responseJSON);
 	}
 
 	static displayFormErrorsFromText(form, errorLabels, errorWrapperDiv) {
@@ -290,6 +276,11 @@ class FormHelper {
 	/** @deprecated **/
 	static logRequestFailure(status, exception) {
 		console.log('request failure. Status: '+status+' ; Exception: '+exception);
+	}
+
+	/** @deprecated **/
+	static displayFormErrorsFromXhr(form, btnSubmit, xhr) {
+		this.displayFormErrors(form, btnSubmit, xhr.responseJSON);
 	}
 
 }

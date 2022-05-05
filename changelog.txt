@@ -40,3 +40,6 @@ FlashMessage.displayRequestFailure(status, exception, modal) -> FlashMessage.dis
 FormHelper.logRequestFailure(status, exception) -> HTTPRequest.logJqueryRequestFailure(jqxhr, status, exception) (le log de l'erreur est devenu inutile car fait de base dans la classe HTTPRequest)
 
 Location.checkCoordinates(...) -> GeographicCoordinates.check(...) (car Location est déjà défini en javascript natif)
+
+FormHelper.getFormErrorTextBis(...) -> FormHelper.getFormErrorText(...)
+FormHelper.displayFormErrorsFromXhr(form, btnSubmit, xhr) -> FormHelper.displayFormErrors(form, btnSubmit, xhr.responseJSON)
