@@ -1,7 +1,7 @@
 class WebRTC {
-    static setIceServers(turnUrl, turnUrl) {
+    static setIceServers(turnUrl, stunUrl) {
         this.turnUrl = turnUrl;
-        this.stunUrl = turnUrl;
+        this.stunUrl = stunUrl;
     }
 
     static setTurnAccount(turnAccount) {
