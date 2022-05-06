@@ -8,7 +8,7 @@ class WebRTC {
         this.turnAccount = turnAccount;
     }
 
-    static offer(stream, onICECandidateCallback) {
+    static offer(stream, iceCandidateCallback) {
         return new Promise((resolve, reject) => {
             try {
                 let { username, password } = this.turnAccount;
@@ -24,10 +24,10 @@ class WebRTC {
                 stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
-                        onICECandidateCallback(event.candidate);
+                        iceCandidateCallback(event.candidate);
                     }
                 });
-    
+
                 peerConn.createOffer()
                 .then(sdp => peerConn.setLocalDescription(sdp))
                 .then(() => resolve(peerConn));
@@ -37,10 +37,10 @@ class WebRTC {
         });
     }
     
-    static answer (remoteDescription, onTrackCallback, onICECandidateCallback) {
+    static answer (remoteDescription, onTrackCallback, iceCandidateCallback) {
         return new Promise((resolve, reject) => {
             try {
-                let { username, password } = this.turnAcccount;
+                let { username, password } = this.turnAccount;
                 let peerConn = new RTCPeerConnection(
                     { 
                         iceServers: [
@@ -50,14 +50,13 @@ class WebRTC {
                     }
                 );
     
-                //todo test si streams n'est pas vide ?
-                peerConn.ontrack = event => onTrackCallback(event.streams);
+                peerConn.ontrack = (event) => onTrackCallback(event.streams);
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
-                        onICECandidateCallback(event.candidate);
+                        iceCandidateCallback(event.candidate);
                     }
                 });
-    
+
                 peerConn.setRemoteDescription(remoteDescription)
                 .then(() => peerConn.createAnswer())
                 .then(sdp => peerConn.setLocalDescription(sdp))
