@@ -21,6 +21,7 @@ const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
 
 // exports plugins "maison"
+const { Browser } = require('./visitor');
 const { DataTable } = require('./data_table');
 const { Pagination, Navigation } = require('./paging');
 const { DetailsSubArray } = require('./details_sub_array');
@@ -44,7 +45,7 @@ const { OpenStreetMap } = require('./open_street_map');
 module.exports = {
 	Array, Object, Number, String,
 	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
-	DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox, WebRTC,
+	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox, WebRTC,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };
