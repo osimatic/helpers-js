@@ -35,17 +35,19 @@ const { ImportFromCsv } = require('./import_from_csv');
 const { JwtToken, JwtSession } = require('./jwt');
 const { ListBox } = require('./list_box');
 const { WebRTC } = require('./web_rtc');
+const { EventBus } = require('./event_bus');
 
 // exports surcouche lib externe
 const { GoogleCharts } = require('./google_charts');
 const { GoogleRecaptcha } = require('./google_recaptcha');
 const { GoogleMap } = require('./google_maps');
 const { OpenStreetMap } = require('./open_street_map');
+const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
 	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
-	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox, WebRTC,
+	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };
