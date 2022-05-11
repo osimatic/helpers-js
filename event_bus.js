@@ -10,7 +10,9 @@ class EventBus {
             return;
         }
 
-        handlers.forEach((handler) => handler.call(this, data));
+        handlers.forEach(function(handler) {
+            handler.call(this, data)
+        });
     }
 
     subscribe(name, handler) {
