@@ -4,14 +4,14 @@ class WebRTC {
         this.stunUrl = stunUrl;
     }
 
-    static setTurnAccount(turnAccount) {
-        this.turnAccount = turnAccount;
+    static setTurnSecret(turnSecret) {
+        this.turnSecret = turnSecret;
     }
 
     static offer(stream, iceCandidateCallback) {
         return new Promise((resolve, reject) => {
             try {
-                let { username, password } = this.turnAccount;
+                let { username, password } = this.getTurnCredentials(); 
                 let peerConn = new RTCPeerConnection(
                     { 
                         iceServers: [
@@ -40,7 +40,7 @@ class WebRTC {
     static answer (remoteDescription, onTrackCallback, iceCandidateCallback) {
         return new Promise((resolve, reject) => {
             try {
-                let { username, password } = this.turnAccount;
+                let { username, password } = this.getTurnCredentials();
                 let peerConn = new RTCPeerConnection(
                     { 
                         iceServers: [
@@ -81,6 +81,23 @@ class WebRTC {
         }
             
         return peerConn;
+    }
+
+    /*
+        static-auth credentials
+        https://eturnal.net/documentation/
+        https://datatracker.ietf.org/doc/html/draft-uberti-behave-turn-rest-00
+    */
+    static getTurnCredentials() {
+        let crypto = require('crypto');
+        let username = String(parseInt(Date.now() / 1000) + 24 * 3600); //ttl: 24h
+        let hmac = crypto.createHmac('sha1', this.turnSecret);
+
+        hmac.setEncoding('base64');
+        hmac.write(username);
+        hmac.end();
+
+        return { username: username, password: hmac.read() };
     }
 }
 
