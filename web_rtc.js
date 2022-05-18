@@ -9,7 +9,7 @@ class WebRTC {
     }
 
     static offer(stream, iceCandidateCallback) {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials(); 
                 let peerConn = new RTCPeerConnection(
@@ -28,17 +28,18 @@ class WebRTC {
                     }
                 });
 
-                peerConn.createOffer()
-                .then(sdp => peerConn.setLocalDescription(sdp))
-                .then(() => resolve(peerConn));
+                const offer = await peerConn.createOffer();
+                await peerConn.setLocalDescription(offer);
+
+                resolve(peerConn);
             } catch (error) {
                 reject(error);
             }
         });
     }
     
-    static answer (remoteDescription, onTrackCallback, iceCandidateCallback) {
-        return new Promise((resolve, reject) => {
+    static answer(remoteDescription, onTrackCallback, iceCandidateCallback) {
+        return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials();
                 let peerConn = new RTCPeerConnection(
@@ -57,10 +58,12 @@ class WebRTC {
                     }
                 });
 
-                peerConn.setRemoteDescription(remoteDescription)
-                .then(() => peerConn.createAnswer())
-                .then(sdp => peerConn.setLocalDescription(sdp))
-                .then(() => resolve(peerConn));
+                peerConn.setRemoteDescription(new RTCSessionDescription(remoteDescription))
+                
+                const answer = await peerConn.createAnswer();
+                await peerConn.setLocalDescription(answer);
+                
+                resolve(peerConn);
             } catch (error) {
                 reject(error);
             }
