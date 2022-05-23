@@ -15,7 +15,11 @@ class WebRTC {
                 let peerConn = new RTCPeerConnection(
                     { 
                         iceServers: [
-                            { urls: this.turnUrl, username: username, credential: password },
+                            { 
+                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
+                                username: username, 
+                                credential: password 
+                            },
                             { urls: this.stunUrl }
                         ] 
                     }
@@ -45,7 +49,11 @@ class WebRTC {
                 let peerConn = new RTCPeerConnection(
                     { 
                         iceServers: [
-                            { urls: this.turnUrl, username: username, credential: password },
+                            { 
+                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
+                                username: username, 
+                                credential: password 
+                            },
                             { urls: this.stunUrl }
                         ] 
                     }
