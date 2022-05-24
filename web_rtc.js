@@ -8,7 +8,7 @@ class WebRTC {
         this.turnSecret = turnSecret;
     }
 
-    static offer(stream, iceCandidateCallback) {
+    static offer(stream, iceCandidateCallback, connectionStateChangeCallback, iceFailureCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials(); 
@@ -16,7 +16,7 @@ class WebRTC {
                     { 
                         iceServers: [
                             { 
-                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
+                                urls: [/*this.turnUrl + '?transport=udp', */this.turnUrl + '?transport=tcp'], 
                                 username: username, 
                                 credential: password 
                             },
@@ -24,13 +24,18 @@ class WebRTC {
                         ] 
                     }
                 );
-    
-                stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
+
+                peerConn.oniceconnectionstatechange = (event) => connectionStateChangeCallback(event);
+
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
                         iceCandidateCallback(event.candidate);
                     }
                 });
+
+                peerConn.onicecandidateerror = (event) => iceFailureCallback(event);
+
+                stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
 
                 const offer = await peerConn.createOffer();
                 await peerConn.setLocalDescription(offer);
@@ -42,7 +47,7 @@ class WebRTC {
         });
     }
     
-    static answer(remoteDescription, onTrackCallback, iceCandidateCallback) {
+    static answer(remoteDescription, onTrackCallback, iceCandidateCallback, connectionStateChangeCallback, iceFailureCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials();
@@ -50,7 +55,7 @@ class WebRTC {
                     { 
                         iceServers: [
                             { 
-                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
+                                urls: [/*this.turnUrl + '?transport=udp',*/ this.turnUrl + '?transport=tcp'], 
                                 username: username, 
                                 credential: password 
                             },
@@ -58,14 +63,19 @@ class WebRTC {
                         ] 
                     }
                 );
-    
-                peerConn.ontrack = (event) => onTrackCallback(event.streams);
+
+                peerConn.oniceconnectionstatechange = (event) => connectionStateChangeCallback(event);
+
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
                         iceCandidateCallback(event.candidate);
                     }
                 });
 
+                peerConn.onicecandidateerror = (event) => iceFailureCallback(event);
+
+                peerConn.ontrack = (event) => onTrackCallback(event.streams);
+                
                 peerConn.setRemoteDescription(new RTCSessionDescription(remoteDescription))
                 
                 const answer = await peerConn.createAnswer();
@@ -80,6 +90,8 @@ class WebRTC {
 
     static disconnectPeer(peerConn) {
         if (peerConn) {
+            peerConn.oniceconnectionstatechange = null;
+            peerConn.onicecandidateerror = null;
             peerConn.onicecandidate = null;
             peerConn.ontrack = null;
 
