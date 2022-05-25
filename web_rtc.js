@@ -16,7 +16,7 @@ class WebRTC {
                     { 
                         iceServers: [
                             { 
-                                urls: [/*this.turnUrl + '?transport=udp', */this.turnUrl + '?transport=tcp'], 
+                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
                                 username: username, 
                                 credential: password 
                             },
@@ -55,7 +55,7 @@ class WebRTC {
                     { 
                         iceServers: [
                             { 
-                                urls: [/*this.turnUrl + '?transport=udp',*/ this.turnUrl + '?transport=tcp'], 
+                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
                                 username: username, 
                                 credential: password 
                             },
