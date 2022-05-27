@@ -8,7 +8,7 @@ class WebRTC {
         this.turnSecret = turnSecret;
     }
 
-    static offer(stream, iceCandidateCallback, connectionStateChangeCallback, iceFailureCallback) {
+    static offer(stream, iceCandidateCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials(); 
@@ -25,15 +25,11 @@ class WebRTC {
                     }
                 );
 
-                peerConn.oniceconnectionstatechange = (event) => connectionStateChangeCallback(event);
-
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
                         iceCandidateCallback(event.candidate);
                     }
                 });
-
-                peerConn.onicecandidateerror = (event) => iceFailureCallback(event);
 
                 stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
 
@@ -47,7 +43,7 @@ class WebRTC {
         });
     }
     
-    static answer(remoteDescription, onTrackCallback, iceCandidateCallback, connectionStateChangeCallback, iceFailureCallback) {
+    static answer(remoteDescription, onTrackCallback, iceCandidateCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials();
@@ -64,15 +60,11 @@ class WebRTC {
                     }
                 );
 
-                peerConn.oniceconnectionstatechange = (event) => connectionStateChangeCallback(event);
-
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
                         iceCandidateCallback(event.candidate);
                     }
                 });
-
-                peerConn.onicecandidateerror = (event) => iceFailureCallback(event);
 
                 peerConn.ontrack = (event) => onTrackCallback(event.streams);
                 
