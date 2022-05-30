@@ -53,6 +53,48 @@ class HTTPRequest {
 		this.headers['Authorization'] = 'Bearer ' + accessToken;
 	}
 
+	static convertObjectToFormData(obj) {
+		// 30/05/2022 : ancienne version, qui ne fonctionne pas avec des tableaux
+		// let formData = new FormData();
+		// Object.entries(data).forEach(([key, value]) => formData.append(key, value));
+		// return formData;
+
+		var formData = new FormData();
+
+		function appendFormData(data, root) {
+			//console.log('appendFormData', data, root);
+			root = root || '';
+			if (data instanceof File) {
+				formData.append(root, data);
+			}
+			else if (Array.isArray(data)) {
+				for (var i = 0; i < data.length; i++) {
+					appendFormData(data[i], root + '[' + i + ']');
+				}
+			}
+			else if (typeof data === 'object' && data) {
+				for (var key in data) {
+					if (data.hasOwnProperty(key)) {
+						if (root === '') {
+							appendFormData(data[key], key);
+						} else {
+							appendFormData(data[key], root + '.' + key);
+						}
+					}
+				}
+			}
+			else {
+				if (data !== null && typeof data !== 'undefined') {
+					formData.append(root, data);
+				}
+			}
+		}
+
+		appendFormData(obj);
+
+		return formData;
+	}
+
 	static formatQueryString(data) {
 		if (data == null) {
 			return '';
@@ -68,9 +110,7 @@ class HTTPRequest {
 
 	static formatFormData(data) {
 		if (!(data instanceof FormData)) {
-			let formData = new FormData();
-			Object.entries(data).forEach(([key, value]) => formData.append(key, value));
-			return formData;
+			return HTTPRequest.convertObjectToFormData(data);
 		}
 		return data;
 	}
