@@ -620,13 +620,18 @@ class UrlAndQueryString {
 			if (typeof (object) == 'object') {
 				for (var name in object) {
 					value = object[name];
+					// 06/06/2022 : ajout de ce if pour éviter bug sur fonction HTTPRequest.formatQueryString
+					if (typeof (value) == 'undefined') {
+						continue;
+					}
 					// 14/01/2020 : les tableaux avec param[0], param[1] en query string fonctionne pas, il faut mettre param[]=x&param[]=y
 					//name = p == '' ? name : '['+name+']';
 					name = p == '' ? name : '[]';
 					if (typeof (value) == 'object') {
 						buildStringFromParam(value, p + name);
 					}
-					else if (typeof (value) != 'function' && name != '') {
+					// 06/06/2022 : ajout null !== value pour éviter bug sur fonction HTTPRequest.formatQueryString
+					else if (null !== value && typeof (value) != 'function' && name != '') {
 						// 27/01/2020 : correction bug boolean affiché en string true/false
 						if (typeof (value) == 'boolean') {
 							value = (value ? 1 : 0);
