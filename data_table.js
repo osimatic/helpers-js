@@ -268,10 +268,6 @@ class DataTable {
 		// }
 	}
 
-	static displayErrorFromXhr(div, jqxhr, defaultMessage) {
-		this.displayError(div, JSON.parse(jqxhr.responseJSON), defaultMessage);
-	}
-
 	static displayError(div, data, defaultMessage) {
 		var error = null;
 		if (data != null) {

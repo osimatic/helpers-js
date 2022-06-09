@@ -111,7 +111,7 @@ class Img {
 				// $(img).attr('src', urlCreator.createObjectURL(data));
 				Img.setBlobToImg($(img), data);
 			},
-			error: (jqxhr, status, exception) => console.log('request failure. Status: '+status+'Exception: '+exception),
+			error: (jqxhr, status, errorThrown) => HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown),
 		});
 	}
 

@@ -95,13 +95,13 @@ class ImportFromCsv {
 
 			requestImportData(dataToImport,
 				// fonction callback en cas d'erreur de formulaire
-				function (jqxhr) {
-					console.log(jqxhr.responseJSON);
-					if (typeof jqxhr.responseJSON['import_list'] !== 'undefined') {
-						formMatching.find('div.errors').html(jqxhr.responseJSON['import_list']).removeClass('hide');
+				(json) => {
+					console.log(json);
+					if (typeof json['import_list'] !== 'undefined') {
+						formMatching.find('div.errors').html(json['import_list']).removeClass('hide');
 					}
 					else {
-						formMatching.find('div.errors').html(ImportFromCsv.getErrorsHtmlOfImportData(jqxhr.responseJSON, divResult)).removeClass('hide');
+						formMatching.find('div.errors').html(ImportFromCsv.getErrorsHtmlOfImportData(json, divResult)).removeClass('hide');
 					}
 					formMatching.find('button[type="submit"]').buttonLoader('reset');
 				}

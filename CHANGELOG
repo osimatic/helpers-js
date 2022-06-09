@@ -46,3 +46,6 @@ FormHelper.displayFormErrorsFromXhr(form, btnSubmit, xhr) -> FormHelper.displayF
 
 1.0.35 :
 ajout méthode HTTPRequest.init() (charge le polyfill de fetch)
+
+1.0.61
+DataTable.displayErrorFromXhr -> DataTable.displayError
