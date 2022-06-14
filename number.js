@@ -1,10 +1,6 @@
 
 Number.prototype.format = Number.prototype.format || function(nbDecimal, locale) {
-	nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
-	return new Intl.NumberFormat(locale, {
-		minimumFractionDigits: nbDecimal,
-		maximumFractionDigits: nbDecimal
-	}).format(this);
+	return Number.format(this, nbDecimal, locale);
 }
 
 if (!Number.format) {
@@ -32,32 +28,44 @@ Number.prototype.formatForDisplay = Number.prototype.formatForDisplay || functio
 };
 
 Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency, nbDecimal, locale) {
+	return Number.formatCurrency(this, currency, nbDecimal, locale);
+}
+Number.formatCurrency = Number.formatCurrency || function(number, currency, nbDecimal, locale) {
 	nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
 	return new Intl.NumberFormat(locale, {
 		style: 'currency',
 		currency: currency,
 		minimumFractionDigits: nbDecimal,
 		maximumFractionDigits: nbDecimal
-	}).format(this);
+	}).format(number);
 }
 
 Number.prototype.formatPercent = Number.prototype.formatPercent || function(nbDecimal, locale) {
+	return Number.formatPercent(this, nbDecimal, locale);
+}
+Number.formatPercent = Number.formatPercent || function(number, nbDecimal, locale) {
 	nbDecimal = (typeof nbDecimal != 'undefined'?nbDecimal:2);
 	return new Intl.NumberFormat(locale, {
 		style: 'percent',
 		minimumFractionDigits: nbDecimal,
 		maximumFractionDigits: nbDecimal
-	}).format(this);
+	}).format(number);
 }
 
-Number.prototype.padLeft2 = Number.prototype.padLeft2 || function(n) {
-	return this > 9 ? "" + this : "0" + this;
+Number.prototype.padLeft2 = Number.prototype.padLeft2 || function() {
+	return Number.padLeft2(this);
+}
+Number.padLeft2 = Number.padLeft2 || function(n) {
+	return n > 9 ? "" + n : "0" + n;
 }
 
 Number.prototype.roundDecimal = Number.prototype.roundDecimal || function(precision) {
+	return Number.roundDecimal(this, precision);
+}
+Number.roundDecimal = Number.roundDecimal || function(number, precision) {
 	precision = precision || 2;
-	var tmp = Math.pow(10, precision);
-	return Math.round(this*tmp) / tmp;
+	let tmp = Math.pow(10, precision);
+	return Math.round(number*tmp) / tmp;
 }
 
 if (!Number.random) {
@@ -65,24 +73,3 @@ if (!Number.random) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	};
 }
-
-/** @deprecated */
-Number.prototype.formatAsString = function(locale, minimumFractionDigits) {
-	minimumFractionDigits = (typeof minimumFractionDigits != 'undefined'?minimumFractionDigits:0);
-	return new Intl.NumberFormat(locale, {minimumFractionDigits: minimumFractionDigits}).format(this);
-};
-/** @deprecated */
-Number.prototype.formatAsCurrency = function(locale, currency, nbFractionDigits) {
-	nbFractionDigits = (typeof nbFractionDigits != 'undefined'?nbFractionDigits:2);
-	return new Intl.NumberFormat(locale, {
-		style: 'currency',
-		currency: 'EUR',
-		minimumFractionDigits: nbFractionDigits,
-		maximumFractionDigits: nbFractionDigits
-	}).format(this);
-};
-/** @deprecated */
-Number.prototype.formatAsPercent = function(locale, minimumFractionDigits) {
-	minimumFractionDigits = (typeof minimumFractionDigits != 'undefined'?minimumFractionDigits:0);
-	return new Intl.NumberFormat(locale, {style: 'percent', minimumFractionDigits:minimumFractionDigits}).format(this);
-};
