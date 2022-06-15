@@ -1,3 +1,4 @@
+const { JwtSession } = require('@osimatic/helpers-js/jwt');
 
 class HTTPRequest {
 	static init() {
@@ -138,10 +139,8 @@ class HTTPRequest {
 			let jsonData = {};
 			try {
 				jsonData = await response.json();
-				//console.log(url, jsonData);
-				//console.log(response.status, response.statusText, jsonData['error']);
 
-				if (response.status === 401 && (response.statusText === 'Expired JWT Token' || typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token')) {
+				if (response.status === 401 && (response.statusText === 'Expired JWT Token' || (typeof jsonData['message'] != 'undefined' && jsonData['message'] === 'Expired JWT Token') || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 					return;
 				}
@@ -303,7 +302,7 @@ class HTTPRequest {
 				}
 				//console.log(url, jsonData);
 
-				if (response.status === 401 && url !== HTTPRequest.refreshTokenUrl && (response.statusText === 'Expired JWT Token' || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
+				if (response.status === 401 && url !== HTTPRequest.refreshTokenUrl && (response.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
@@ -386,6 +385,9 @@ class HTTPRequest {
 			(data) => {
 				JwtSession.setToken(data.token);
 				JwtSession.setRefreshToken(data.refresh_token);
+
+				HTTPRequest.setAuthorizationHeader(JwtSession.getToken());
+
 				onCompleteCallback();
 			}, 
 			() => {
