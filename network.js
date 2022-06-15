@@ -1,5 +1,3 @@
-const { JwtSession } = require('@osimatic/helpers-js/jwt');
-
 class HTTPRequest {
 	static init() {
 		require('whatwg-fetch'); //fetch polyfill loaded in window.fetch
