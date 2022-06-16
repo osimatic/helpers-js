@@ -122,6 +122,21 @@ class HTTPRequest {
 		console.error('Request failure. Status: '+status+' ; HTTP Code: '+jqxhr.responseJSON.code+(null!=errorThrown && ''!==errorThrown ? ' ; Error message: '+errorThrown : ''), jqxhr.responseJSON);
 	}
 
+	static isExpiredToken(response, json) {
+		if (response.status !== 401) {
+			return false;
+		}
+
+		return (
+			response.statusText === 'Expired JWT Token'
+			|| (typeof json['message'] != 'undefined' && json['message'] === 'Expired JWT Token')
+			|| (typeof json['error'] != 'undefined' && json['error'] === 'expired_token')
+			|| (typeof json['error'] != 'undefined' && json['error'] === 'authentification_failure')
+			|| (json === 'expired_token')
+			|| (json === 'authentification_failure')
+		);
+	}
+
 	static async get(url, data, successCallback, errorCallback) {
 		url += (!url.includes('?') ? '?' : '') + this.formatQueryString(data);
 		data = null;
@@ -138,7 +153,7 @@ class HTTPRequest {
 			try {
 				jsonData = await response.json();
 
-				if (response.status === 401 && (response.statusText === 'Expired JWT Token' || (typeof jsonData['message'] != 'undefined' && jsonData['message'] === 'Expired JWT Token') || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
+				if (HTTPRequest.isExpiredToken(response, jsonData)) {
 					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 					return;
 				}
@@ -176,7 +191,7 @@ class HTTPRequest {
 				}
 			},
 			error: (jqxhr, status, errorThrown) => {
-				if (jqxhr.status === 401 && (jqxhr.statusText === 'Expired JWT Token'  || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (HTTPRequest.isExpiredToken(jqxhr, jqxhr.responseJSON)) {
 					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
 					return;
 				}
@@ -263,7 +278,7 @@ class HTTPRequest {
 		$.ajax(Object.assign({...ajaxOptions}, {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, errorThrown) => {
-				if (jqxhr.status === 401 && (jqxhr.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (HTTPRequest.isExpiredToken(jqxhr, jqxhr.responseJSON)) {
 					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method));
 					return;
 				}
@@ -300,7 +315,7 @@ class HTTPRequest {
 				}
 				//console.log(url, jsonData);
 
-				if (response.status === 401 && url !== HTTPRequest.refreshTokenUrl && (response.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
+				if (url !== HTTPRequest.refreshTokenUrl && HTTPRequest.isExpiredToken(response, jsonData)) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
@@ -348,7 +363,7 @@ class HTTPRequest {
 				}
 			},
 			error: (jqxhr, status, errorThrown) => {
-				if (url !== HTTPRequest.refreshTokenUrl && jqxhr.status === 401 && (jqxhr.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
+				if (url !== HTTPRequest.refreshTokenUrl && HTTPRequest.isExpiredToken(jqxhr, jqxhr.responseJSON)) {
 					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
 					return;
 				}
