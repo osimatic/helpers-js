@@ -32,7 +32,7 @@ const { ShoppingCart } = require('./shopping_cart');
 const { FlashMessage } = require('./flash_message');
 const { CountDown } = require('./count_down');
 const { ImportFromCsv } = require('./import_from_csv');
-const { JwtToken, JwtSession } = require('./jwt');
+const { JwtToken, JwtSession, ApiTokenSession } = require('./jwt');
 const { ListBox } = require('./list_box');
 const { WebRTC } = require('./web_rtc');
 const { EventBus } = require('./event_bus');
@@ -47,7 +47,7 @@ const { WebSocket } = require('./web_socket');
 module.exports = {
 	Array, Object, Number, String,
 	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
-	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ListBox, WebRTC, WebSocket, EventBus,
+	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };
