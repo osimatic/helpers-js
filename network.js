@@ -119,7 +119,7 @@ class HTTPRequest {
 	}
 
 	static logJqueryRequestFailure(jqxhr, status, errorThrown) {
-		console.error('Request failure. Status: '+status+' ; HTTP Code: '+jqxhr.responseJSON.code+(null!=errorThrown && ''!==errorThrown ? ' ; Error message: '+errorThrown : ''), jqxhr.responseJSON);
+		console.error('Request failure. Status: '+status+' ; HTTP Code: '+jqxhr.status+(null!=errorThrown && ''!==errorThrown ? ' ; Error message: '+errorThrown : ''), jqxhr.responseJSON);
 	}
 
 	static isExpiredToken(response, json) {
