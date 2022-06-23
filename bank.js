@@ -13,8 +13,7 @@ class BankCard {
 		return cardNumber;
 	}
 
-	static formatExpirationDate(expirationDate) {
-		let locale = typeof locale != 'undefined' ? locale : 'fr-FR';
+	static formatExpirationDate(expirationDate, locale="fr-FR") {
 		return SqlDateTime.getMonthName(expirationDate, locale)+' '+SqlDateTime.getYear(expirationDate);
 	}
 }
