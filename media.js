@@ -46,7 +46,7 @@ class AudioMedia {
 			let context = new (window.AudioContext || window.webkitAudioContext)();
 			let request = new XMLHttpRequest();
 			request.open("GET", url, true);
-			Object.entries(HTTPRequest.getHeaders()).forEach(([key, value]) => request.setRequestHeader(key, value));
+			Object.entries(HTTPRequest.getHeaders(true)).forEach(([key, value]) => request.setRequestHeader(key, value));
 			request.responseType = "arraybuffer";
 
 			request.onload = function () {
