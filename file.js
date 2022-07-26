@@ -61,6 +61,16 @@ class File {
 			maximumFractionDigits: fractionDigits
 		}).format(size)) + ' ' + byteUnits[i];
 	}
+
+	static blobToBase64(blob, callback) {
+		let reader = new FileReader();
+		reader.onload = function() {
+			//let dataUrl = reader.result;
+			//let base64 = dataUrl.split(',')[1];
+			callback(reader.result);
+		};
+		reader.readAsDataURL(blob);
+	};
 }
 
 const CSV_FILE_EXTENSION = "csv";
