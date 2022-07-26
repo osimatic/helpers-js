@@ -139,7 +139,7 @@ class HTTPRequest {
 				jsonData = await response.json();
 
 				if (response.status === 401 && (response.statusText === 'Expired JWT Token' || (typeof jsonData['message'] != 'undefined' && jsonData['message'] === 'Expired JWT Token') || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
-					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback), errorCallback);
 					return;
 				}
 
@@ -177,7 +177,7 @@ class HTTPRequest {
 			},
 			error: (jqxhr, status, errorThrown) => {
 				if (jqxhr.status === 401 && (jqxhr.statusText === 'Expired JWT Token'  || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
-					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.get(url, data, successCallback, errorCallback), errorCallback);
 					return;
 				}
 
@@ -217,7 +217,7 @@ class HTTPRequest {
 				console.log(blobData);*/
 
 				if (response.status === 401 && response.statusText === 'Expired JWT Token') {
-					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method));
+					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method), errorCallback);
 					return;
 				}
 
@@ -264,7 +264,7 @@ class HTTPRequest {
 			success: (data, status, jqxhr) => File.download(data, jqxhr.getResponseHeader('Content-Type'), jqxhr.getResponseHeader('Content-Disposition')),
 			error: (jqxhr, status, errorThrown) => {
 				if (jqxhr.status === 401 && (jqxhr.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
-					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method));
+					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method), errorCallback);
 					return;
 				}
 
@@ -301,7 +301,7 @@ class HTTPRequest {
 				//console.log(url, jsonData);
 
 				if (response.status === 401 && url !== HTTPRequest.refreshTokenUrl && (response.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jsonData['error'] != 'undefined' && jsonData['error'] === 'expired_token'))) {
-					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback), errorCallback);
 					return;
 				}
 
@@ -349,7 +349,7 @@ class HTTPRequest {
 			},
 			error: (jqxhr, status, errorThrown) => {
 				if (url !== HTTPRequest.refreshTokenUrl && jqxhr.status === 401 && (jqxhr.statusText === 'Expired JWT Token' || (typeof jqxhr.responseJSON['message'] != 'undefined' && jqxhr.responseJSON['message'] === 'Expired JWT Token') || (typeof jqxhr.responseJSON['error'] != 'undefined' && jqxhr.responseJSON['error'] === 'expired_token' ))) {
-					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback));
+					HTTPRequest.refreshToken(() => HTTPRequest.post(url, formData, successCallback, errorCallback, formErrorCallback), errorCallback);
 					return;
 				}
 				if (jqxhr.status === 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
@@ -365,7 +365,7 @@ class HTTPRequest {
 		});
 	}
 
-	static refreshToken(onCompleteCallback) {
+	static refreshToken(onCompleteCallback, onErrorCallback) {
 		if (typeof this.refreshTokenCallback == 'function') {
 			this.refreshTokenCallback(onCompleteCallback);
 			return;
@@ -390,6 +390,7 @@ class HTTPRequest {
 			}, 
 			() => {
 				JwtSession.logout();
+				onErrorCallback();
 			}
 		);
 	}
