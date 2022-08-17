@@ -285,4 +285,49 @@ class FormHelper {
 
 }
 
-module.exports = { FormHelper };
+class EditValue {
+	static init(valueDiv, onSubmitCallback, getInputCallback) {
+		let link = $('<a href="#" class="text-warning"><i class="fas fa-pencil-alt"></i></a>');
+		valueDiv.parent().append('&nbsp;').append(link);
+
+		function cancelEdit(valueParentDiv) {
+			valueParentDiv.find('a, span').removeClass('hide');
+			valueParentDiv.find('form').remove();
+		}
+
+		link.click(function (e) {
+			e.preventDefault();
+
+			let parent = $(this).parent();
+
+			parent.find('a, span').addClass('hide');
+
+			let form = $('<form class="form-inline"></form>');
+
+			let value = parent.find('span').data('value') || parent.find('span').text();
+			let input = $( typeof getInputCallback == 'function' ? getInputCallback(value) : '<input type="text" />');
+			form.append(input);
+			form.find('input').addClass('form-control').css('width', 'auto').val(value);
+
+			let button = $('<button type="submit" class="btn btn-success ms-2" data-loading-text="<i class=\'fa fa-circle-notch fa-spin\'></i>" style="vertical-align: baseline;"><i class="fas fa-check"></i></button>');
+			button.click(function (e) {
+				parent.find('button').buttonLoader('loading');
+				let newValue = parent.find('input').val();
+				onSubmitCallback(newValue, parent,
+					(isSuccess, valueFormatCallback) => {
+						cancelEdit(parent);
+						if (isSuccess) {
+							parent.find('span').data('value', newValue).text(typeof valueFormatCallback == 'function' ? valueFormatCallback(newValue) : newValue);
+						}
+					}
+				);
+			});
+			form.append(button);
+
+			parent.append(form);
+			return false;
+		});
+	}
+}
+
+module.exports = { FormHelper, EditValue };
