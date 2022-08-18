@@ -2,7 +2,7 @@
 class DateTime {
 
 	static getSqlDate(jsDate, timeZone="Europe/Paris") {
-		let pad = function(num) { return ('00'+num).slice(-2) };
+		//let pad = function(num) { return ('00'+num).slice(-2) };
 		// return jsDate.getUTCFullYear() + '-' + pad(jsDate.getUTCMonth() + 1) + '-' + pad(jsDate.getUTCDate());
 		//return jsDate.getFullYear() + '-' + pad(jsDate.getMonth() + 1) + '-' + pad(jsDate.getDate());
 		return jsDate.toLocaleDateString('fr-FR', {year: 'numeric', timeZone: timeZone})+'-'+jsDate.toLocaleDateString('fr-FR', {month: '2-digit', timeZone: timeZone})+'-'+jsDate.toLocaleDateString('fr-FR', {day: '2-digit', timeZone: timeZone});

@@ -227,16 +227,13 @@ class HTTPRequest {
 
 			const response = await fetch(url, requestInit);
 			try {
-				const blobData = await response.blob();
-				/*console.log(url);
-				console.log(blobData);*/
-
 				if (response.status === 401 && response.statusText === 'Expired JWT Token') {
 					HTTPRequest.refreshToken(() => HTTPRequest.download(url, data, errorCallback, completeCallback, method), errorCallback);
 					return;
 				}
 
 				if (response.ok) {
+					const blobData = await response.blob();
 					File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition'));
 				}
 				else {
