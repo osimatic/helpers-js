@@ -1,18 +1,81 @@
 
-class DateTime {
+class DateTimeFormatter {
+	static getDateDigitalFormatter(locale, timeZone) {
+		if (this.dateDigitalFormatter == null) {
+			this.dateDigitalFormatter = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: timeZone }); 
+		}
 
+		return this.dateDigitalFormatter;
+	}
+
+	static getDateTextFormatter(locale, timeZone) {
+		if (this.dateTextFormatter == null) {
+			this.dateTextFormatter = new Intl.DateTimeFormat(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timeZone });
+		}
+
+		return this.dateTextFormatter;
+	}
+
+	static getDateTimeFormatter(locale, timeZone) {
+		if (this.dateTimeFormatter == null) {
+			this.dateTimeFormatter = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', timeZone: timeZone });
+		}
+
+		return this.dateTimeFormatter;
+	}
+
+	static getDateSqlFormatter(timeZone) {
+		if (this.dateSqlFormatter == null) {
+			this.dateSqlFormatter = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timeZone });
+		}
+
+		return this.dateSqlFormatter;
+	}
+
+	static getTimeSqlFormatter(timeZone) {
+		if (this.timeSqlFormatter == null) {
+			this.timeSqlFormatter = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: timeZone }); //hour12: false = 24h format
+		}
+
+		return this.timeSqlFormatter;
+	}
+
+	static getTimeFormatter(locale, timeZone) {
+		if (this.timeFormatter == null) {
+			this.timeFormatter = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: timeZone });
+		}
+
+		return this.timeFormatter;
+	}
+
+	static getTimeDigitalFormatter(locale, timeZone) {
+		if (this.timeDigitalFormatter == null) {
+			this.timeDigitalFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: timeZone });
+		}
+
+		return this.timeDigitalFormatter;
+	}
+} 
+
+class DateTime {
 	static getSqlDate(jsDate, timeZone="Europe/Paris") {
-		let pad = function(num) { return ('00'+num).slice(-2) };
+		return DateTimeFormatter.getDateSqlFormatter(timeZone).format(jsDate).replace(/\//g,'-').replace(',','');
+
+		//24/08/22 bad perfs
+		/*let pad = function(num) { return ('00'+num).slice(-2) };
 		// return jsDate.getUTCFullYear() + '-' + pad(jsDate.getUTCMonth() + 1) + '-' + pad(jsDate.getUTCDate());
 		//return jsDate.getFullYear() + '-' + pad(jsDate.getMonth() + 1) + '-' + pad(jsDate.getDate());
 		return jsDate.toLocaleDateString('fr-FR', {year: 'numeric', timeZone: timeZone})+'-'+jsDate.toLocaleDateString('fr-FR', {month: '2-digit', timeZone: timeZone})+'-'+jsDate.toLocaleDateString('fr-FR', {day: '2-digit', timeZone: timeZone});
+		*/
 	}
 
 	static getSqlTime(jsDate, timeZone="Europe/Paris") {
-		let pad = function(num) { return ('00'+num).slice(-2) };
+		return DateTimeFormatter.getTimeSqlFormatter(timeZone).format(jsDate);
+		/*let pad = function(num) { return ('00'+num).slice(-2) };
 		// return pad(jsDate.getUTCHours()) + ':' + pad(jsDate.getUTCMinutes()) + ':' + pad(jsDate.getUTCSeconds());
 		//return pad(jsDate.getHours()) + ':' + pad(jsDate.getMinutes()) + ':' + pad(jsDate.getSeconds());
 		return pad(jsDate.toLocaleTimeString('en-GB', {hour: 'numeric', timeZone: timeZone}))+':'+pad(jsDate.toLocaleTimeString('en-GB', {minute: 'numeric', timeZone: timeZone}))+':'+pad(jsDate.toLocaleTimeString('en-GB', {second: 'numeric', timeZone: timeZone}));
+		*/
 	}
 
 	static getSqlDateTime(jsDate) {
@@ -24,18 +87,25 @@ class DateTime {
 	}
 
 	static getDateDigitalDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
-		return jsDate.toLocaleDateString(locale, {year: 'numeric', month: 'numeric', day: 'numeric', timeZone: timeZone});
+		return DateTimeFormatter.getDateDigitalFormatter(locale, timeZone).format(jsDate);
+		//return jsDate.toLocaleDateString(locale, {year: 'numeric', month: 'numeric', day: 'numeric', timeZone: timeZone}); //24/08/22 bad perfs
 	}
+
 	static getDateTextDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
-		return jsDate.toLocaleDateString(locale, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timeZone});
+		return DateTimeFormatter.getDateTextFormatter(locale, timeZone).format(jsDate);
+		//return jsDate.toLocaleDateString(locale, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timeZone});  //24/08/22 bad perfs
 	}
 
 	static getTimeDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
-		return jsDate.toLocaleTimeString(locale, {hour: 'numeric', minute: 'numeric', timeZone: timeZone});
+		return DateTimeFormatter.getTimeFormatter(locale, timeZone).format(jsDate);
+		//return jsDate.toLocaleTimeString(locale, {hour: 'numeric', minute: 'numeric', timeZone: timeZone}); //24/08/22 bad perfs
 	}
+
 	static getTimeDigitalDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
-		return jsDate.toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: timeZone});
+		return DateTimeFormatter.getTimeDigitalFormatter(locale, timeZone).format(jsDate);
+		//return jsDate.toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: timeZone}); //24/08/22 bad perfs
 	}
+
 	static getTimeDisplayWithNbDays(jsDate, jsPreviousDate, locale="fr-FR", timeZone="Europe/Paris") {
 		let str = this.getTimeDisplay(jsDate, locale, timeZone);
 		if (jsPreviousDate != 0 && jsPreviousDate != null) {
@@ -48,7 +118,8 @@ class DateTime {
 	}
 
 	static getDateTimeDigitalDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
-		return jsDate.toLocaleDateString(locale, {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', timeZone: timeZone});
+		return DateTimeFormatter.getDateTimeFormatter(locale, timeZone).format(jsDate);
+		//return jsDate.toLocaleDateString(locale, {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', timeZone: timeZone}); //24/08/22 bad perfs
 	}
 
 	static getYear(jsDate) {
