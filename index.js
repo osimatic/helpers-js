@@ -14,7 +14,7 @@ const { PersonName, Email, TelephoneNumber } = require('./contact_details');
 const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
-const { FormHelper } = require('./form_helper');
+const { FormHelper, EditValue } = require('./form_helper');
 const { Country, PostalAddress, GeographicCoordinates } = require('./location');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
@@ -47,7 +47,7 @@ const { WebSocket } = require('./web_socket');
 module.exports = {
 	Array, Object, Number, String,
 	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
-	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
+	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };
