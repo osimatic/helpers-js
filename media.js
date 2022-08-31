@@ -15,14 +15,13 @@ class AudioMedia {
 		});
 
 		div.find('.play_asynchronously_link').off('click').click(function () {
-			if ($(this).buttonLoader('loading') != null) {
-				let button = $(this).buttonLoader('loading');
-				AudioMedia.playAudioUrl($(this).data('url'), () => button.buttonLoader('reset'));
-			} else {
-				let button = $(this).attr('disabled', true).button('loading');
-				AudioMedia.playAudioUrl($(this).data('url'), () => button.attr('disabled', false).button('reset'));
-			}
-
+			//if (FormHelper.buttonLoader($(this), 'loading') != null) {
+			let button = FormHelper.buttonLoader($(this), 'loading');
+			AudioMedia.playAudioUrl($(this).data('url'), () => FormHelper.buttonLoader(button, 'reset'));
+			//} else {
+			//	let button = $(this).attr('disabled', true).button('loading');
+			//	AudioMedia.playAudioUrl($(this).data('url'), () => button.attr('disabled', false).button('reset'));
+			//}
 			return false;
 		});
 

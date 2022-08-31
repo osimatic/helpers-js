@@ -200,11 +200,12 @@ class FormHelper {
 	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv) {
 		this.displayFormErrorsFromText(form, this.getFormErrorText(errors), errorWrapperDiv);
 		if (btnSubmit != null) {
-			if (btnSubmit.buttonLoader != null) {
-				btnSubmit.buttonLoader('reset');
-			} else {
-				btnSubmit.attr('disabled', false).button('reset');
-			}
+			FormHelper.buttonLoader(btnSubmit, 'reset');
+			//if (btnSubmit.buttonLoader != null) {
+			//	btnSubmit.buttonLoader('reset');
+			//} else {
+			//	btnSubmit.attr('disabled', false).button('reset');
+			//}
 		}
 	}
 
@@ -311,7 +312,7 @@ class EditValue {
 
 			let button = $('<button type="submit" class="btn btn-success ms-2" data-loading-text="<i class=\'fa fa-circle-notch fa-spin\'></i>" style="vertical-align: baseline;"><i class="fas fa-check"></i></button>');
 			button.click(function (e) {
-				parent.find('button').buttonLoader('loading');
+				FormHelper.buttonLoader(parent.find('button'), 'loading');
 				let newValue = parent.find('input').val();
 				onSubmitCallback(newValue, parent,
 					(isSuccess, valueFormatCallback) => {

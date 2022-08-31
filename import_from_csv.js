@@ -24,7 +24,7 @@ class ImportFromCsv {
 
 		formUpload.find('button[type="submit"]').click(function(event) {
 			event.preventDefault();
-			$(this).buttonLoader('loading');
+			FormHelper.buttonLoader($(this), 'loading');
 			formUpload.find('div.errors').addClass('hide');
 
 			let isFileParsed = false;
@@ -69,7 +69,7 @@ class ImportFromCsv {
 					if (!isFileParsed) {
 						formUpload.find('div.errors').html(errorMessageFileEmpty).removeClass('hide');
 					}
-					formUpload.find('button[type="submit"]').buttonLoader('reset');
+					FormHelper.buttonLoader(formUpload.find('button[type="submit"]'), 'reset');
 				}
 			});
 			event.preventDefault();
@@ -77,7 +77,7 @@ class ImportFromCsv {
 
 		formMatching.find('button[type="submit"]').click(function (event) {
 			event.preventDefault();
-			$(this).buttonLoader('loading');
+			FormHelper.buttonLoader($(this), 'loading');
 			formMatching.find('div.errors').addClass('hide').empty();
 			divResult.find('table tr').removeClass('danger');
 			
@@ -86,7 +86,7 @@ class ImportFromCsv {
 
 			if ($.isEmptyObject(tabLink)) {
 				formMatching.find('div.errors').html(errorMessageImportSelectColumns).removeClass('hide');
-				$(this).buttonLoader('reset');
+				FormHelper.buttonLoader($(this), 'reset');
 				return false;
 			}
 
@@ -103,7 +103,7 @@ class ImportFromCsv {
 					else {
 						formMatching.find('div.errors').html(ImportFromCsv.getErrorsHtmlOfImportData(json, divResult)).removeClass('hide');
 					}
-					formMatching.find('button[type="submit"]').buttonLoader('reset');
+					FormHelper.buttonLoader(formMatching.find('button[type="submit"]'), 'reset');
 				}
 			);
 		});
