@@ -22,6 +22,12 @@ class FormHelper {
 		return form.find('select[name="'+selectName+'"] option:not([disabled])').length;
 	}
 
+	static reset(form) {
+		form.find('[name]').each((idx, el) => $(el).val(''));
+		FormHelper.hideFormErrors(form);
+		return form;
+	}
+
 	static getFormData(form) {
 		// var formElement = document.getElementById("myFormElement");
 		return new FormData(form[0]);
