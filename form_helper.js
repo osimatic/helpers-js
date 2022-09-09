@@ -105,6 +105,17 @@ class FormHelper {
 		}).get().filter(word => word.length > 0);
 	}
 
+	static getInputValue(input) {
+		if (typeof input == 'undefined') {
+			return null;
+		}
+		let value = $(input).val();
+		if (value === null || value === '') {
+			return null;
+		}
+		return value;
+	}
+
 	static getLinesOfTextarea(textarea) {
 		return textarea.val().replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
 	}
