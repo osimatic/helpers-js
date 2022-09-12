@@ -6,7 +6,7 @@ class MultipleActionInTable {
 			return;
 		}
 
-		var divBtn = MultipleActionInTable.getDivBtn(table);
+		let divBtn = MultipleActionInTable.getDivBtn(table);
 		if (divBtn == null) {
 			return;
 		}
@@ -26,23 +26,19 @@ class MultipleActionInTable {
 			}
 		});
 
-		table.find('input.action_multiple_checkbox').each(function(idx, el) {
-			var th = $(el).closest('table').find('thead tr th').first();
-			if (th.find('input').length === 0) {
-				// console.log(th);
-				th.html('<input type="checkbox" class="action_multiple_check_all" />');
-				// th.html('Coucou');
-			}
-		});
+		let firstTh = table.find('thead tr th').first();
+		if (firstTh.find('input').length === 0) {
+			firstTh.html('<input type="checkbox" class="action_multiple_check_all" />');
+		}
 
 		table.find('input.action_multiple_checkbox').change(function() {
 			MultipleActionInTable.updateCheckbox(table);
 		});
 
 		table.find('input.action_multiple_check_all').off('click').click(function() {
-			var table = $(this).closest('table');
-			var checkbox = table.find('input.action_multiple_checkbox');
-			var checkboxChecked = table.find('input.action_multiple_checkbox:checked');
+			let table = $(this).closest('table');
+			let checkbox = table.find('input.action_multiple_checkbox');
+			let checkboxChecked = table.find('input.action_multiple_checkbox:checked');
 			if (checkbox.length === checkboxChecked.length) {
 				checkbox.prop('checked', false);
 			}
@@ -58,9 +54,9 @@ class MultipleActionInTable {
 	static updateCheckbox(table) {
 		MultipleActionInTable.showButtonsAction(table);
 
-		var allCheckbox = table.find('input.action_multiple_checkbox');
-		var allCheckboxChecked = table.find('input.action_multiple_checkbox:checked');
-		var checkboxSelectAll = table.find('thead tr th input.action_multiple_check_all');
+		let allCheckbox = table.find('input.action_multiple_checkbox');
+		let allCheckboxChecked = table.find('input.action_multiple_checkbox:checked');
+		let checkboxSelectAll = table.find('thead tr th input.action_multiple_check_all');
 		if (allCheckbox.length === allCheckboxChecked.length) {
 			checkboxSelectAll.prop('checked', true);
 		}
@@ -70,8 +66,8 @@ class MultipleActionInTable {
 	}
 
 	static getDivBtn(table) {
-		var divTableResponsive = table.parent();
-		var divBtn = divTableResponsive.next();
+		let divTableResponsive = table.parent();
+		let divBtn = divTableResponsive.next();
 		if (divBtn.hasClass('action_multiple_buttons')) {
 			return divBtn;
 		}
@@ -111,7 +107,107 @@ class MultipleActionInTable {
 
 }
 
-module.exports = { MultipleActionInTable };
+class MultipleActionInDivList {
+// init checkbox
+	static init(contentDiv) {
+		// Si aucune div sélectionnable, on n'applique pas le plugin
+		if (!contentDiv.find('.multiple_action').length) {
+			return;
+		}
+
+		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+		if (buttonsDiv == null) {
+			return;
+		}
+
+		if (!buttonsDiv.data('action_multiple_buttons_initialized')) {
+			buttonsDiv.prepend($('<img src="'+ROOT_PATH+DOSSIER_IMAGES+'arrow_ltr.png" alt="" /> &nbsp;'));
+			buttonsDiv.append($('<br/><br/>'));
+			buttonsDiv.data('action_multiple_buttons_initialized', 1);
+		}
+
+		// Ajout checkbox pour chaque div sélectionnable
+		contentDiv.find('.multiple_action').each(function(idx, div) {
+			if ($(div).find('div.multi_select').length === 0) {
+				$(div).prepend($('<div class="multi_select float-start me-2"><input type="checkbox" class="action_multiple_checkbox" name="'+$(div).data('action_multiple_input_name')+'" value="'+$(div).data('action_multiple_item_id')+'"></div>'));
+			}
+		});
+
+		// Ajout checkbox select all
+		if (contentDiv.find('input.action_multiple_check_all').length === 0) {
+			contentDiv.prepend('<p class="mb-2"><input type="checkbox" class="action_multiple_check_all" /> Tout sélectionner</p>');
+		}
+
+		contentDiv.find('input.action_multiple_checkbox').change(function() {
+			MultipleActionInDivList.updateCheckbox(contentDiv);
+		});
+
+		contentDiv.find('input.action_multiple_check_all').off('click').click(function() {
+			let checkbox = contentDiv.find('input.action_multiple_checkbox');
+			let checkboxChecked = contentDiv.find('input.action_multiple_checkbox:checked');
+			if (checkbox.length === checkboxChecked.length) {
+				checkbox.prop('checked', false);
+			}
+			else {
+				checkbox.prop('checked', true);
+			}
+			MultipleActionInDivList.updateCheckbox(contentDiv);
+		});
+
+		MultipleActionInDivList.updateCheckbox(contentDiv);
+	}
+
+	static updateCheckbox(contentDiv) {
+		MultipleActionInDivList.showButtonsAction(contentDiv);
+
+		let allCheckbox = contentDiv.find('input.action_multiple_checkbox');
+		let allCheckboxChecked = contentDiv.find('input.action_multiple_checkbox:checked');
+		let checkboxSelectAll = contentDiv.find('input.action_multiple_check_all');
+		if (allCheckbox.length === allCheckboxChecked.length) {
+			checkboxSelectAll.prop('checked', true);
+		}
+		else {
+			checkboxSelectAll.prop('checked', false);
+		}
+	}
+
+	static getButtonsDiv(contentDiv) {
+		let buttonsDiv = contentDiv.next();
+		if (buttonsDiv.hasClass('action_multiple_buttons')) {
+			return buttonsDiv;
+		}
+		return null;
+	}
+
+	static showButtonsAction(contentDiv) {
+		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+		if (buttonsDiv == null) {
+			return;
+		}
+
+		// console.log(divBtn);
+		//var nbItems = $('input[name="' + checkbox.attr('name') + '"]:checked').length;
+		let nbItems = contentDiv.find('input.action_multiple_checkbox:checked').length;
+
+		if (nbItems > 0 && buttonsDiv.is(':hidden')) {
+			buttonsDiv.removeClass('hide');
+		}
+		// 13/04/2021 : si le tableau est caché cela veut dire qu'il est en train de s'initialiser (après avoir chargé les données) et donc s'il n'y a pas de ligne sélectionnées, on cache la div buttons
+		else if ((nbItems === 0 && buttonsDiv.is(':visible')) || (nbItems === 0 && contentDiv.is(':hidden'))) {
+			buttonsDiv.addClass('hide');
+		}
+
+		// affichage aucune action possible si aucun bouton n'est visible
+		if (buttonsDiv.is(':visible')) {
+			buttonsDiv.find('span.no_button').remove();
+			if (buttonsDiv.find('button:visible, a:visible').length === 0) {
+				buttonsDiv.find('img').after('<span class="no_button"><em>aucune action possible</em></span>');
+			}
+		}
+	}
+}
+
+module.exports = { MultipleActionInTable, MultipleActionInDivList };
 
 /*
 // init checkbox

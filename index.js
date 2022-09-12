@@ -26,7 +26,7 @@ const { DataTable } = require('./data_table');
 const { Pagination, Navigation } = require('./paging');
 const { DetailsSubArray } = require('./details_sub_array');
 const { SelectAll } = require('./select_all');
-const { MultipleActionInTable } = require('./multiple_action_in_table');
+const { MultipleActionInTable, MultipleActionInDivList } = require('./multiple_action_in_table');
 const { FormDate, InputPeriod } = require('./form_date');
 const { ShoppingCart } = require('./shopping_cart');
 const { FlashMessage } = require('./flash_message');
@@ -47,7 +47,7 @@ const { WebSocket } = require('./web_socket');
 module.exports = {
 	Array, Object, Number, String,
 	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
-	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
+	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };
