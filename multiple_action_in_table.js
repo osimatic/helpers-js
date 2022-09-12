@@ -110,13 +110,15 @@ class MultipleActionInTable {
 class MultipleActionInDivList {
 // init checkbox
 	static init(contentDiv) {
-		// Si aucune div sélectionnable, on n'applique pas le plugin
-		if (!contentDiv.find('.multiple_action').length) {
+		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+		if (buttonsDiv == null) {
 			return;
 		}
 
-		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
-		if (buttonsDiv == null) {
+		buttonsDiv.addClass('hide');
+
+		// Si aucune div sélectionnable, on n'applique pas le plugin
+		if (!contentDiv.find('.multiple_action').length) {
 			return;
 		}
 
