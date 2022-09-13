@@ -1,62 +1,25 @@
 class FormHelper {
-	static resetSelectOption(form, selectName) {
-		form.find('select[name="'+selectName+'"] option').prop('disabled', false).prop('selected', false);
-	}
-	static setSelectedSelectOption(form, selectName, optionValue) {
-		form.find('select[name="'+selectName+'"] option[value="'+optionValue+'"]').prop('selected', true);
-	}
-	static setSelectedSelectOptions(form, selectName, optionValues) {
-		$.each(optionValues, function(idx, id) {
-			FormHelper.setSelectedSelectOption(form, selectName, id);
+	static init(form, onSubmitCallback, submitButton) {
+		FormHelper.reset(form, submitButton);
+		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
+		submitButton.off('click').click(function(e) {
+			e.preventDefault();
+			FormHelper.buttonLoader($(this), 'loading');
+			FormHelper.hideFormErrors(form);
+			onSubmitCallback(form, submitButton);
 		});
-	}
-	static disableSelectOption(form, selectName, optionValue) {
-		form.find('select[name="'+selectName+'"] option[value="'+optionValue+'"]').prop('disabled', true);
-	}
-	static disableSelectOptions(form, selectName, optionValues) {
-		$.each(optionValues, function(idx, id) {
-			FormHelper.disableSelectOption(form, selectName, id);
-		});
-	}
-	static countSelectOptions(form, selectName) {
-		return form.find('select[name="'+selectName+'"] option:not([disabled])').length;
 	}
 
 	static reset(form) {
 		form.find('[name]').each((idx, el) => $(el).val(''));
+		FormHelper.buttonLoader(form.find('button'), 'reset');
 		FormHelper.hideFormErrors(form);
 		return form;
 	}
 
-	static getFormData(form) {
-		// var formElement = document.getElementById("myFormElement");
-		return new FormData(form[0]);
-	}
-
-	static getDataFromFormData(formData) {
-		var data = {};
-		for(let pair of formData.entries()) {
-			//console.log(pair[0]+ ', '+ pair[1]);
-			data[pair[0]] = pair[1];
-		}
-		return data;
-	}
-
-	static getFormDataQueryString(form) {
-		return form.serialize();
-		// cette soluce marche pas pour les clés sous forme de tableau : ids[]=1&ids[]=2
-		/*
-		return form.serializeArray().reduce(function(obj, item) {
-			obj[item.name] = item.value;
-			return obj;
-		}, {});
-		*/
-	}
-
-
 	static populateForm(form, data) {
 		form.find('[name="employees_display_type"][value="NONE"]').prop('checked', true); //todo à retirer
-		
+
 		$.each(data, function(key, value) {
 			if (value == null) {
 				return;
@@ -85,6 +48,85 @@ class FormHelper {
 		});
 	}
 
+
+	static getFormData(form) {
+		// var formElement = document.getElementById("myFormElement");
+		return new FormData(form[0]);
+	}
+
+	static getDataFromFormData(formData) {
+		var data = {};
+		for(let pair of formData.entries()) {
+			//console.log(pair[0]+ ', '+ pair[1]);
+			data[pair[0]] = pair[1];
+		}
+		return data;
+	}
+
+	static getFormDataQueryString(form) {
+		return form.serialize();
+		// cette soluce marche pas pour les clés sous forme de tableau : ids[]=1&ids[]=2
+		/*
+		return form.serializeArray().reduce(function(obj, item) {
+			obj[item.name] = item.value;
+			return obj;
+		}, {});
+		*/
+	}
+
+
+
+	// ------------------------------------------------------------
+	// Input text
+	// ------------------------------------------------------------
+
+	static getInputValue(input) {
+		if (typeof input == 'undefined') {
+			return null;
+		}
+		let value = $(input).val();
+		if (value === null || value === '') {
+			return null;
+		}
+		return value;
+	}
+
+	static getLinesOfTextarea(textarea) {
+		return textarea.val().replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
+	}
+
+	// ------------------------------------------------------------
+	// Select
+	// ------------------------------------------------------------
+
+	static resetSelectOption(form, selectName) {
+		form.find('select[name="'+selectName+'"] option').prop('disabled', false).prop('selected', false);
+	}
+	static setSelectedSelectOption(form, selectName, optionValue) {
+		form.find('select[name="'+selectName+'"] option[value="'+optionValue+'"]').prop('selected', true);
+	}
+	static setSelectedSelectOptions(form, selectName, optionValues) {
+		$.each(optionValues, function(idx, id) {
+			FormHelper.setSelectedSelectOption(form, selectName, id);
+		});
+	}
+	static disableSelectOption(form, selectName, optionValue) {
+		form.find('select[name="'+selectName+'"] option[value="'+optionValue+'"]').prop('disabled', true);
+	}
+	static disableSelectOptions(form, selectName, optionValues) {
+		$.each(optionValues, function(idx, id) {
+			FormHelper.disableSelectOption(form, selectName, id);
+		});
+	}
+	static countSelectOptions(form, selectName) {
+		return form.find('select[name="'+selectName+'"] option:not([disabled])').length;
+	}
+
+
+	// ------------------------------------------------------------
+	// Checkbox
+	// ------------------------------------------------------------
+
 	static getCheckedValues(inputs) {
 		return inputs.map(function() {
 			if (this.checked) {
@@ -103,21 +145,6 @@ class FormHelper {
 		return inputs.map(function() {
 			return this.value;
 		}).get().filter(word => word.length > 0);
-	}
-
-	static getInputValue(input) {
-		if (typeof input == 'undefined') {
-			return null;
-		}
-		let value = $(input).val();
-		if (value === null || value === '') {
-			return null;
-		}
-		return value;
-	}
-
-	static getLinesOfTextarea(textarea) {
-		return textarea.val().replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
 	}
 
 
@@ -171,7 +198,7 @@ class FormHelper {
 	}
 
 	// ------------------------------------------------------------
-	// Messages
+	// Messages erreur
 	// ------------------------------------------------------------
 
 	static extractErrorKeyOfJson(json, onlyIfUniqueError) {
@@ -259,6 +286,10 @@ class FormHelper {
 	}
 
 
+	// ------------------------------------------------------------
+	// Bouton valider
+	// ------------------------------------------------------------
+
 	static buttonLoader(button, action) {
 		button = $(button);
 		if (action === 'start' || action === 'loading') {
@@ -287,19 +318,6 @@ class FormHelper {
 		return button;
 	}
 	
-	
-	
-	
-
-	/** @deprecated **/
-	static logRequestFailure(status, exception) {
-		console.log('request failure. Status: '+status+' ; Exception: '+exception);
-	}
-
-	/** @deprecated **/
-	static displayFormErrorsFromXhr(form, btnSubmit, xhr) {
-		this.displayFormErrors(form, btnSubmit, xhr.responseJSON);
-	}
 
 }
 
