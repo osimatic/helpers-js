@@ -1,17 +1,20 @@
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton) {
-		FormHelper.reset(form, submitButton);
+		FormHelper.reset(form);
 		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
 		submitButton.off('click').click(function(e) {
 			e.preventDefault();
 			FormHelper.buttonLoader($(this), 'loading');
 			FormHelper.hideFormErrors(form);
-			onSubmitCallback(form, submitButton);
+			if (typeof onSubmitCallback == 'function') {
+				onSubmitCallback(form, submitButton);
+			}
 		});
+		return form;
 	}
 
 	static reset(form) {
-		form.find('[name]').each((idx, el) => $(el).val(''));
+		form.find('input[name]:not([type="checkbox"], [type="radio"]), select, textarea').each((idx, el) => $(el).val(''));
 		FormHelper.buttonLoader(form.find('button'), 'reset');
 		FormHelper.hideFormErrors(form);
 		return form;
