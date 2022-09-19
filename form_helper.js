@@ -15,7 +15,8 @@ class FormHelper {
 
 	static reset(form, submitButton) {
 		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
-		form.find('input[name]:not([type="checkbox"], [type="radio"]), select, textarea').each((idx, el) => $(el).val('')).off('change');
+		form.find('input[name]:not([type="checkbox"], [type="radio"]), select:not(.selectpicker), textarea').each((idx, el) => $(el).val('')).off('change');
+		form.find('select.selectpicker').each((idx, el) => $(el).val(''));
 		FormHelper.buttonLoader(submitButton, 'reset');
 		FormHelper.hideFormErrors(form);
 		return form;
