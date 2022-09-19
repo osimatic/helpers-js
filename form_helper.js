@@ -1,6 +1,6 @@
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton) {
-		FormHelper.reset(form);
+		FormHelper.reset(form, submitButton);
 		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
 		submitButton.off('click').click(function(e) {
 			e.preventDefault();
@@ -13,9 +13,10 @@ class FormHelper {
 		return form;
 	}
 
-	static reset(form) {
-		form.find('input[name]:not([type="checkbox"], [type="radio"]), select, textarea').each((idx, el) => $(el).val(''));
-		FormHelper.buttonLoader(form.find('button'), 'reset');
+	static reset(form, submitButton) {
+		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
+		form.find('input[name]:not([type="checkbox"], [type="radio"]), select, textarea').each((idx, el) => $(el).val('')).off('change');
+		FormHelper.buttonLoader(submitButton, 'reset');
 		FormHelper.hideFormErrors(form);
 		return form;
 	}
@@ -300,7 +301,7 @@ class FormHelper {
 				return self;
 			}
 			button.attr('disabled', true);
-			button.attr('data-btn-text', button.html());
+			button.data('btn-text', button.html());
 			//let text = '<span class="spinner"><i class=\'fa fa-circle-notch fa-spin\'></i></span>Traitement en cours…';
 			let text = '<i class=\'fa fa-circle-notch fa-spin\'></i> Traitement en cours…';
 			if (button.data('load-text') != undefined && button.data('load-text') != null && button.data('load-text') != '') {
@@ -313,7 +314,7 @@ class FormHelper {
 			button.addClass('disabled');
 		}
 		if (action === 'stop' || action === 'reset') {
-			button.html(button.attr('data-btn-text'));
+			button.html(button.data('btn-text'));
 			button.removeClass('disabled');
 			button.attr('disabled', false);
 			//button.removeAttr("disabled");

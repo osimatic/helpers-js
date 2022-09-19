@@ -288,6 +288,23 @@ class Country {
 }
 
 class PostalAddress {
+	static setAutocomplete(input, onPlaceChanged) {
+		let autocomplete = new google.maps.places.Autocomplete(
+			input[0],
+			{types: ['geocode']}
+		);
+		//console.log(autocomplete);
+
+		// When the user selects an address from the dropdown, populate the address fields in the form.
+		autocomplete.addListener('place_changed', function() {
+			let place = autocomplete.getPlace();
+			input.val('');
+			if (typeof onPlaceChanged == 'function') {
+				onPlaceChanged(place['formatted_address']);
+			}
+		});
+	}
+
 	static format(addressData, separator) {
 		if (typeof separator == 'undefined') {
 			separator = '<br/>';
