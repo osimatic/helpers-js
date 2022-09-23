@@ -310,6 +310,10 @@ class PostalAddress {
 			separator = '<br/>';
 		}
 
+		function empty(value) {
+			return typeof value == 'undefined' || value == null || value === '';
+		}
+
 		/*
 		var address = new Address({
 			country: "USA",
@@ -324,23 +328,25 @@ class PostalAddress {
 		console.log(formatted);
 		 */
 
-		var addressDataForPluging = {
-			streetAddress: addressData.streetAddress+(addressData.additionalAddress!=null&&addressData.additionalAddress!==''?"\n"+addressData.additionalAddress:''),
-			postalCode: addressData.postalCode,
-			locality: addressData.locality,
-			region: addressData.state,
-			countryCode: addressData.countryCode,
-			country: Country.getCountryName(addressData.countryCode),
+		addressData['countryCode'] = !empty(addressData['countryCode'])?addressData['countryCode']:null;
+
+		let addressDataForPluging = {
+			streetAddress: (!empty(addressData['streetAddress'])?addressData['streetAddress']:'')+(!empty(addressData['additionalAddress'])?"\n"+addressData['additionalAddress']:''),
+			postalCode: !empty(addressData['postalCode'])?addressData['postalCode']:null,
+			locality: !empty(addressData['locality'])?addressData['locality']:null,
+			region: !empty(addressData['state'])?addressData['state']:null,
+			countryCode: addressData['countryCode'],
+			country: Country.getCountryName(addressData['countryCode']),
 		};
-		if (addressDataForPluging.locality == null) {
-			addressDataForPluging.locality = addressData.suburb;
+		if (addressDataForPluging['locality'] == null && !empty(addressData['suburb'])) {
+			addressDataForPluging['locality'] = addressData['suburb'];
 		}
-		if (addressDataForPluging.locality == null) {
-			addressDataForPluging.locality = addressData.stateDistrict;
+		if (addressDataForPluging['locality'] == null && !empty(addressData['stateDistrict'])) {
+			addressDataForPluging['locality'] = addressData['stateDistrict'];
 		}
 
-		var af = new AddressFmt();
-		var formattedAddress = af.format(new Address(addressDataForPluging));
+		let af = new AddressFmt();
+		let formattedAddress = af.format(new Address(addressDataForPluging));
 		return formattedAddress.replace(/\n+/g, separator);
 	}
 
