@@ -202,6 +202,10 @@ class FormHelper {
 		form.find('input[type="password"]').wrap('<div class="input-group password"></div>').after(linkTogglePassword);
 	}
 
+	static hideField(inputOrSelect) {
+		inputOrSelect.closest('.form-group').addClass('hide');
+	}
+
 	// ------------------------------------------------------------
 	// Messages erreur
 	// ------------------------------------------------------------

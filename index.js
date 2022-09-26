@@ -16,6 +16,7 @@ const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
 const { FormHelper, EditValue } = require('./form_helper');
 const { Country, PostalAddress, GeographicCoordinates } = require('./location');
+const { HexColor, RgbColor } = require('./draw');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
@@ -46,7 +47,7 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, SocialNetwork,
+	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork,
 	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
