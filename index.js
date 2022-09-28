@@ -7,6 +7,7 @@ require('./array');
 require('./number');
 
 // exports d'ojets non natif
+const { HTTPClient } = require('./http_client');
 const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
 const { IBAN, BankCard } = require('./bank');
 const { AudioMedia, UserMedia } = require('./media');
@@ -47,7 +48,7 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork,
+	HTTPClient, HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork,
 	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
