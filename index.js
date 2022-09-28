@@ -23,7 +23,7 @@ const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
 
 // exports plugins "maison"
-const { Browser } = require('./visitor');
+const { Browser, UserAgent } = require('./visitor');
 const { DataTable } = require('./data_table');
 const { Pagination, Navigation } = require('./paging');
 const { DetailsSubArray } = require('./details_sub_array');
