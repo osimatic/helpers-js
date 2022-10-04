@@ -13,7 +13,7 @@ class GoogleCharts {
 		// on supprime du tableau la liste des graphiques dont l'id div n'a pas été trouvé (le graphique ne pourra pas être généré)
 		chartsList = chartsList.filter(chartData => typeof chartData.div_id != 'undefined' && $('#'+chartData.div_id).length);
 
-		var nbChartsCompleted = 0;
+		let nbChartsCompleted = 0;
 		chartsList.forEach(chartData => {
 			//console.log(chartData);
 			GoogleCharts.draw(
@@ -41,17 +41,18 @@ class GoogleCharts {
 
 	static draw(div, typeGraph, titre, libelleAbs, tabDataAbsParam, listeLibelleOrd, listeTabDataOrd, tabColor, formatData, height, width, onComplete) {
 		if (typeof div == 'undefined' || !div.length) {
+			console.error('div not found');
 			return;
 		}
 
 		height = height || null;
 		width = width || null;
 
-		var htmlDomDiv = div[0];
+		let htmlDomDiv = div[0];
 
-		var afficherLibelleOrd = false;
+		let afficherLibelleOrd = false;
 
-		var isStacked = false;
+		let isStacked = false;
 		if (typeGraph === 'stacked_bar_chart') {
 			typeGraph = 'bar_chart';
 			isStacked = true;
@@ -65,7 +66,7 @@ class GoogleCharts {
 			isStacked = true;
 		}
 
-		var isDualChart = false;
+		let isDualChart = false;
 		if (typeGraph === 'dual_column_chart') {
 			typeGraph = 'column_chart';
 			isDualChart = true;
@@ -75,7 +76,7 @@ class GoogleCharts {
 			isDualChart = true;
 		}
 
-		var data = null;
+		let data = null;
 		if (typeGraph === 'pie_chart') {
 			//data = google.visualization.arrayToDataTable(tabDataAbsParam);
 
@@ -83,7 +84,7 @@ class GoogleCharts {
 			data.addColumn('string', libelleAbs);
 			data.addColumn('number', '');
 
-			var numRow = 0;
+			let numRow = 0;
 			$.each(tabDataAbsParam, function(idx, value) {
 				data.addRows(1);
 				data.setCell(numRow, 0, idx);
@@ -100,8 +101,8 @@ class GoogleCharts {
 			});
 
 			// Remplissage des données
-			var nbCells = 0;
-			var numRow = 0;
+			let nbCells = 0;
+			let numRow = 0;
 			$.each(tabDataAbsParam, function(idx, dataAbs) {
 				// dataOrd = tabDataOrd[idx];
 				// data.addRow([dataAbs, dataOrd]);
@@ -109,7 +110,7 @@ class GoogleCharts {
 
 				data.setCell(numRow, 0, dataAbs);
 
-				var numCell = 1;
+				let numCell = 1;
 				$.each(listeTabDataOrd, function(idx2, tabDataOrd) {
 					data.setCell(numRow, numCell, tabDataOrd[idx]);
 					//data.setCell(numRow, numCell, Math.round(tabDataOrd[idx], 2));
@@ -126,7 +127,7 @@ class GoogleCharts {
 		// console.log('drawGraph : '+div+' ; type : '+typeGraph);
 
 		// Options générales
-		var options = {
+		let options = {
 			colors: tabColor,
 			fontName: 'Trebuchet MS',
 			fontSize: 12,
@@ -221,7 +222,7 @@ class GoogleCharts {
 				// console.log(idx);
 				if (idx <= 1) {
 					// key = 'series_'+idx;
-					var key = idx;
+					let key = idx;
 					// options.series[idx] = {axis: key, targetAxisIndex: key};
 					options.series[idx] = {axis: key, targetAxisIndex: idx};
 					if (typeGraph === 'column_chart') {
@@ -278,7 +279,7 @@ class GoogleCharts {
 		// console.log(options);
 
 		// Création du graphique
-		var chart = null;
+		let chart = null;
 		if (typeGraph === 'column_chart') {
 			// chart = new google.visualization.ColumnChart(htmlDomDiv);
 			chart = new google.charts.Bar(htmlDomDiv);
@@ -301,7 +302,7 @@ class GoogleCharts {
 		div.removeClass('loading');
 
 		if (chart === null) {
-			console.log('erreur graphique');
+			console.error('error during creating chart');
 			div.addClass('graphique_error');
 			htmlDomDiv.innerHTML = 'Une erreur s\'est produite lors du chargement du graphique.';
 			return;
@@ -317,7 +318,7 @@ class GoogleCharts {
 			tabPaneDiv = div.closest('.tab-pane');
 		}
 
-		var hasClassActive = tabPaneDiv.hasClass('active');
+		let hasClassActive = tabPaneDiv.hasClass('active');
 		if (!hasClassActive) {
 			tabPaneDiv.addClass('active');
 		}
