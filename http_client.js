@@ -48,6 +48,10 @@ class HTTPClient {
 			HTTPClient.headers = {};
 		}
 
+		if (typeof authorizationToken == 'undefined' || null == authorizationToken) {
+			return;
+		}
+
 		HTTPClient.headers['Authorization'] = 'Bearer ' + authorizationToken;
 	}
 
