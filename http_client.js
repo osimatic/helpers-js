@@ -3,9 +3,15 @@ class HTTPClient {
 	static setRefreshTokenUrl(url) {
 		HTTPClient.refreshTokenUrl = url;
 	}
-
 	static setRefreshTokenCallback(callback) {
 		HTTPClient.refreshTokenCallback = callback;
+	}
+
+	static setOnInvalidTokenRedirectUrl(url) {
+		HTTPClient.onInvalidTokenRedirectUrl = url;
+	}
+	static setOnInvalidTokenCallback(callback) {
+		HTTPClient.onInvalidTokenCallback = callback;
 	}
 
 	static getHeaders(asObject) {
@@ -130,10 +136,35 @@ class HTTPClient {
 			response.statusText === 'Expired JWT Token'
 			|| (typeof json['message'] != 'undefined' && json['message'] === 'Expired JWT Token')
 			|| (typeof json['error'] != 'undefined' && json['error'] === 'expired_token')
-			|| (typeof json['error'] != 'undefined' && json['error'] === 'authentification_failure')
 			|| (json === 'expired_token')
+		);
+	}
+
+	static isInvalidToken(response, json) {
+		if (response.status !== 401) {
+			return false;
+		}
+
+		return (
+			response.statusText === 'Invalid JWT Token'
+			|| (typeof json['message'] != 'undefined' && json['message'] === 'Invalid JWT Token')
+			|| (typeof json['error'] != 'undefined' && json['error'] === 'invalid_token')
+			|| (typeof json['error'] != 'undefined' && json['error'] === 'authentification_failure')
+			|| (json === 'invalid_token')
 			|| (json === 'authentification_failure')
 		);
+	}
+
+	static onInvalidToken() {
+		if (typeof HTTPClient.onInvalidTokenCallback == 'function') {
+			HTTPClient.onInvalidTokenCallback();
+			return;
+		}
+
+		JwtSession.logout();
+		if (typeof HTTPClient.onInvalidTokenRedirectUrl != 'undefined') {
+			window.location.href = HTTPClient.onInvalidTokenRedirectUrl;
+		}
 	}
 
 	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
@@ -170,6 +201,11 @@ class HTTPClient {
 
 			if (HTTPClient.isExpiredToken(response, jsonData)) {
 				HTTPClient.refreshToken(() => HTTPClient.request(method, url, data, successCallback, errorCallback, formErrorCallback), errorCallback);
+				return;
+			}
+
+			if (HTTPClient.isInvalidToken(response, jsonData)) {
+				HTTPClient.onInvalidToken();
 				return;
 			}
 
@@ -226,6 +262,11 @@ class HTTPClient {
 		try {
 			if (response.status === 401 && response.statusText === 'Expired JWT Token') {
 				HTTPClient.refreshToken(() => HTTPClient.download(method, url, data, errorCallback, completeCallback), errorCallback);
+				return;
+			}
+
+			if (response.status === 401 && response.statusText === 'Invalid JWT Token') {
+				HTTPClient.onInvalidToken();
 				return;
 			}
 
