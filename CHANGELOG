@@ -49,3 +49,6 @@ ajout méthode HTTPRequest.init() (charge le polyfill de fetch)
 
 1.0.61
 DataTable.displayErrorFromXhr -> DataTable.displayError
+
+1.0.96
+var intlTelInputUtilsPath = 'xxx'; -> TelephoneNumber.setIntlTelInputUtilsPath('xxx');
