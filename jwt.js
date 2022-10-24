@@ -1,8 +1,8 @@
 class JwtToken {
 	static parseJwt (token) {
-		var base64Url = token.split('.')[1];
-		var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-		var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+		let base64Url = token.split('.')[1];
+		let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+		let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
 			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
 		}).join(''));
 
@@ -15,7 +15,19 @@ class JwtToken {
 		}
 
 		let payload = JwtToken.parseJwt(token);
-		return payload.roles.indexOf(role) !== -1;
+		return typeof payload['roles'] != 'undefined' && payload['roles'].indexOf(role) !== -1;
+	}
+
+	static getData(token, key) {
+		if (token == null) {
+			return null;
+		}
+
+		let payload = JwtToken.parseJwt(token);
+		if (typeof payload[key] != 'undefined') {
+			return payload[key];
+		}
+		return null;
 	}
 }
 
@@ -66,16 +78,7 @@ class JwtSession {
 	}
 
 	static getData(key) {
-		let token = JwtSession.getToken();
-		if (token == null) {
-			return null;
-		}
-
-		let payload = JwtToken.parseJwt(token);
-		if (typeof payload[key] != 'undefined') {
-			return payload[key];
-		}
-		return null;
+		return JwtToken.getData(JwtSession.getToken(), key);
 	}
 
 	static isAnonymous() {
@@ -83,13 +86,7 @@ class JwtSession {
 	}
 
 	static isGranted(role) {
-		let token = localStorage.getItem('access_token');
-		if (token == null) {
-			return false;
-		}
-
-		let payload = JwtToken.parseJwt(token);
-		return payload.roles.indexOf(role) !== -1;
+		return JwtToken.hasRole(JwtSession.getToken(), role);
 	}
 }
 
