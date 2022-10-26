@@ -161,33 +161,35 @@ class FormHelper {
 		//if ( $('[type="date"]').prop('type') != 'date' ) {
 		//	$('[type="date"]').datepicker();
 		//}
-		if (!Modernizr.inputtypes.date) {
-			// $.fn.datepicker.defaults.language = 'fr';
-			// $.datepicker.setDefaults( $.datepicker.regional["fr"]);
-			form.find('input[type="date"]')
-				.css('max-width', '120px')
-				// 28/06/2021 : désactivation du datepicker car safari le gere en natif
-				/*
-				.datepicker({
-					dateFormat: 'yy-mm-dd',
-					changeMonth: true,
-					changeYear: true,
-					showOn: "both",
-					buttonImage: ROOT_PATH+'images/icons/calendar-alt.png',
-					buttonImageOnly: true,
-				})
-				*/
-			;
-			//form.find('input[type="date"]').datepicker({dateFormat: 'yy-mm-dd', minDate: "-10Y", maxDate: "+3Y"});
-			// $("#date_conf").datepicker("option", $.datepicker.regional["fr"]);
-			// $("#date_conf").datepicker("option", "dateFormat", "yy-mm-dd");
-		}
-		if (!Modernizr.inputtypes.time) {
-			form.find('input[type="time"]')
-				.css('max-width', '100px')
-				.attr('placeholder', 'hh:mm')
-			;
-			form.find('input[type="time"][step="1"]').attr('placeholder', 'hh:mm:ss');
+		if (typeof Modernizr != 'undefined') {
+			if (!Modernizr.inputtypes.date) {
+				// $.fn.datepicker.defaults.language = 'fr';
+				// $.datepicker.setDefaults( $.datepicker.regional["fr"]);
+				form.find('input[type="date"]')
+					.css('max-width', '120px')
+					// 28/06/2021 : désactivation du datepicker car safari le gere en natif
+					/*
+					.datepicker({
+						dateFormat: 'yy-mm-dd',
+						changeMonth: true,
+						changeYear: true,
+						showOn: "both",
+						buttonImage: ROOT_PATH+'images/icons/calendar-alt.png',
+						buttonImageOnly: true,
+					})
+					*/
+				;
+				//form.find('input[type="date"]').datepicker({dateFormat: 'yy-mm-dd', minDate: "-10Y", maxDate: "+3Y"});
+				// $("#date_conf").datepicker("option", $.datepicker.regional["fr"]);
+				// $("#date_conf").datepicker("option", "dateFormat", "yy-mm-dd");
+			}
+			if (!Modernizr.inputtypes.time) {
+				form.find('input[type="time"]')
+					.css('max-width', '100px')
+					.attr('placeholder', 'hh:mm')
+				;
+				form.find('input[type="time"][step="1"]').attr('placeholder', 'hh:mm:ss');
+			}
 		}
 
 		// Show/Hide password

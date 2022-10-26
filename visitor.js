@@ -12,6 +12,7 @@ class Browser {
 		return !!window.chrome && !!window.chrome.webstore;
 	}
 	static isIE() {
+		//return window.navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
 		return /*@cc_on!@*/false || !!document.documentMode;
 	}
 	static isEdge() {

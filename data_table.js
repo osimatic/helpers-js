@@ -1,9 +1,11 @@
 
 class DataTable {
-	// criteres = {};
 
-	constructor() {
-		this.criteres = {};
+	static setOptions(options) {
+		DataTable.dateTableOptions = Object.assign(...DataTable.getOptions(), options);
+	}
+	static getOptions() {
+		return DataTable.dateTableOptions || {};
 	}
 
 	static setCallbackOnLoadData(callback) {
@@ -39,8 +41,8 @@ class DataTable {
 	// ------------------------------------------------------------
 
 	static init(options) {
-		var div = options.div;
-		var defaultFilters = options.default_filters || {};
+		let div = options.div;
+		let defaultFilters = options.default_filters || {};
 
 		//let form = div.find('.filter_popover_content form');
 		//if (typeof form != 'undefined') {
@@ -49,7 +51,7 @@ class DataTable {
 		//}
 
 		// Bouton filtrer
-		var filterLink = div.find('a.filter_link');
+		let filterLink = div.find('a.filter_link');
 		if (filterLink.length) {
 			filterLink.popover({
 				content: div.find('.filter_popover_content').html(),
@@ -68,7 +70,7 @@ class DataTable {
 			});
 
 			filterLink.on('shown.bs.popover', function () {
-				var form = $('.filter_popover form');
+				let form = $('.filter_popover form');
 
 				DataTable.populateFormFromFilters(form);
 
@@ -89,7 +91,7 @@ class DataTable {
 		}
 
 		// Bouton exporter
-		var exportLink = div.find('a.export_link');
+		let exportLink = div.find('a.export_link');
 		if (exportLink.length) {
 			if (typeof options.export_modal_enabled == 'undefined' || !options.export_modal_enabled) {
 				// sans modal
@@ -111,9 +113,9 @@ class DataTable {
 				});
 
 				$('div#modal_export').on('show.bs.modal', function (event) {
-					var button = $(event.relatedTarget);
-					var modal = $(this);
-					var form = modal.find('form');
+					let button = $(event.relatedTarget);
+					let modal = $(this);
+					let form = modal.find('form');
 
 					// Fonction de callback permettant d'initialiser contenu du modal export, cette fonction doit renvoyer le contenu du modal
 					if (typeof options.set_export_form != 'undefined' && options.set_export_form != null) {
@@ -125,7 +127,7 @@ class DataTable {
 						modal.find('modal-body').html(options.on_show_export_form(modal, button));
 					}
 
-					var btnSubmit = form.find('button[type="submit"]').attr('disabled', false).button('reset');
+					let btnSubmit = form.find('button[type="submit"]').attr('disabled', false).button('reset');
 					btnSubmit.off('click').click(function(e) {
 						e.preventDefault();
 						$(this).attr('disabled', true).button('loading');
@@ -255,9 +257,9 @@ class DataTable {
 	}
 	static displayMessage(div, msg, cssClass /*, removeLoader=false*/) {
 		this.resetContent(div);
-		var table = div.find('table');
+		let table = div.find('table');
 		table.find('thead,tfoot').addClass('hide');
-		var msgHtml = '<div class="text-'+cssClass+' center">'+msg+'</div>';
+		let msgHtml = '<div class="text-'+cssClass+' center">'+msg+'</div>';
 		if (table.find('tbody').length == 0) {
 			table.append('<tbody></tbody>');
 		}
@@ -269,7 +271,7 @@ class DataTable {
 	}
 
 	static displayError(div, data, defaultMessage) {
-		var error = null;
+		let error = null;
 		if (data != null) {
 			if (typeof data.error != 'undefined') {
 				error = data.error;
@@ -286,9 +288,9 @@ class DataTable {
 	}
 
 	static getDefaultColumnsForDisplayedTable(div) {
-		var table = div.find('table');
-		var columns = [];
-		var defaultHiddenColumns = table.data('hidden_fields') != null ? table.data('hidden_fields').split(',') : [];
+		let table = div.find('table');
+		let columns = [];
+		let defaultHiddenColumns = table.data('hidden_fields') != null ? table.data('hidden_fields').split(',') : [];
 		table.find('thead tr th').each(function(idx, th) {
 			if (defaultHiddenColumns.indexOf($(th).data('key')) == -1) {
 				columns.push($(th).data('key'));
@@ -300,12 +302,12 @@ class DataTable {
 
 	static setDataContent(div, data, displayLineCallback, completeCallback) {
 		//console.log('setDataContent');
-		var table = div.find('table').removeClass('hide');
+		let table = div.find('table').removeClass('hide');
 
 		try {
 			DataTable.resetContent(div);
-			var tableBody = table.find('tbody');
-			for (var i = 0; i < data.length; i++) {
+			let tableBody = table.find('tbody');
+			for (let i = 0; i < data.length; i++) {
 				tableBody.append(displayLineCallback(data[i]));
 			}
 
@@ -339,7 +341,7 @@ class DataTable {
 
 	static initDataContent(div) {
 		//console.log('initDataContent');
-		var table = div.find('table');
+		let table = div.find('table');
 
 		// Popover/Tooltip
 		div.find('[data-toggle="popover"]').popover({'trigger':'hover', 'html':true});
@@ -355,16 +357,16 @@ class DataTable {
 
 		if (table.length > 0 && !table.is('[data-no_datatables="1"]') && !$.fn.dataTable.isDataTable(table)) {
 			if (table.data('page_length') != null) {
-				dateTablesOptions.pageLength = table.data('page_length');
+				DataTable.getOptions()['pageLength'] = table.data('page_length');
 			}
-			table.DataTable(dateTablesOptions);
+			table.DataTable(DataTable.getOptions());
 		}
 
 		DataTable.updateDataContent(div);
 	}
 
 	static updateDataContent(div) {
-		var table = div.find('table');
+		let table = div.find('table');
 
 		// Maj colonnes
 		if (table.length > 0 && typeof div.data('table_name') != 'undefined' && div.data('table_name') != null && div.data('display_items').split(',').indexOf('table_columns') != -1) {
@@ -372,7 +374,7 @@ class DataTable {
 				// table.find('.'+$(th).data('key')+':not(.select):not(.action)').hide();
 				table.find('.'+$(th).data('key')+':not(.select):not(.action)').addClass('hide');
 			});
-			var columns = this.getDisplayParam(div, 'html', null, 'columns').split(',').removeEmptyValues();
+			let columns = this.getDisplayParam(div, 'html', null, 'columns').split(',').removeEmptyValues();
 			$.each(columns, function(idx, key) {
 				table.find('.'+key).removeClass('hide');
 				// table.find('.'+key).show();
@@ -391,7 +393,7 @@ class DataTable {
 
 		$.fn.dataTable.ext.search = [];
 		//$.fn.dataTable.ext.search.pop();
-		var dataTableObject = table.DataTable();
+		let dataTableObject = table.DataTable();
 		$.fn.dataTable.ext.search.push(
 			function(settings, searchData, index, rowData, counter) {
 				return callback($(dataTableObject.row(index).node()));

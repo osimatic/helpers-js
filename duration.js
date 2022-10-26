@@ -21,7 +21,8 @@ class Duration {
 		minutes = Math.floor(minutes / 60);
 		// minutes = minutes - (minutes % 60);
 		let minCentieme = Math.round( (minutes / 60 ) * 100 );
-		return parseFloat(hour+'.'+minCentieme);
+		return hour+(minCentieme/100);
+		//return parseFloat(hour+'.'+minCentieme);
 	}
 
 	static convertToDurationAsInputTimeValue(durationInSeconds) {
