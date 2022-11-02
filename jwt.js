@@ -9,15 +9,6 @@ class JwtToken {
 		return JSON.parse(jsonPayload);
 	}
 
-	static hasRole(token, role) {
-		if (token == null) {
-			return false;
-		}
-
-		let payload = JwtToken.parseJwt(token);
-		return typeof payload['roles'] != 'undefined' && payload['roles'].indexOf(role) !== -1;
-	}
-
 	static getData(token, key) {
 		if (token == null) {
 			return null;
@@ -29,52 +20,70 @@ class JwtToken {
 		}
 		return null;
 	}
+
+	static hasRole(token, role) {
+		if (token == null) {
+			return false;
+		}
+
+		let payload = JwtToken.parseJwt(token);
+		return typeof payload['roles'] != 'undefined' && payload['roles'].indexOf(role) !== -1;
+	}
 }
 
 class JwtSession {
-	static denyAccessUnlessGranted(roles) {
-		let hasRole = false;
-		
-		roles.forEach(role => {
-			if (JwtSession.isGranted(role)) {
-				hasRole = true;
-			}
-		});
-
-		return hasRole;
+	static setOnNewTokenCallback(callback) {
+		JwtSession.onNewTokenCallback = callback;
 	}
-
-	static setToken(token) {
-		localStorage.setItem('access_token', token);
+	static setOnLogoutCallback(callback) {
+		JwtSession.onLogoutCallback = callback;
 	}
 
 	static getToken() {
 		return localStorage.getItem('access_token');
 	}
-
-	static setRefreshToken(token) {
-		localStorage.setItem('refresh_token', token);
+	static setToken(token) {
+		localStorage.setItem('access_token', token);
 	}
 
 	static getRefreshToken() {
 		return localStorage.getItem('refresh_token');
 	}
-
-	static isSimulationConnexion() {
-		return localStorage.getItem('admin_refresh_token') != null && localStorage.getItem('admin_access_token') != null;
+	static setRefreshToken(token) {
+		localStorage.setItem('refresh_token', token);
 	}
 
-	static cancelSimulationConnexion() {
-		localStorage.setItem('refresh_token', localStorage.getItem('admin_refresh_token'));
-		localStorage.setItem('access_token', localStorage.getItem('admin_access_token'));
-
-		localStorage.removeItem('admin_refresh_token');
-		localStorage.removeItem('admin_access_token');
+	static login(accessToken, refreshToken) {
+		console.log('JwtSession.login()');
+		JwtSession.setToken(accessToken);
+		JwtSession.setRefreshToken(refreshToken);
 	}
 
-	static logout() {
+	static updateToken(accessToken, refreshToken) {
+		console.log('JwtSession.updateToken()');
+		JwtSession.setToken(accessToken);
+
+		if (typeof refreshToken != 'undefined' && null != refreshToken) {
+			JwtSession.setRefreshToken(refreshToken);
+		}
+
+		if (typeof JwtSession.onNewTokenCallback == 'function') {
+			JwtSession.onNewTokenCallback();
+		}
+	}
+
+	static logout(redirectUrl) {
+		console.log('JwtSession.logout()');
 		localStorage.removeItem('access_token');
 		localStorage.removeItem('refresh_token');
+
+		if (typeof JwtSession.onLogoutCallback == 'function') {
+			JwtSession.onLogoutCallback();
+		}
+
+		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
+			window.location.href = redirectUrl;
+		}
 	}
 
 	static getData(key) {
@@ -88,21 +97,21 @@ class JwtSession {
 	static isGranted(role) {
 		return JwtToken.hasRole(JwtSession.getToken(), role);
 	}
-}
 
-class ApiTokenSession {
 	static denyAccessUnlessGranted(roles) {
 		let hasRole = false;
 
 		roles.forEach(role => {
-			if (ApiTokenSession.isGranted(role)) {
+			if (JwtSession.isGranted(role)) {
 				hasRole = true;
 			}
 		});
 
 		return hasRole;
 	}
+}
 
+class ApiTokenSession {
 	static getToken() {
 		return localStorage.getItem('api_token');
 	}
@@ -157,6 +166,18 @@ class ApiTokenSession {
 		roles = Array.isArray(roles) ? roles : [roles];
 
 		return roles.indexOf(role) !== -1;
+	}
+
+	static denyAccessUnlessGranted(roles) {
+		let hasRole = false;
+
+		roles.forEach(role => {
+			if (ApiTokenSession.isGranted(role)) {
+				hasRole = true;
+			}
+		});
+
+		return hasRole;
 	}
 }
 

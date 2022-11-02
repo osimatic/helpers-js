@@ -52,3 +52,8 @@ DataTable.displayErrorFromXhr -> DataTable.displayError
 
 1.0.96
 var intlTelInputUtilsPath = 'xxx'; -> TelephoneNumber.setIntlTelInputUtilsPath('xxx');
+
+1.0.99
+JwtSession.isSimulationConnexion() -> non remplacé
+JwtSession.cancelSimulationConnexion() -> non remplacé
+HTTPRequest -> HTTPClient

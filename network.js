@@ -1,3 +1,4 @@
+/** @deprecated */
 class HTTPRequest {
 	static init() {
 		require('whatwg-fetch'); //fetch polyfill loaded in window.fetch

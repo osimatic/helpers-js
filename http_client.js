@@ -332,13 +332,9 @@ class HTTPClient {
 
 		HTTPClient.request('POST', HTTPClient.refreshTokenUrl, payload,
 			(data) => {
-				JwtSession.setToken(data['token']);
-				JwtSession.setRefreshToken(data['refresh_token']);
-
+				JwtSession.updateToken(data['token'], data['refresh_token']);
 				HTTPClient.setAuthorizationToken(JwtSession.getToken());
-
 				onRefreshTokenComplete();
-
 			},
 			() => {
 				JwtSession.logout();
