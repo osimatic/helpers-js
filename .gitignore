@@ -1,0 +1,14 @@
+### Windows ###
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+### MAC ###
+# MAC file caches
+*.icloud
+
+### editor ###
+/.idea
+
+### node_js ###
+node_modules

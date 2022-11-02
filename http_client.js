@@ -14,6 +14,10 @@ class HTTPClient {
 		HTTPClient.onInvalidTokenCallback = callback;
 	}
 
+	static setOnInvalidRefreshTokenRedirectUrl(url) {
+		HTTPClient.onInvalidRefreshTokenRedirectUrl = url;
+	}
+
 	static getHeaders(asObject) {
 		HTTPClient.setAuthorizationToken(JwtSession.getToken());
 
@@ -161,10 +165,7 @@ class HTTPClient {
 			return;
 		}
 
-		JwtSession.logout();
-		if (typeof HTTPClient.onInvalidTokenRedirectUrl != 'undefined') {
-			window.location.href = HTTPClient.onInvalidTokenRedirectUrl;
-		}
+		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl);
 	}
 
 	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
@@ -337,7 +338,7 @@ class HTTPClient {
 				onRefreshTokenComplete();
 			},
 			() => {
-				JwtSession.logout();
+				JwtSession.logout(HTTPClient.onInvalidRefreshTokenRedirectUrl);
 				errorCallback();
 			}
 		);

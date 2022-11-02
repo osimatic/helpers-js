@@ -35,6 +35,9 @@ class JwtSession {
 	static setOnNewTokenCallback(callback) {
 		JwtSession.onNewTokenCallback = callback;
 	}
+	static setOnLoginCallback(callback) {
+		JwtSession.onLoginCallback = callback;
+	}
 	static setOnLogoutCallback(callback) {
 		JwtSession.onLogoutCallback = callback;
 	}
@@ -53,10 +56,20 @@ class JwtSession {
 		localStorage.setItem('refresh_token', token);
 	}
 
-	static login(accessToken, refreshToken) {
+	static login(data, redirectUrl) {
 		console.log('JwtSession.login()');
-		JwtSession.setToken(accessToken);
-		JwtSession.setRefreshToken(refreshToken);
+		JwtSession.setToken(data['access_token'] || data['token']);
+		JwtSession.setRefreshToken(data['refresh_token']);
+
+		localStorage.removeItem('real_users');
+
+		if (typeof JwtSession.onLoginCallback == 'function') {
+			JwtSession.onLoginCallback();
+		}
+
+		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
+			window.location.href = redirectUrl;
+		}
 	}
 
 	static updateToken(accessToken, refreshToken) {
@@ -76,6 +89,8 @@ class JwtSession {
 		console.log('JwtSession.logout()');
 		localStorage.removeItem('access_token');
 		localStorage.removeItem('refresh_token');
+
+		localStorage.removeItem('real_users');
 
 		if (typeof JwtSession.onLogoutCallback == 'function') {
 			JwtSession.onLogoutCallback();
@@ -109,6 +124,55 @@ class JwtSession {
 
 		return hasRole;
 	}
+
+
+	static getRealLoggedUsers() {
+		let realUsers = [];
+		if (localStorage.getItem('real_users') != null) {
+			realUsers = JSON.parse(localStorage.getItem('real_users'));
+		}
+		return realUsers;
+	}
+
+	static simulateLogin(loginData, onSuccess) {
+		console.log('JwtSession.simulateLogin');
+
+		// on sauvegarde les tokens de l'utilisateur réellement connecté
+		let realUsers = JwtSession.getRealLoggedUsers();
+		realUsers.push({
+			access_token: JwtSession.getToken(),
+			refresh_token: JwtSession.getRefreshToken(),
+		});
+		localStorage.setItem('real_users', JSON.stringify(realUsers));
+
+		// on enregistre la session de l'utilisateur simulé
+		JwtSession.setToken(loginData['access_token'] || loginData['token']);
+		JwtSession.setRefreshToken(loginData['refresh_token']);
+
+		if (typeof onSuccess == 'function') {
+			onSuccess();
+		}
+	}
+
+	static cancelSimulatedLogin(onSuccess) {
+		console.log('JwtSession.cancelSimulatedLogin');
+
+		// on récupère les tokens de l'utilisateur réellement connecté
+		let realUsers = JwtSession.getRealLoggedUsers();
+		let loginData = realUsers.pop();
+
+		if (typeof loginData != 'undefined' && null != loginData) {
+			localStorage.setItem('real_users', JSON.stringify(realUsers));
+
+			JwtSession.setToken(loginData['access_token'] || loginData['token']);
+			JwtSession.setRefreshToken(loginData['refresh_token']);
+
+			if (typeof onSuccess == 'function') {
+				onSuccess();
+			}
+		}
+	}
+
 }
 
 class ApiTokenSession {
