@@ -535,6 +535,11 @@ class UrlAndQueryString {
 		let queryString = UrlAndQueryString.deleteParam(UrlAndQueryString.getQueryString(url), name);
 		return UrlAndQueryString.getPath(url) + '?' + queryString;
 	}
+	static deleteParamsOfUrl(names, url) {
+		let queryString = UrlAndQueryString.getQueryString(url);
+		names.forEach((name => queryString = UrlAndQueryString.deleteParam(queryString, name)));
+		return UrlAndQueryString.getPath(url) + '?' + queryString;
+	}
 
 	static parseQuery(queryString) {
 		var params = {};

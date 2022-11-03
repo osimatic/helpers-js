@@ -229,6 +229,10 @@ class FormHelper {
 			return json[0].error;
 		}
 
+		if (typeof json[0] != 'undefined' && Array.isArray(json[0]) && json[0].length === 2) {
+			return json[0][0];
+		}
+
 		return null;
 	}
 
