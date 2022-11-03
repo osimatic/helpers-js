@@ -1,21 +1,31 @@
 
 class HTTPClient {
+	// URL appelée pour rafraichir le token. Le token est mis à jour dans JwtSession. En cas de succès, on appelle HTTPClient.onSuccessRefreshTokenCallback et on réexécute toutes les requêtes HTTP en attente de nouveau token. En cas d'échec, on redirige vers HTTPClient.onInvalidRefreshTokenRedirectUrl et/ou on appelle HTTPClient.onInvalidRefreshTokenCallback.
 	static setRefreshTokenUrl(url) {
 		HTTPClient.refreshTokenUrl = url;
 	}
+	// Callback appelé pour remplacer l'appel à HTTPClient.refreshTokenUrl (et donc pas de gestion de la session avec JwtSession)
 	static setRefreshTokenCallback(callback) {
 		HTTPClient.refreshTokenCallback = callback;
 	}
 
+	static setOnSuccessRefreshTokenCallback(callback) {
+		HTTPClient.onSuccessRefreshTokenCallback = callback;
+	}
+	static setOnInvalidRefreshTokenCallback(callback) {
+		HTTPClient.onInvalidRefreshTokenCallback = callback;
+	}
+	static setOnInvalidRefreshTokenRedirectUrl(url) {
+		HTTPClient.onInvalidRefreshTokenRedirectUrl = url;
+	}
+
+	// URL de la page vers laquelle on redirige si le token est invalide apres destruction de la JwtSession.
 	static setOnInvalidTokenRedirectUrl(url) {
 		HTTPClient.onInvalidTokenRedirectUrl = url;
 	}
+	// Callback appelé lorsqu'un token est invalide (destruction de la JwtSession dans tous les cas).
 	static setOnInvalidTokenCallback(callback) {
 		HTTPClient.onInvalidTokenCallback = callback;
-	}
-
-	static setOnInvalidRefreshTokenRedirectUrl(url) {
-		HTTPClient.onInvalidRefreshTokenRedirectUrl = url;
 	}
 
 	static getHeaders(asObject) {
@@ -160,12 +170,7 @@ class HTTPClient {
 	}
 
 	static onInvalidToken() {
-		if (typeof HTTPClient.onInvalidTokenCallback == 'function') {
-			HTTPClient.onInvalidTokenCallback();
-			return;
-		}
-
-		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl);
+		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl, HTTPClient.onInvalidTokenCallback);
 	}
 
 	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
@@ -333,12 +338,12 @@ class HTTPClient {
 
 		HTTPClient.request('POST', HTTPClient.refreshTokenUrl, payload,
 			(data) => {
-				JwtSession.updateToken(data['token'], data['refresh_token']);
+				JwtSession.updateToken(data['token'], data['refresh_token'], HTTPClient.onSuccessRefreshTokenCallback);
 				HTTPClient.setAuthorizationToken(JwtSession.getToken());
 				onRefreshTokenComplete();
 			},
 			() => {
-				JwtSession.logout(HTTPClient.onInvalidRefreshTokenRedirectUrl);
+				JwtSession.expireSession(HTTPClient.onInvalidRefreshTokenRedirectUrl, HTTPClient.onInvalidRefreshTokenCallback);
 				errorCallback();
 			}
 		);

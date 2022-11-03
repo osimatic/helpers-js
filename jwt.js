@@ -32,14 +32,17 @@ class JwtToken {
 }
 
 class JwtSession {
-	static setOnNewTokenCallback(callback) {
-		JwtSession.onNewTokenCallback = callback;
-	}
 	static setOnLoginCallback(callback) {
 		JwtSession.onLoginCallback = callback;
 	}
 	static setOnLogoutCallback(callback) {
 		JwtSession.onLogoutCallback = callback;
+	}
+	static setOnNewTokenCallback(callback) {
+		JwtSession.onNewTokenCallback = callback;
+	}
+	static setOnSessionExpireCallback(callback) {
+		JwtSession.onSessionExpireCallback = callback;
 	}
 
 	static getToken() {
@@ -56,7 +59,7 @@ class JwtSession {
 		localStorage.setItem('refresh_token', token);
 	}
 
-	static login(data, redirectUrl) {
+	static login(data, redirectUrl, onComplete) {
 		console.log('JwtSession.login()');
 		JwtSession.setToken(data['access_token'] || data['token']);
 		JwtSession.setRefreshToken(data['refresh_token']);
@@ -66,13 +69,16 @@ class JwtSession {
 		if (typeof JwtSession.onLoginCallback == 'function') {
 			JwtSession.onLoginCallback();
 		}
+		if (typeof onComplete == 'function') {
+			onComplete();
+		}
 
 		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
 			window.location.href = redirectUrl;
 		}
 	}
 
-	static updateToken(accessToken, refreshToken) {
+	static updateToken(accessToken, refreshToken, onComplete) {
 		console.log('JwtSession.updateToken()');
 		JwtSession.setToken(accessToken);
 
@@ -83,9 +89,12 @@ class JwtSession {
 		if (typeof JwtSession.onNewTokenCallback == 'function') {
 			JwtSession.onNewTokenCallback();
 		}
+		if (typeof onComplete == 'function') {
+			onComplete();
+		}
 	}
 
-	static logout(redirectUrl) {
+	static logout(redirectUrl, onComplete) {
 		console.log('JwtSession.logout()');
 		localStorage.removeItem('access_token');
 		localStorage.removeItem('refresh_token');
@@ -94,6 +103,28 @@ class JwtSession {
 
 		if (typeof JwtSession.onLogoutCallback == 'function') {
 			JwtSession.onLogoutCallback();
+		}
+		if (typeof onComplete == 'function') {
+			onComplete();
+		}
+
+		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
+			window.location.href = redirectUrl;
+		}
+	}
+
+	static expireSession(redirectUrl, onComplete) {
+		console.log('JwtSession.expireSession()');
+		localStorage.removeItem('access_token');
+		localStorage.removeItem('refresh_token');
+
+		localStorage.removeItem('real_users');
+
+		if (typeof JwtSession.onSessionExpireCallback == 'function') {
+			JwtSession.onSessionExpireCallback();
+		}
+		if (typeof onComplete == 'function') {
+			onComplete();
 		}
 
 		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
@@ -134,7 +165,7 @@ class JwtSession {
 		return realUsers;
 	}
 
-	static simulateLogin(loginData, onSuccess) {
+	static simulateLogin(loginData, redirectUrl, onComplete) {
 		console.log('JwtSession.simulateLogin');
 
 		// on sauvegarde les tokens de l'utilisateur réellement connecté
@@ -149,27 +180,37 @@ class JwtSession {
 		JwtSession.setToken(loginData['access_token'] || loginData['token']);
 		JwtSession.setRefreshToken(loginData['refresh_token']);
 
-		if (typeof onSuccess == 'function') {
-			onSuccess();
+		if (typeof onComplete == 'function') {
+			onComplete();
+		}
+
+		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
+			window.location.href = redirectUrl;
 		}
 	}
 
-	static cancelSimulatedLogin(onSuccess) {
+	static cancelSimulatedLogin(redirectUrl, onComplete) {
 		console.log('JwtSession.cancelSimulatedLogin');
 
 		// on récupère les tokens de l'utilisateur réellement connecté
 		let realUsers = JwtSession.getRealLoggedUsers();
 		let loginData = realUsers.pop();
 
-		if (typeof loginData != 'undefined' && null != loginData) {
-			localStorage.setItem('real_users', JSON.stringify(realUsers));
+		if (typeof loginData == 'undefined' || null == loginData) {
+			return;
+		}
 
-			JwtSession.setToken(loginData['access_token'] || loginData['token']);
-			JwtSession.setRefreshToken(loginData['refresh_token']);
+		localStorage.setItem('real_users', JSON.stringify(realUsers));
 
-			if (typeof onSuccess == 'function') {
-				onSuccess();
-			}
+		JwtSession.setToken(loginData['access_token'] || loginData['token']);
+		JwtSession.setRefreshToken(loginData['refresh_token']);
+
+		if (typeof onComplete == 'function') {
+			onComplete();
+		}
+
+		if (typeof redirectUrl != 'undefined' && null != redirectUrl) {
+			window.location.href = redirectUrl;
 		}
 	}
 

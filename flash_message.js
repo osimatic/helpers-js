@@ -2,7 +2,9 @@ class FlashMessage {
 	static displaySuccess(message, reload, modal) {
 		this.display('success', message, reload, modal);
 	}
-
+	static displayWarning(message, modal) {
+		this.display('warning', message, false, modal);
+	}
 	static displayError(message, modal) {
 		this.display('danger', message, false, modal);
 	}
@@ -14,7 +16,7 @@ class FlashMessage {
 		if ($('div.snackbar').length !== 0) {
 			$('div.snackbar').remove();
 		}
-		var snackbar = $('<div class="snackbar '+type+'"></div>');
+		let snackbar = $('<div class="snackbar '+type+'"></div>');
 		$('html body').append(snackbar);
 		snackbar.html(message);
 		snackbar.addClass('show');
@@ -26,12 +28,6 @@ class FlashMessage {
 		if (true === reload) {
 			document.location.reload();
 		}
-	}
-
-	/** @deprecated **/
-	static displayRequestFailure(status, exception, modal) {
-		console.log('request failure. Status: ', status, ' Exception: ', exception);
-		this.display('danger', typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  'Une erreur s’est produite.', false, modal);
 	}
 }
 

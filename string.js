@@ -4,7 +4,7 @@ String.prototype.copyToClipboard = String.prototype.copyToClipboard || function(
 		window.clipboardData.setData('Text', this);
 	}
 	else if (document.body.createTextRange) {
-		var textRange = document.body.createTextRange();
+		let textRange = document.body.createTextRange();
 		textRange.moveToElementText(this);
 		textRange.execCommand("Copy");
 	}
@@ -18,7 +18,7 @@ String.prototype.copyToClipboard = String.prototype.copyToClipboard || function(
 			alert("Impossible d'accéder au presse-papier.");
 		}
 		// Initialisation du composant fournit par Mozilla.
-		var gClipboardHelper = Components.classes["@mozilla.org/widget/clipboardhelper;1"].getService(Components.interfaces.nsIClipboardHelper);
+		let gClipboardHelper = Components.classes["@mozilla.org/widget/clipboardhelper;1"].getService(Components.interfaces.nsIClipboardHelper);
 		// Copie du texte dans le presse papier.
 		gClipboardHelper.copyString(this);
 	}
@@ -33,14 +33,14 @@ String.prototype.truncateOnWord = String.prototype.truncateOnWord || function(li
 	if (fromLeft) {
 		return this.reverseString(this.truncateOnWord(this.reverseString(), limit));
 	}
-	var TRIM_CHARS = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u2028\u2029\u3000\uFEFF';
-	var words = this.split(RegExp('(?=['+TRIM_CHARS+'])'));
-	var count = 0;
+	let TRIM_CHARS = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u2028\u2029\u3000\uFEFF';
+	let words = this.split(RegExp('(?=['+TRIM_CHARS+'])'));
+	let count = 0;
 
 	function filter(arr, fn) {
-		var result = [];
-		for (var i = 0, len = arr.length; i < len; i++) {
-			var el = arr[i];
+		let result = [];
+		for (let i = 0, len = arr.length; i < len; i++) {
+			let el = arr[i];
 			if (i in arr && fn(el, i)) {
 				result.push(el);
 			}
@@ -105,7 +105,7 @@ String.prototype.escapeRegExp = String.prototype.escapeRegExp || function() {
 	return this.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 };
 String.prototype.format = String.prototype.format || function() {
-	var args = arguments;
+	let args = arguments;
 	return this.replace(/{(\d+)}/g, (match, number) => (typeof args[number] != 'undefined' ? args[number] : match));
 };
 
@@ -136,7 +136,7 @@ String.prototype.isNumeric = String.prototype.isNumeric || function() {
 // s'utilise : "ma chaine {0} de caracteres"
 if (!String.format) {
 	String.format = function(format) {
-		var args = Array.prototype.slice.call(arguments, 1);
+		let args = Array.prototype.slice.call(arguments, 1);
 		return format.replace(/{(\d+)}/g, (match, number) => (typeof args[number] != 'undefined' ? args[number] : match));
 	};
 }

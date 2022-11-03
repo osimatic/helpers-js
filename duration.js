@@ -116,7 +116,7 @@ class Duration {
 				// pas d'arrondissement
 			}
 			else {
-				var halfRoundPrecision = roundPrecision / 2;
+				let halfRoundPrecision = roundPrecision / 2;
 				hoursRounded = hours;
 				secondsRounded = 0;
 				if (roundMode === 'up' || (roundMode === 'close' && minutesRemainingAndSecondsAsCentieme > halfRoundPrecision)) {
@@ -149,14 +149,10 @@ class Duration {
 		return Math.floor(durationInSeconds / 60);
 	}
 
-	/*
-	static getNbMinutesRemaining(durationInSeconds) {
+	/*static getNbMinutesRemaining(durationInSeconds) {
 		var remander = ( durationInSeconds % 3600 ) - ( durationInSeconds % 60 );
 		return ( remander / 60 );
 	}
-	*/
-
-	/*
 	static getNbHoursOfDurationInSeconds(durationInSeconds) {
 		// return (this.getNbDaysOfDurationInSeconds(durationInSeconds)*24)+this.getNbHoursRemainingOfDurationInSeconds(durationInSeconds);
 		return (durationInSeconds - (durationInSeconds % 3600)) / 3600;
@@ -164,8 +160,7 @@ class Duration {
 	static getNbMinutesOfDurationInSeconds(durationInSeconds) {
 		// return (this.getNbDaysOfDurationInSeconds(durationInSeconds)*24*60)+(this.getNbHoursRemainingOfDurationInSeconds(durationInSeconds)*60)+this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
 		return (durationInSeconds - (durationInSeconds % 60)) / 60;
-	}
-	*/
+	}*/
 
 	static getNbHoursRemainingOfDurationInSeconds(durationInSeconds) {
 		return this.getNbHoursOfDurationInSeconds(durationInSeconds % 86400);
