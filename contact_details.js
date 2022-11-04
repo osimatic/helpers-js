@@ -68,11 +68,14 @@ class TelephoneNumber {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
 		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatInternational();
 	}
+	static formatInternationalWithTelLink(phoneNumber, localCountryIsoCode) {
+		return '<a href="tel:'+phoneNumber+'">'+TelephoneNumber.formatInternational(phoneNumber, localCountryIsoCode)+'</a>';
+	}
 	static formatNationalWithFlagImg(phoneNumber, localCountryIsoCode) {
-		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;'+TelephoneNumber.formatNational(phoneNumber);
+		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;'+TelephoneNumber.formatNational(phoneNumber, localCountryIsoCode);
 	}
 	static formatNationalWithFlagImgAndTelLink(phoneNumber, localCountryIsoCode) {
-		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;<a href="tel:'+phoneNumber+'">'+TelephoneNumber.formatNational(phoneNumber)+'</a>';
+		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;<a href="tel:'+phoneNumber+'">'+TelephoneNumber.formatNational(phoneNumber, localCountryIsoCode)+'</a>';
 	}
 
 	static parse(phoneNumber, localCountryIsoCode) {
