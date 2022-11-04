@@ -41,6 +41,10 @@ class Email {
 		let regExEmail = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,5}$/;
 		return regExEmail.exec(email) != null;
 	}
+
+	static getMailToLink(email) {
+		return '<a href="mailto:'+email+'">'+email+'</a>';
+	}
 }
 
 class TelephoneNumber {

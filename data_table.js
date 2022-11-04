@@ -204,7 +204,7 @@ class DataTable {
 		queryString = queryString.includes('?') ? queryString.substring(1) : queryString;
 		//console.log('new queryString', queryString);
 
-		let newUrl = UrlAndQueryString.getPath(url) + '?' + queryString;
+		let newUrl = UrlAndQueryString.getHostAndPath(url) + '?' + queryString;
 		window.history.pushState("", "", newUrl);
 	}
 

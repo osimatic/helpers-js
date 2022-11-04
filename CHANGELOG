@@ -57,3 +57,6 @@ var intlTelInputUtilsPath = 'xxx'; -> TelephoneNumber.setIntlTelInputUtilsPath('
 JwtSession.isSimulationConnexion() -> JwtSession.simulateLogin() (fonctionnement différent)
 JwtSession.cancelSimulationConnexion() -> JwtSession.cancelSimulatedLogin() (fonctionnement différent)
 HTTPRequest -> HTTPClient
+
+1.0.106
+UrlAndQueryString.getPath() -> UrlAndQueryString.getHostAndPath()
