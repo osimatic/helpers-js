@@ -29,7 +29,12 @@ class Cookie {
 
 class UrlAndQueryString {
 	static displayUrl(url, withLink) {
-		return '<a href="'+url+'">'+UrlAndQueryString.getHost(url, false)+'</a>';
+		withLink = typeof withLink == 'undefined' ? true : withLink;
+		return (withLink?'<a href="'+url+'">':'')+UrlAndQueryString.getHost(url, false)+(withLink?'</a>':'');
+	}
+	static displayUrlAndPath(url, withLink) {
+		withLink = typeof withLink == 'undefined' ? true : withLink;
+		return (withLink?'<a href="'+url+'">':'')+UrlAndQueryString.getHostAndPath(url, false)+(withLink?'</a>':'');
 	}
 
 	static getHost(url, withProtocol) {
