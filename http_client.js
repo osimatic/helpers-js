@@ -176,7 +176,7 @@ class HTTPClient {
 	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
 		method = method.toUpperCase();
 
-		if ('POST' !== method) {
+		if ('GET' === method) {
 			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
 			data = null;
 		}
@@ -193,7 +193,7 @@ class HTTPClient {
 			cache: 'no-cache'
 		}
 
-		if ('POST' === method) {
+		if ('GET' !== method) {
 			requestOptions['body'] = HTTPClient.formatFormData(data);
 		}
 
@@ -244,7 +244,7 @@ class HTTPClient {
 	static async download(method, url, data, errorCallback, completeCallback) {
 		method = typeof method == 'undefined' || null == method ? 'GET' : method;
 
-		if ('POST' !== method) {
+		if ('GET' === method) {
 			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
 			data = null;
 		}
@@ -260,7 +260,7 @@ class HTTPClient {
 			cache: 'no-cache'
 		}
 
-		if ('POST' === method) {
+		if ('GET' !== method) {
 			requestOptions['body'] = HTTPClient.formatFormData(data);
 		}
 

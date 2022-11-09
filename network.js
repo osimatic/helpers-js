@@ -30,11 +30,17 @@ class Cookie {
 class UrlAndQueryString {
 	static displayUrl(url, withLink) {
 		withLink = typeof withLink == 'undefined' ? true : withLink;
-		return (withLink?'<a href="'+url+'">':'')+UrlAndQueryString.getHost(url, false)+(withLink?'</a>':'');
+		return (withLink ? '<a href="' + url + '">' : '') + UrlAndQueryString.getHost(url, false) + (withLink ? '</a>' : '');
 	}
-	static displayUrlAndPath(url, withLink) {
+
+	static displayUrlAndPath(url, withLink, displayPathIfEmpty) {
 		withLink = typeof withLink == 'undefined' ? true : withLink;
-		return (withLink?'<a href="'+url+'">':'')+UrlAndQueryString.getHostAndPath(url, false)+(withLink?'</a>':'');
+		displayPathIfEmpty = typeof displayPathIfEmpty == 'undefined' ? false : displayPathIfEmpty;
+		let formattedUrl = UrlAndQueryString.getHostAndPath(url, false);
+		if (!displayPathIfEmpty && UrlAndQueryString.getPath(url) === '/') {
+			formattedUrl = formattedUrl.slice(-1) === '/' ? formattedUrl.slice(0, -1) : formattedUrl;
+		}
+		return (withLink ? '<a href="' + url + '">' : '') + formattedUrl + (withLink ? '</a>' : '');
 	}
 
 	static getHost(url, withProtocol) {
@@ -43,7 +49,7 @@ class UrlAndQueryString {
 			return withProtocol ? window.location.origin : window.location.host;
 		}
 		url = new URL(url);
-		return (withProtocol?url.protocol+'//':'') + url.host;
+		return (withProtocol ? url.protocol + '//' : '') + url.host;
 	}
 
 	static getPath(url) {
@@ -88,6 +94,7 @@ class UrlAndQueryString {
 		params[name] = value;
 		return decodeURI($.param(params));
 	}
+
 	static setParamOfUrl(name, value, url) {
 		let queryString = UrlAndQueryString.setParam(UrlAndQueryString.getQueryString(url), name, value);
 		return UrlAndQueryString.getHostAndPath(url) + '?' + queryString;
@@ -102,10 +109,12 @@ class UrlAndQueryString {
 		//params[name] = null;
 		//return $.param(params);
 	}
+
 	static deleteParamOfUrl(name, url) {
 		let queryString = UrlAndQueryString.deleteParam(UrlAndQueryString.getQueryString(url), name);
 		return UrlAndQueryString.getHostAndPath(url) + '?' + queryString;
 	}
+
 	static deleteParamsOfUrl(names, url) {
 		let queryString = UrlAndQueryString.getQueryString(url);
 		names.forEach((name => queryString = UrlAndQueryString.deleteParam(queryString, name)));
@@ -237,23 +246,6 @@ class UrlAndQueryString {
 	}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	// deprecated
 
 	/** @deprecated **/
@@ -314,6 +306,7 @@ class UrlAndQueryString {
 	}
 
 }
+
 /** @deprecated */
 class HTTPRequest {
 	static init() {
@@ -382,13 +375,11 @@ class HTTPRequest {
 			root = root || '';
 			if (data instanceof File) {
 				formData.append(root, data);
-			}
-			else if (Array.isArray(data)) {
+			} else if (Array.isArray(data)) {
 				for (var i = 0; i < data.length; i++) {
 					appendFormData(data[i], root + '[' + i + ']');
 				}
-			}
-			else if (typeof data === 'object' && data) {
+			} else if (typeof data === 'object' && data) {
 				for (var key in data) {
 					if (data.hasOwnProperty(key)) {
 						if (root === '') {
@@ -398,8 +389,7 @@ class HTTPRequest {
 						}
 					}
 				}
-			}
-			else {
+			} else {
 				if (data !== null && typeof data !== 'undefined') {
 					formData.append(root, data);
 				}
@@ -432,11 +422,11 @@ class HTTPRequest {
 	}
 
 	static logRequestFailure(response, json) {
-		console.error('Request failure. Status: '+response.statusText+' ; HTTP Code : '+response.status, json);
+		console.error('Request failure. Status: ' + response.statusText + ' ; HTTP Code : ' + response.status, json);
 	}
 
 	static logJqueryRequestFailure(jqxhr, status, errorThrown) {
-		console.error('Request failure. Status: '+status+' ; HTTP Code: '+jqxhr.status+(null!=errorThrown && ''!==errorThrown ? ' ; Error message: '+errorThrown : ''), jqxhr.responseJSON);
+		console.error('Request failure. Status: ' + status + ' ; HTTP Code: ' + jqxhr.status + (null != errorThrown && '' !== errorThrown ? ' ; Error message: ' + errorThrown : ''), jqxhr.responseJSON);
 	}
 
 	static isExpiredToken(response, json) {
@@ -479,8 +469,7 @@ class HTTPRequest {
 					successCallback(jsonData, response);
 					return;
 				}
-			}
-			catch (e) {
+			} catch (e) {
 				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response);
@@ -552,15 +541,13 @@ class HTTPRequest {
 				if (response.ok) {
 					const blobData = await response.blob();
 					File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition'));
-				}
-				else {
+				} else {
 					HTTPRequest.logRequestFailure(response, null);
 					if (typeof errorCallback != 'undefined' && errorCallback != null) {
 						errorCallback(response);
 					}
 				}
-			}
-			catch (e) {
+			} catch (e) {
 				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response);
@@ -645,8 +632,7 @@ class HTTPRequest {
 					formErrorCallback(jsonData, response);
 					return;
 				}
-			}
-			catch (e) {
+			} catch (e) {
 				console.error(e);
 				if (typeof errorCallback != 'undefined' && errorCallback != null) {
 					errorCallback(response);
@@ -747,8 +733,7 @@ class HTTPRequest {
 				let data;
 				if (formatRetour == 'xml') {
 					data = xhr.responseXML;
-				}
-				else {
+				} else {
 					data = eval('(' + xhr.responseText + ')');
 				}
 				callback(data);
@@ -758,8 +743,7 @@ class HTTPRequest {
 		if (methode === 'POST') {
 			xhr.open('POST', url, true);
 			xhr.send();
-		}
-		else {
+		} else {
 			xhr.open('GET', url + '?' + strParam, true);
 			xhr.send(null);
 		}
@@ -767,4 +751,4 @@ class HTTPRequest {
 	}
 }
 
-module.exports = { HTTPRequest, Cookie, UrlAndQueryString };
+module.exports = {HTTPRequest, Cookie, UrlAndQueryString};
