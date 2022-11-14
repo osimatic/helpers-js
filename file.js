@@ -113,7 +113,7 @@ class Img {
 		$.ajax({
 			type: 'GET',
 			url: url,
-			headers: HTTPRequest.getHeaders(true),
+			headers: HTTPClient.getHeaders(true),
 			cache: false,
 			xhrFields: {responseType: 'blob'},
 			success: (data) => {
@@ -121,7 +121,7 @@ class Img {
 				// $(img).attr('src', urlCreator.createObjectURL(data));
 				Img.setBlobToImg($(img), data);
 			},
-			error: (jqxhr, status, errorThrown) => HTTPRequest.logJqueryRequestFailure(jqxhr, status, errorThrown),
+			error: (jqxhr, status, errorThrown) => HTTPClient.logJqueryRequestFailure(jqxhr, status, errorThrown),
 		});
 	}
 

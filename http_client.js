@@ -140,6 +140,9 @@ class HTTPClient {
 	static logRequestFailure(response, json) {
 		console.error('Request failure. Status: '+response.statusText+' ; HTTP Code : '+response.status, json);
 	}
+	static logJqueryRequestFailure(jqxhr, status, errorThrown) {
+		console.error('Request failure. Status: ' + status + ' ; HTTP Code: ' + jqxhr.status + (null != errorThrown && '' !== errorThrown ? ' ; Error message: ' + errorThrown : ''), jqxhr.responseJSON);
+	}
 
 	static isExpiredToken(response, json) {
 		if (response.status !== 401) {

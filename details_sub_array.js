@@ -81,7 +81,7 @@ class DetailsSubArray {
 			}
 
 			//link.attr('disabled', true).button('loading');
-			HTTPRequest.get(link.data('url_details'), {},
+			HTTPClient.request('GET', link.data('url_details'), null,
 				(jsonObj) => {
 					if (jsonObj == null) {
 						if (typeof callbackOnDetailsActionRequestError != 'undefined' && callbackOnDetailsActionRequestError != null) {
@@ -108,7 +108,7 @@ class DetailsSubArray {
 
 					onComplete();
 					//window.location.replace(decodeURIComponent(urlRetour));
-				},
+				}
 			);
 		}
 
