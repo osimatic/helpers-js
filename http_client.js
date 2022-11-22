@@ -179,25 +179,33 @@ class HTTPClient {
 	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
 		method = method.toUpperCase();
 
-		if ('GET' === method) {
-			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
-			data = null;
-		}
-
 		if (!window.fetch) {
 			return;
 		}
 
-		//console.log(HTTPClient.getHeaders());
-		let requestOptions = {
-			method: method,
-			headers: HTTPClient.getHeaders(),
-			mode: 'cors',
-			cache: 'no-cache'
+		let body = null;
+		method = method.toUpperCase();
+
+		if ('POST' !== method && 'PATCH' !== method) {
+			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
+			data = null;
 		}
 
-		if ('GET' !== method) {
-			requestOptions['body'] = HTTPClient.formatFormData(data);
+		if (method === 'PATCH') {
+			HTTPClient.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
+		}
+
+		if ('POST' === method) {
+			body = HTTPClient.formatFormData(data);
+		}
+
+		const requestOptions = {
+			headers: HTTPClient.getHeaders(),
+			mode: 'cors',
+			cache: 'no-cache',
+			method,
+			body
 		}
 
 		const response = await fetch(url, requestOptions);
