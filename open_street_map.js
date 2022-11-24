@@ -81,7 +81,7 @@ class OpenStreetMap {
 
 		//marker.on('click', () => {
 		marker.on('popupopen', () => {
-			console.log('popupopen');
+			//console.log('popupopen');
 			if (typeof options['on_click'] == 'function') {
 				options['on_click']();
 			}

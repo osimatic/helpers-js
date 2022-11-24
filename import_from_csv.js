@@ -42,7 +42,7 @@ class ImportFromCsv {
 					},
 					complete: function(results, file) {
 						isFileParsed = true;
-						console.log(file, results);
+						//console.log(file, results);
 
 						if (false === CSV.checkFile(file.name, file.type)) {
 							$('#form_import_upload div.errors').html(errorMessageFileNotValid).removeClass('hide');
@@ -63,7 +63,7 @@ class ImportFromCsv {
 				error: function(err, file, inputElem, reason) {
 					isFileParsed = true;
 					formUpload.find('div.errors').html(errorMessageFileNotValid).removeClass('hide');
-					console.log(err, file, reason);
+					console.error(err, file, reason);
 				},
 				complete: function() {
 					if (!isFileParsed) {
@@ -82,7 +82,7 @@ class ImportFromCsv {
 			divResult.find('table tr').removeClass('danger');
 			
 			let tabLink = ImportFromCsv.getTabLink(formMatching);
-			console.log('tabLink', tabLink);
+			//console.log('tabLink', tabLink);
 
 			if ($.isEmptyObject(tabLink)) {
 				formMatching.find('div.errors').html(errorMessageImportSelectColumns).removeClass('hide');
@@ -91,12 +91,12 @@ class ImportFromCsv {
 			}
 
 			let dataToImport = ImportFromCsv.getDataToImport(divResult, tabLink);
-			console.log('dataToImport', dataToImport);
+			//console.log('dataToImport', dataToImport);
 
 			requestImportData(dataToImport,
 				// fonction callback en cas d'erreur de formulaire
 				(json) => {
-					console.log(json);
+					//console.log(json);
 					if (typeof json['import_list'] !== 'undefined') {
 						formMatching.find('div.errors').html(json['import_list']).removeClass('hide');
 					}
@@ -133,7 +133,7 @@ class ImportFromCsv {
 					}
 				}
 			});
-			console.log('lineData', lineData);
+			//console.log('lineData', lineData);
 			importListWithFieldNames.push(lineData);
 		});
 		return importListWithFieldNames;
@@ -222,7 +222,7 @@ class ImportFromCsv {
 		let resultError = errorMessageImportFailed;
 		resultError += '<ul>';
 		$.each(json, function(idx, errorData) {
-			console.log(errorData);
+			console.error(errorData);
 			divResult.find('table tr[data-line="'+errorData.line+'"]').addClass('danger');
 
 			resultError += '<li>'+lineLabel.format(errorData.line)+'<ul>';

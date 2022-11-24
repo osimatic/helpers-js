@@ -40,7 +40,7 @@ class GoogleMap {
 	}
 
 	addMarkers(listLocation, icon) {
-		console.log(listLocation);
+		//console.log(listLocation);
 		if (listLocation.length == 0) {
 			return;
 		}

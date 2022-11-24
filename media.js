@@ -66,8 +66,7 @@ class AudioMedia {
 			request.send();
 		}
 		catch (e) {
-			console.log(e);
-			console.log('web audio api not supported');
+			console.error('web audio api not supported', e);
 		}
 	}
 
@@ -86,7 +85,7 @@ class AudioMedia {
 
 		analyser.fftSize = 256;
 		let bufferLength = analyser.frequencyBinCount;
-		console.log(bufferLength);
+		//console.log(bufferLength);
 		let dataArray = new Uint8Array(bufferLength);
 
 		canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);

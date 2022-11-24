@@ -49,7 +49,7 @@ class GoogleRecaptcha {
 				GoogleRecaptcha.grecaptchaWidgets[id] = grecaptcha.render(id, googleReCaptchaDatas);
 			}
 			catch (e) {
-				console.log('Exception during grecaptcha.render', e);
+				console.error('Exception during grecaptcha.render', e);
 			}
 		}
 		else {

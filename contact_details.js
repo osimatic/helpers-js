@@ -88,7 +88,7 @@ class TelephoneNumber {
 			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
 			return number != null ? number.formatInternational() : null;
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 		return '';
 	}

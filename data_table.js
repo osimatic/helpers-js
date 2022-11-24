@@ -158,7 +158,7 @@ class DataTable {
 
 		}
 
-		console.log('defaultFilters', defaultFilters);
+		//console.log('defaultFilters', defaultFilters);
 
 		DataTable.setDefaultFilters(defaultFilters);
 		DataTable.setCallbackOnLoadData(options.on_load_data);
@@ -335,7 +335,7 @@ class DataTable {
 			DataTable.removeLoader(div);
 		}
 		catch (e) {
-			console.log(e);
+			console.error(e);
 		}
 	}
 
