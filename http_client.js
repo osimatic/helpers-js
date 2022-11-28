@@ -177,8 +177,6 @@ class HTTPClient {
 	}
 
 	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
-		method = method.toUpperCase();
-
 		if (!window.fetch) {
 			return;
 		}
@@ -186,18 +184,16 @@ class HTTPClient {
 		let body = null;
 		method = method.toUpperCase();
 
-		if ('POST' !== method && 'PATCH' !== method) {
-			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
-			data = null;
-		}
-
-		if (method === 'PATCH') {
+		if ('PATCH' === method) {
 			HTTPClient.setHeader('Content-Type', 'application/x-www-form-urlencoded');
 			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
 		}
-
-		if ('POST' === method) {
+		else if ('POST' === method) {
 			body = HTTPClient.formatFormData(data);
+		}
+		else {
+			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
+			data = null;
 		}
 
 		const requestOptions = {
@@ -252,33 +248,46 @@ class HTTPClient {
 		}
 	}
 
-	static async download(method, url, data, errorCallback, completeCallback) {
-		method = typeof method == 'undefined' || null == method ? 'GET' : method;
+	static download(method, url, data, errorCallback, completeCallback) {
+		HTTPClient.requestBlob(method, url, data,
+			(blobData, response) => File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition')),
+			errorCallback,
+			completeCallback
+		);
+	}
 
-		if ('GET' === method) {
-			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
-			data = null;
-		}
-
+	static async requestBlob(method, url, data, successCallback, errorCallback, completeCallback) {
 		if (!window.fetch) {
 			return;
 		}
 
-		let requestOptions = {
-			method: method,
-			headers: HTTPClient.getHeaders(),
-			mode: 'cors',
-			cache: 'no-cache'
+		let body = null;
+		method = method.toUpperCase();
+
+		if ('PATCH' === method) {
+			HTTPClient.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
+		}
+		else if ('POST' === method) {
+			body = HTTPClient.formatFormData(data);
+		}
+		else {
+			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
+			data = null;
 		}
 
-		if ('GET' !== method) {
-			requestOptions['body'] = HTTPClient.formatFormData(data);
+		const requestOptions = {
+			method: method,
+			headers: HTTPClient.getHeaders(),
+			body: body,
+			mode: 'cors',
+			cache: 'no-cache'
 		}
 
 		const response = await fetch(url, requestOptions);
 		try {
 			if (response.status === 401 && response.statusText === 'Expired JWT Token') {
-				HTTPClient.refreshToken(() => HTTPClient.download(method, url, data, errorCallback, completeCallback), errorCallback);
+				HTTPClient.refreshToken(() => HTTPClient.requestBlob(method, url, data, successCallback, errorCallback, completeCallback), errorCallback);
 				return;
 			}
 
@@ -289,7 +298,9 @@ class HTTPClient {
 
 			if (response.ok) {
 				const blobData = await response.blob();
-				File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition'));
+				if (typeof successCallback != 'undefined' && successCallback != null) {
+					successCallback(blobData, response);
+				}
 			}
 			else {
 				HTTPClient.logRequestFailure(response, null);
