@@ -115,6 +115,25 @@ class AudioMedia {
 	}
 }
 
+class VideoMedia {
+	static initPlayPauseClick(videoElement) {
+		$(videoElement).click(function(e) {
+			// handle click if not Firefox (Firefox supports this feature natively)
+			if (typeof InstallTrigger === 'undefined') {
+				// get click position
+				let clickY = (e.pageY - $(this).offset().top);
+				let height = parseFloat( $(this).height() );
+
+				// avoids interference with controls
+				if (clickY > 0.82*height) return;
+
+				// toggles play / pause
+				this.paused ? this.play() : this.pause();
+			}
+		});
+	}
+}
+
 //Source : https://www.npmjs.com/package/mic-check
 class UserMedia {
 	static hasGetUserMedia() {
@@ -196,4 +215,4 @@ class UserMedia {
 	}
 }
 
-module.exports = { AudioMedia, UserMedia };
+module.exports = { AudioMedia, VideoMedia, UserMedia };

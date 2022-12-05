@@ -10,7 +10,7 @@ require('./number');
 const { HTTPClient } = require('./http_client');
 const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
 const { IBAN, BankCard } = require('./bank');
-const { AudioMedia, UserMedia } = require('./media');
+const { AudioMedia, VideoMedia, UserMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
 const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
 const { Duration } = require('./duration');
@@ -48,7 +48,7 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPClient, HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork,
+	HTTPClient, HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork,
 	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
