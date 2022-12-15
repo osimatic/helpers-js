@@ -366,7 +366,9 @@ class HTTPClient {
 			},
 			() => {
 				JwtSession.expireSession(HTTPClient.onInvalidRefreshTokenRedirectUrl, HTTPClient.onInvalidRefreshTokenCallback);
-				errorCallback();
+				if (typeof errorCallback != 'undefined' && errorCallback != null) {
+					errorCallback();
+				}
 			}
 		);
 	}
