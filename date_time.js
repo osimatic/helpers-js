@@ -1,59 +1,67 @@
 
 class DateTimeFormatter {
 	static getDateDigitalFormatter(locale, timeZone) {
-		if (this.dateDigitalFormatter == null) {
-			this.dateDigitalFormatter = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: timeZone }); 
+		this.dateDigitalFormatter = this.dateDigitalFormatter || {};
+		if (typeof this.dateDigitalFormatter[timeZone+locale] == 'undefined') {
+			this.dateDigitalFormatter[timeZone+locale] = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: timeZone });
 		}
 
-		return this.dateDigitalFormatter;
+		return this.dateDigitalFormatter[timeZone+locale];
 	}
 
 	static getDateTextFormatter(locale, timeZone) {
-		if (this.dateTextFormatter == null) {
-			this.dateTextFormatter = new Intl.DateTimeFormat(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timeZone });
+		this.dateTextFormatter = this.dateTextFormatter || {};
+		if (typeof this.dateTextFormatter[timeZone+locale] == 'undefined') {
+			this.dateTextFormatter[timeZone+locale] = new Intl.DateTimeFormat(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timeZone });
 		}
 
-		return this.dateTextFormatter;
+		return this.dateTextFormatter[timeZone+locale];
 	}
 
 	static getDateTimeFormatter(locale, timeZone) {
-		if (this.dateTimeFormatter == null) {
-			this.dateTimeFormatter = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', timeZone: timeZone });
+		this.dateTimeFormatter = this.dateTimeFormatter || {};
+		if (typeof this.dateTimeFormatter[timeZone+locale] == 'undefined') {
+			this.dateTimeFormatter[timeZone+locale] = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', timeZone: timeZone });
 		}
 
-		return this.dateTimeFormatter;
+		return this.dateTimeFormatter[timeZone+locale];
 	}
 
 	static getDateSqlFormatter(timeZone) {
-		if (this.dateSqlFormatter == null) {
-			this.dateSqlFormatter = new Intl.DateTimeFormat('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timeZone });
+		this.dateSqlFormatter = this.dateSqlFormatter || {};
+		if (typeof this.dateSqlFormatter[timeZone] == 'undefined') {
+			this.dateSqlFormatter[timeZone] = new Intl.DateTimeFormat('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timeZone });
 		}
 
-		return this.dateSqlFormatter;
+		return this.dateSqlFormatter[timeZone];
 	}
 
 	static getTimeSqlFormatter(timeZone) {
-		if (this.timeSqlFormatter == null) {
-			this.timeSqlFormatter = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: timeZone }); //hour12: false = 24h format
+		this.timeSqlFormatter = this.timeSqlFormatter || {};
+		if (typeof this.timeSqlFormatter[timeZone] == 'undefined') {
+			console.log('init getTimeSqlFormatter avec timezone', timeZone);
+			this.timeSqlFormatter[timeZone] = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: timeZone }); //hour12: false = 24h format
 		}
 
-		return this.timeSqlFormatter;
+		return this.timeSqlFormatter[timeZone];
 	}
 
 	static getTimeFormatter(locale, timeZone) {
-		if (this.timeFormatter == null) {
-			this.timeFormatter = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: timeZone });
+		this.timeFormatter = this.timeFormatter || {};
+		if (typeof this.timeFormatter[timeZone+locale] == 'undefined') {
+			this.timeFormatter[timeZone+locale] = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: timeZone });
 		}
 
-		return this.timeFormatter;
+		return this.timeFormatter[timeZone+locale];
 	}
 
 	static getTimeDigitalFormatter(locale, timeZone) {
-		if (this.timeDigitalFormatter == null) {
-			this.timeDigitalFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: timeZone });
+		this.timeDigitalFormatter = this.timeDigitalFormatter || {};
+		if (typeof this.timeDigitalFormatter[timeZone+locale] == 'undefined') {
+			this.timeDigitalFormatter[timeZone+locale] = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: timeZone });
 		}
 
-		return this.timeDigitalFormatter;
+		return this.timeDigitalFormatter[timeZone+locale];
 	}
 } 
 

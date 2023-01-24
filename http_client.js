@@ -223,27 +223,27 @@ class HTTPClient {
 			}
 
 			if (response.ok) {
-				if (typeof successCallback != 'undefined' && successCallback != null) {
+				if (typeof successCallback == 'function') {
 					successCallback(jsonData, response);
 				}
 				return;
 			}
 
-			if (response.status === 400 && typeof formErrorCallback != 'undefined' && formErrorCallback != null) {
+			if (response.status === 400 && typeof formErrorCallback == 'function') {
 				formErrorCallback(jsonData, response);
 				return;
 			}
 		}
 		catch (e) {
 			console.error(e);
-			if (typeof errorCallback != 'undefined' && errorCallback != null) {
+			if (typeof errorCallback == 'function') {
 				errorCallback(response);
 			}
 			return;
 		}
 
 		HTTPClient.logRequestFailure(response, jsonData);
-		if (typeof errorCallback != 'undefined' && errorCallback != null) {
+		if (typeof errorCallback == 'function') {
 			errorCallback(response, jsonData);
 		}
 	}
@@ -298,24 +298,24 @@ class HTTPClient {
 
 			if (response.ok) {
 				const blobData = await response.blob();
-				if (typeof successCallback != 'undefined' && successCallback != null) {
+				if (typeof successCallback == 'function') {
 					successCallback(blobData, response);
 				}
 			}
 			else {
 				HTTPClient.logRequestFailure(response, null);
-				if (typeof errorCallback != 'undefined' && errorCallback != null) {
+				if (typeof errorCallback == 'function') {
 					errorCallback(response);
 				}
 			}
 		}
 		catch (e) {
 			console.error(e);
-			if (typeof errorCallback != 'undefined' && errorCallback != null) {
+			if (typeof errorCallback == 'function') {
 				errorCallback(response);
 			}
 		}
-		if (typeof completeCallback != 'undefined' && completeCallback != null) {
+		if (typeof completeCallback == 'function') {
 			completeCallback(response);
 		}
 	}
@@ -366,7 +366,7 @@ class HTTPClient {
 			},
 			() => {
 				JwtSession.expireSession(HTTPClient.onInvalidRefreshTokenRedirectUrl, HTTPClient.onInvalidRefreshTokenCallback);
-				if (typeof errorCallback != 'undefined' && errorCallback != null) {
+				if (typeof errorCallback == 'function') {
 					errorCallback();
 				}
 			}
@@ -394,7 +394,7 @@ class HTTPClient {
 		xhr.onreadystatechange = function () {
 			if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0)) {
 				let data;
-				if (formatRetour == 'xml') {
+				if (formatRetour === 'xml') {
 					data = xhr.responseXML;
 				}
 				else {
