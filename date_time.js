@@ -39,7 +39,7 @@ class DateTimeFormatter {
 	static getTimeSqlFormatter(timeZone) {
 		this.timeSqlFormatter = this.timeSqlFormatter || {};
 		if (typeof this.timeSqlFormatter[timeZone] == 'undefined') {
-			console.log('init getTimeSqlFormatter avec timezone', timeZone);
+			//console.log('init getTimeSqlFormatter avec timezone', timeZone);
 			this.timeSqlFormatter[timeZone] = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: timeZone }); //hour12: false = 24h format
 		}
 

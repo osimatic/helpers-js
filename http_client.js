@@ -184,8 +184,9 @@ class HTTPClient {
 		let body = null;
 		method = method.toUpperCase();
 
+		let headers = HTTPClient.getHeaders();
 		if ('PATCH' === method) {
-			HTTPClient.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+			headers.append('Content-Type', 'application/x-www-form-urlencoded');
 			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
 		}
 		else if ('POST' === method) {
@@ -197,7 +198,7 @@ class HTTPClient {
 		}
 
 		const requestOptions = {
-			headers: HTTPClient.getHeaders(),
+			headers: headers,
 			mode: 'cors',
 			cache: 'no-cache',
 			method,
@@ -264,8 +265,9 @@ class HTTPClient {
 		let body = null;
 		method = method.toUpperCase();
 
+		let headers = HTTPClient.getHeaders();
 		if ('PATCH' === method) {
-			HTTPClient.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+			headers.append('Content-Type', 'application/x-www-form-urlencoded');
 			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
 		}
 		else if ('POST' === method) {
@@ -278,7 +280,7 @@ class HTTPClient {
 
 		const requestOptions = {
 			method: method,
-			headers: HTTPClient.getHeaders(),
+			headers: headers,
 			body: body,
 			mode: 'cors',
 			cache: 'no-cache'
