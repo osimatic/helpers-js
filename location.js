@@ -345,6 +345,9 @@ class PostalAddress {
 			addressDataForPluging['locality'] = addressData['stateDistrict'];
 		}
 
+		//var Address = require("ilib/js/lib/Address");
+		//var AddressFmt = require("ilib/lib/AddressFmt");
+
 		let af = new AddressFmt();
 		let formattedAddress = af.format(new Address(addressDataForPluging));
 		return formattedAddress.replace(/\n+/g, separator);

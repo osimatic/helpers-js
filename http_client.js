@@ -187,7 +187,8 @@ class HTTPClient {
 		let headers = HTTPClient.getHeaders();
 		if ('PATCH' === method) {
 			headers.append('Content-Type', 'application/x-www-form-urlencoded');
-			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
+			// 30/01/2023 : ajout encodeURIComponent() sinon les valeurs contenant des "+" pose pb (signe "+" retiré)
+			body = encodeURIComponent(new URLSearchParams(HTTPClient.formatFormData(data)).toString());
 		}
 		else if ('POST' === method) {
 			body = HTTPClient.formatFormData(data);
@@ -268,7 +269,7 @@ class HTTPClient {
 		let headers = HTTPClient.getHeaders();
 		if ('PATCH' === method) {
 			headers.append('Content-Type', 'application/x-www-form-urlencoded');
-			body = new URLSearchParams(HTTPClient.formatFormData(data)).toString();
+			body = encodeURIComponent(new URLSearchParams(HTTPClient.formatFormData(data)).toString());
 		}
 		else if ('POST' === method) {
 			body = HTTPClient.formatFormData(data);
