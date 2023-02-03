@@ -36,6 +36,7 @@ class Pagination {
 		}
 
 		if (doublePagination) {
+			$('ul.pagination').each((index, ul) => $(ul).remove());
 			Pagination.initPaginationDiv(div, $('ul.pagination'), true, true); //top
 			Pagination.initPaginationDiv(div, $('ul.pagination'), false, true); //bottom
 		} else {
