@@ -94,6 +94,10 @@ class OpenStreetMap {
 		this.locations.push([latitude, longitude]);
 	}
 
+	setView(location, zoom) {
+		this.map.setView(location, zoom);
+	}
+
 	centerOnFrance() {
 		this.map.setView([46.52863469527167, 2.43896484375], 6);
 	}
