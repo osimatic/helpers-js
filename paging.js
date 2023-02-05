@@ -35,12 +35,13 @@ class Pagination {
 			select.change(update);
 		}
 
+		const ulPagination = $('ul.pagination');
 		if (doublePagination) {
-			$('ul.pagination').each((index, ul) => $(ul).remove());
-			Pagination.initPaginationDiv(div, $('ul.pagination'), true, true); //top
-			Pagination.initPaginationDiv(div, $('ul.pagination'), false, true); //bottom
+			ulPagination.each((index, ul) => $(ul).remove());
+			Pagination.initPaginationDiv(div, ulPagination, true, true); //top
+			Pagination.initPaginationDiv(div, ulPagination, false, true); //bottom
 		} else {
-			Pagination.initPaginationDiv(div, $('ul.pagination'), false, false); //bottom
+			Pagination.initPaginationDiv(div, ulPagination, false, false); //bottom
 		}
 
 		Pagination.initPaginationItems(items, maxItems, doublePagination);
