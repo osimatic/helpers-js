@@ -2,15 +2,15 @@
 //Bootstrap class pagination https://getbootstrap.com/docs/3.3/components/#pagination
 
 class Pagination {
-	static paginateCards(div, nbItemsPerPage) {
-		Pagination.paginate(div, div.find('.pagination_item'), nbItemsPerPage);
+	static paginateCards(div, nbItemsPerPage, doublePagination) {
+		Pagination.paginate(div, div.find('.pagination_item'), nbItemsPerPage, undefined, doublePagination);
 	}
 
-	static paginateTable(table, select) {
-		Pagination.paginate(table, table.find('tbody tr:not(.hide)'), parseInt(table.data('max_rows')), select);
+	static paginateTable(table, select, doublePagination) {
+		Pagination.paginate(table, table.find('tbody tr:not(.hide)'), parseInt(table.data('max_rows')), select, doublePagination);
 	}
 
-	static paginate(div, items, nbItemsPerPage, select) {
+	static paginate(div, items, nbItemsPerPage, select, doublePagination) {
 		let maxItems = nbItemsPerPage;
 
 		if (typeof div == 'undefined' || !div.length) {
@@ -35,65 +35,83 @@ class Pagination {
 			select.change(update);
 		}
 
-		let paginationUl = $('ul.pagination');
-		if (!paginationUl.length) {
-			paginationUl = $('<ul class="pagination"></ul>');
+		const ulPagination = $('ul.pagination');
+		if (doublePagination) {
+			ulPagination.each((index, ul) => $(ul).remove());
+			Pagination.initPaginationDiv(div, ulPagination, true, true); //top
+			Pagination.initPaginationDiv(div, ulPagination, false, true); //bottom
+		} else {
+			Pagination.initPaginationDiv(div, ulPagination, false, false); //bottom
+		}
+
+		Pagination.initPaginationItems(items, maxItems, doublePagination);
+	}
+
+	static initPaginationDiv(div, ulDiv, onTop, doublePagination) {
+		if (!ulDiv.length || doublePagination) {
+			ulDiv = $('<ul class="pagination"></ul>');
 			if (div.find('.pagination_links').length) {
-				div.find('.pagination_links').append(paginationUl);
+				(onTop ? div.find('.pagination_links').prepend(ulDiv) : div.find('.pagination_links').append(ulDiv))
+			} else {
+				(onTop ? div.before(ulDiv) : div.after(ulDiv));
+			}
+		}
+	}
+
+	static initPaginationItems(items, maxItems, doublePagination) {
+		const paginationUl = $('ul.pagination');
+
+		let totalItems = items.length;
+
+		let lineNum = 0;
+		items.each(function () {
+			lineNum++;
+			if (0 === maxItems || lineNum <= maxItems) {
+				$(this).show();
 			}
 			else {
-				div.after(paginationUl);
+				$(this).hide();
 			}
+		});
+
+		paginationUl.each((index, ul) => $(ul).find('li').remove());
+
+		if (0 === maxItems || totalItems < maxItems) {
+			paginationUl.each((index, ul) => $(ul).addClass('hide'));
+			return;
 		}
 
-		function update() {
-			let totalItems = items.length;
+		let nbPages = Math.ceil(totalItems/maxItems);
+		for (let i=1; i <= nbPages; i++) {
+			paginationUl.each((index, ul) => $(ul).append('<li class="page-item" data-page="'+i+'"><a href="#" class="page-link">'+i+'<span class="sr-only">(current)</span></a></li>').show());
+		}
 
-			let lineNum = 0;
+		paginationUl.each((index, ul) => $(ul).removeClass('hide'));
+		paginationUl.each((index, ul) => $(ul).find('li:first-child').addClass('active'));
+		paginationUl.each((index, ul) => $(ul).find('li').click(function () {
+			paginationUl.each((index, ul) => $(ul).find('li').removeClass('active'));
+
+			let pageNum = $(this).data('page');
+			let trIndex = 0;
+
+			if (doublePagination) {
+				$('li[data-page="' + pageNum + '"]').each((index, li) => $(li).addClass('active'));
+			} else {
+				$(this).addClass('active');
+			}
+
 			items.each(function () {
-				lineNum++;
-				if (0 === maxItems || lineNum <= maxItems) {
-					$(this).show();
-				}
-				else {
+				trIndex++;
+				if (trIndex > (maxItems*pageNum) || trIndex <= ((maxItems*pageNum)-maxItems)) {
 					$(this).hide();
 				}
+				else{
+					$(this).show();
+				}
 			});
-			paginationUl.find('li').remove();
 
-			if (0 === maxItems || totalItems < maxItems) {
-				paginationUl.addClass('hide');
-				return;
-			}
-
-			let nbPages = Math.ceil(totalItems/maxItems);
-			for (let i=1; i <= nbPages; i++) {
-				paginationUl.append('<li class="page-item" data-page="'+i+'"><a href="#" class="page-link">'+i+'<span class="sr-only">(current)</span></a></li>').show();
-			}
-			paginationUl.removeClass('hide');
-
-			paginationUl.find('li:first-child').addClass('active');
-			paginationUl.find('li').click(function () {
-				paginationUl.find('li').removeClass('active');
-
-				let pageNum = $(this).data('page');
-				let trIndex = 0;
-				$(this).addClass('active');
-				items.each(function () {
-					trIndex++;
-					if (trIndex > (maxItems*pageNum) || trIndex <= ((maxItems*pageNum)-maxItems)) {
-						$(this).hide();
-					}
-					else{
-						$(this).show();
-					}
-				});
-
-				return false;
-			});
-		}
-
-		update();
+			return false;
+		}));
 	}
 }
 
