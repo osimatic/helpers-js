@@ -102,14 +102,16 @@ class OpenStreetMap {
 		this.map.setView([46.52863469527167, 2.43896484375], 6);
 	}
 
-	centerOnMarkers() {
+	centerOnMarkers(padding) {
 		this.map.invalidateSize(false);
 
 		if (this.locations.length === 0) {
 			return;
 		}
 
-		this.map.fitBounds(new L.LatLngBounds(this.locations));
+		this.map.fitBounds(new L.LatLngBounds(this.locations), {
+			padding: typeof padding != 'undefined' ? padding : [0, 0]
+		});
 	}
 
 	connectMarkers() {
