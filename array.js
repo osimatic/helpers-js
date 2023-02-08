@@ -63,6 +63,12 @@ Object.filter = (obj, predicate) => {
 		.reduce( (res, key) => (res[key] = obj[key], res), {} );
 };
 
+Object.filterKeys = (obj, predicate) => {
+	return Object.keys(obj)
+		.filter( key => predicate(key) )
+		.reduce( (res, key) => (res[key] = obj[key], res), {} );
+};
+
 Object.renameKeys = function(obj, keysMap) {
 	return Object.keys(obj).reduce(
 		(acc, key) => ({
