@@ -135,6 +135,14 @@ class Navigation {
 		a.addClass('active');
 		tabContent.find(a.attr('href')).addClass('active').addClass('show');
 	}
+
+	static showTab(a) {
+		if (typeof bootstrap == 'undefined') {
+			return;
+		}
+		let tab = new bootstrap.Tab(a[0]);
+		tab.show();
+	}
 }
 
 module.exports = { Pagination, Navigation };
