@@ -165,6 +165,13 @@ class MultipleActionInDivList {
 		let allCheckbox = contentDiv.find('input.action_multiple_checkbox');
 		let allCheckboxChecked = contentDiv.find('input.action_multiple_checkbox:checked');
 		let checkboxSelectAll = contentDiv.find('input.action_multiple_check_all');
+
+		if (allCheckbox.length === 0) {
+			checkboxSelectAll.addClass('hide');
+			return;
+		}
+
+		checkboxSelectAll.removeClass('hide');
 		if (allCheckbox.length === allCheckboxChecked.length) {
 			checkboxSelectAll.prop('checked', true);
 		}
