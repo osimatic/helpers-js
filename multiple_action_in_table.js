@@ -57,6 +57,13 @@ class MultipleActionInTable {
 		let allCheckbox = table.find('input.action_multiple_checkbox');
 		let allCheckboxChecked = table.find('input.action_multiple_checkbox:checked');
 		let checkboxSelectAll = table.find('thead tr th input.action_multiple_check_all');
+
+		if (allCheckbox.length === 0) {
+			checkboxSelectAll.addClass('hide');
+			return;
+		}
+
+		checkboxSelectAll.removeClass('hide');
 		if (allCheckbox.length === allCheckboxChecked.length) {
 			checkboxSelectAll.prop('checked', true);
 		}
