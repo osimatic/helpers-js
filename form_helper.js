@@ -100,6 +100,23 @@ class FormHelper {
 		return textarea.val().replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
 	}
 
+	static setOnInputChange(input, callback, doneTypingInterval) {
+		//setup before functions
+		let typingTimer;                //timer identifier
+		doneTypingInterval = typeof doneTypingInterval != 'undefined' && null !== doneTypingInterval ? doneTypingInterval : 700;  // time in ms
+
+		//on keyup, start the countdown
+		input.on('keyup', function () {
+			clearTimeout(typingTimer);
+			typingTimer = setTimeout(callback, doneTypingInterval);
+		});
+
+		//on keydown, clear the countdown
+		input.on('keydown', function () {
+			clearTimeout(typingTimer);
+		});
+	}
+
 	// ------------------------------------------------------------
 	// Select
 	// ------------------------------------------------------------

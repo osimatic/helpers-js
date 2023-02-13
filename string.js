@@ -115,6 +115,10 @@ String.prototype.ucwords = String.prototype.ucwords || function() {
 String.prototype.capitalize = String.prototype.capitalize || function() {
 	return this.charAt(0).toUpperCase() + this.slice(1);
 }
+String.prototype.acronym = String.prototype.acronym || function() {
+	return this.split(' ').map(word => word.charAt(0)).join('');
+	//return this.match(/\b(\w)/g).join('');
+}
 
 String.prototype.encodeForHtmlDataAttribute = String.prototype.encodeForHtmlDataAttribute || function() {
 	return this.replace(/\"/g, "'");
