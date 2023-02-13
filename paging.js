@@ -143,6 +143,19 @@ class Navigation {
 		let tab = new bootstrap.Tab(a[0]);
 		tab.show();
 	}
+
+	static addTabInHistory(tabId, queryStringKey, replace) {
+		queryStringKey = typeof queryStringKey != 'undefined' && null !== queryStringKey ? queryStringKey : 'tab';
+		replace = typeof replace != 'undefined' && null !== replace ? replace : true;
+		let url = window.location.href;
+		url = UrlAndQueryString.setParamOfUrl(queryStringKey, tabId, url);
+		if (replace) {
+			window.history.replaceState('', document.title, url);
+		}
+		else {
+			window.history.pushState("", "", newUrl);
+		}
+	}
 }
 
 module.exports = { Pagination, Navigation };
