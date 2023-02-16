@@ -95,7 +95,9 @@ class SelectAll {
 		div.find('div.checkbox, div.form-check').find('input[type="checkbox"]').change(function() {
 			SelectAll.updateDiv($(this).closest('div.checkbox_with_check_all'));
 		});
-		SelectAll.updateDiv(div);
+		div.find('div.checkbox_with_check_all').each(function(idx, divWithCheckAll) {
+			SelectAll.updateDiv($(divWithCheckAll));
+		});
 	}
 
 	static updateDiv(div) {
