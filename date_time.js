@@ -240,6 +240,17 @@ class DateTime {
 		return (jsDate1.getFullYear() == jsDate2.getFullYear() && jsDate1.getMonth() == jsDate2.getMonth() && jsDate1.getDate() == jsDate2.getDate());
 	}
 
+	static isDateInThePast(jsDate) {
+		jsDate.setHours(0);
+		jsDate.setMinutes(0);
+		jsDate.setSeconds(0);
+		let today = new Date();
+		today.setHours(0);
+		today.setMinutes(0);
+		today.setSeconds(0);
+		return jsDate.getTime() < today.getTime();
+	}
+
 	static isDateInTheFuture(jsDate) {
 		jsDate.setHours(0);
 		jsDate.setMinutes(0);
@@ -249,6 +260,11 @@ class DateTime {
 		today.setMinutes(0);
 		today.setSeconds(0);
 		return jsDate.getTime() > today.getTime();
+	}
+
+	static isDateTimeInThePast(jsDateTime) {
+		let today = new Date();
+		return jsDateTime < today;
 	}
 
 	static isDateTimeInTheFuture(jsDateTime) {
@@ -352,6 +368,13 @@ class TimestampUnix {
 
 	static getNbDayBetweenTwo(timestamp1, timestamp2, asPeriod, timeZone="Europe/Paris") {
 		return DateTime.getNbDayBetweenTwo(this.parse(timestamp1), this.parse(timestamp2), asPeriod, timeZone);
+	}
+
+	static isDateInThePast(timestamp) {
+		return DateTime.isDateInThePast(this.parse(timestamp));
+	}
+	static isDateTimeInThePast(timestamp) {
+		return DateTime.isDateTimeInThePast(this.parse(timestamp));
 	}
 
 	static isDateInTheFuture(timestamp) {
