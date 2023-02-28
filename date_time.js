@@ -244,10 +244,12 @@ class DateTime {
 		jsDate.setHours(0);
 		jsDate.setMinutes(0);
 		jsDate.setSeconds(0);
+		jsDate.setMilliseconds(0);
 		let today = new Date();
 		today.setHours(0);
 		today.setMinutes(0);
 		today.setSeconds(0);
+		today.setMilliseconds(0);
 		return jsDate.getTime() < today.getTime();
 	}
 
@@ -255,10 +257,12 @@ class DateTime {
 		jsDate.setHours(0);
 		jsDate.setMinutes(0);
 		jsDate.setSeconds(0);
+		jsDate.setMilliseconds(0);
 		let today = new Date();
 		today.setHours(0);
 		today.setMinutes(0);
 		today.setSeconds(0);
+		today.setMilliseconds(0);
 		return jsDate.getTime() > today.getTime();
 	}
 
