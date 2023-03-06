@@ -101,19 +101,25 @@ class FormHelper {
 	}
 
 	static setOnInputChange(input, callback, doneTypingInterval) {
-		//setup before functions
-		let typingTimer;                //timer identifier
+		// setup before functions
+		let typingTimer;  // timer identifier
 		doneTypingInterval = typeof doneTypingInterval != 'undefined' && null !== doneTypingInterval ? doneTypingInterval : 700;  // time in ms
 
-		//on keyup, start the countdown
+		// on keyup, start the countdown
 		input.on('keyup', function () {
 			clearTimeout(typingTimer);
 			typingTimer = setTimeout(callback, doneTypingInterval);
 		});
 
-		//on keydown, clear the countdown
+		// on keydown, clear the countdown
 		input.on('keydown', function () {
 			clearTimeout(typingTimer);
+		});
+
+		// on focusout, clear the countdown and call callback
+		input.on('focusout', function () {
+			clearTimeout(typingTimer);
+			callback();
 		});
 	}
 
