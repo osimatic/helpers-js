@@ -77,25 +77,29 @@ class SelectAll {
 
 	// Dans un div
 
-	static initDiv(div) {
-		div.find('input.check_all').off('click').click(function() {
-			let rootDiv = $(this).closest('div.checkbox_with_check_all');
-			let allCheckbox = rootDiv.find('input[type="checkbox"]:not(.check_all)');
-			let allCheckboxChecked = rootDiv.find('input[type="checkbox"]:not(.check_all):checked');
-			if (allCheckbox.length === allCheckboxChecked.length) {
-				allCheckbox.prop('checked', false);
-			}
-			else {
-				allCheckbox.prop('checked', true);
-			}
-			SelectAll.updateDiv(rootDiv);
-			//SelectAll.updateFormGroup(rootDiv.closest('.form-group'));
-		});
+	static initDiv(contentDiv) {
+		contentDiv.find('input.check_all').each(function(idx, inputCheckAll) {
+			let div = $(inputCheckAll).closest('div.checkbox_with_check_all');
 
-		div.find('div.checkbox, div.form-check').find('input[type="checkbox"]').change(function() {
-			SelectAll.updateDiv($(this).closest('div.checkbox_with_check_all'));
+			$(inputCheckAll).off('click').click(function() {
+				let div = $(this).closest('div.checkbox_with_check_all');
+				let allCheckbox = div.find('input[type="checkbox"]:not(.check_all)');
+				let allCheckboxChecked = div.find('input[type="checkbox"]:not(.check_all):checked');
+				if (allCheckbox.length === allCheckboxChecked.length) {
+					allCheckbox.prop('checked', false);
+				}
+				else {
+					allCheckbox.prop('checked', true);
+				}
+				SelectAll.updateDiv(div);
+				//SelectAll.updateFormGroup(rootDiv.closest('.form-group'));
+			});
+
+			div.find('div.checkbox, div.form-check').find('input[type="checkbox"]').change(function() {
+				SelectAll.updateDiv($(this).closest('div.checkbox_with_check_all'));
+			});
+			SelectAll.updateDiv(div);
 		});
-		SelectAll.updateDiv(div);
 	}
 
 	static updateDiv(div) {
