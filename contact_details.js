@@ -56,7 +56,14 @@ class TelephoneNumber {
 
 	static getCountryIsoCode(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).country || '';
+		try {
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			return number != null ? number.country : null;
+		} catch (error) {
+			console.error(error);
+		}
+		return null;
+		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).country || '';
 	}
 	static getCountryName(phoneNumber, localCountryIsoCode) {
 		return Country.getCountryName(this.getCountryIsoCode(phoneNumber, localCountryIsoCode));
@@ -66,11 +73,25 @@ class TelephoneNumber {
 	}
 	static formatNational(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatNational();
+		try {
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			return number != null ? number.formatNational() : '';
+		} catch (error) {
+			console.error(error);
+		}
+		return '';
+		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatNational();
 	}
 	static formatInternational(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatInternational();
+		try {
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			return number != null ? number.formatInternational() : '';
+		} catch (error) {
+			console.error(error);
+		}
+		return '';
+		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatInternational();
 	}
 	static formatInternationalWithTelLink(phoneNumber, localCountryIsoCode) {
 		return '<a href="tel:'+phoneNumber+'">'+TelephoneNumber.formatInternational(phoneNumber, localCountryIsoCode)+'</a>';
@@ -90,13 +111,16 @@ class TelephoneNumber {
 		} catch (error) {
 			console.error(error);
 		}
-		return '';
+		return null;
 	}
 
 	static check(phoneNumber, localCountryIsoCode) {
 		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-		const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
-		return number != null ? number.isValid() : false;
+		try {
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			return number != null ? number.isValid() : false;
+		} catch (error) { }
+		return false;
 		//var numberObject = libphonenumber.parse(phoneNumber, localCountryIsoCode);
 		//return (typeof numberObject.country !== 'undefined');
 	}
@@ -117,8 +141,13 @@ class TelephoneNumber {
 			return 'MASKED';
 		}
 		
-		let number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
-		return number != null ? number.getType() : null;
+		try {
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			return number != null ? number.getType() : null;
+		} catch (error) {
+			console.error(error);
+		}
+		return null;
 	}
 
 	static getTypeLabelList() {
