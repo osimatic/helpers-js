@@ -96,7 +96,7 @@ class DateTime {
 	}
 
 	static getTimestamp(jsDate) {
-		return jsDate.getTime();
+		return jsDate.getTime()/1000;
 	}
 
 	static getDateDigitalDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
