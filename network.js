@@ -28,14 +28,11 @@ class Cookie {
 }
 
 class UrlAndQueryString {
-	static displayUrl(url, withLink) {
-		withLink = typeof withLink == 'undefined' ? true : withLink;
+	static displayUrl(url, withLink=true) {
 		return (withLink ? '<a href="' + url + '">' : '') + UrlAndQueryString.getHost(url, false) + (withLink ? '</a>' : '');
 	}
 
-	static displayUrlAndPath(url, withLink, displayPathIfEmpty) {
-		withLink = typeof withLink == 'undefined' ? true : withLink;
-		displayPathIfEmpty = typeof displayPathIfEmpty == 'undefined' ? false : displayPathIfEmpty;
+	static displayUrlAndPath(url, withLink=true, displayPathIfEmpty=false) {
 		let formattedUrl = UrlAndQueryString.getHostAndPath(url, false);
 		if (!displayPathIfEmpty && UrlAndQueryString.getPath(url) === '/') {
 			formattedUrl = formattedUrl.slice(-1) === '/' ? formattedUrl.slice(0, -1) : formattedUrl;
@@ -43,8 +40,7 @@ class UrlAndQueryString {
 		return (withLink ? '<a href="' + url + '">' : '') + formattedUrl + (withLink ? '</a>' : '');
 	}
 
-	static getHost(url, withProtocol) {
-		withProtocol = typeof withProtocol == 'undefined' ? true : withProtocol;
+	static getHost(url, withProtocol=true) {
 		if (typeof url == 'undefined') {
 			return withProtocol ? window.location.origin : window.location.host;
 		}
@@ -68,7 +64,7 @@ class UrlAndQueryString {
 		return url.search;
 	}
 
-	static getHostAndPath(url, withProtocol) {
+	static getHostAndPath(url, withProtocol=true) {
 		return UrlAndQueryString.getHost(url, withProtocol) + UrlAndQueryString.getPath(url);
 
 		//let strpos = url.indexOf('?');

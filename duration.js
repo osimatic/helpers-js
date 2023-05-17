@@ -1,8 +1,7 @@
 
 class Duration {
 
-	static formatNbDays(nbDays, locale) {
-		locale = (typeof locale != 'undefined'?locale:'fr-FR');
+	static formatNbDays(nbDays, locale='fr-FR') {
 		return new Intl.NumberFormat(locale, {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2
@@ -29,9 +28,7 @@ class Duration {
 		return Duration.convertToDurationInHourChronoDisplay(Math.abs(durationInSeconds), 'input_time');
 	}
 
-	static convertToDurationInHourChronoDisplay(durationInSeconds, displayMode) {
-		displayMode = typeof displayMode != 'undefined' ? displayMode : 'chrono';
-
+	static convertToDurationInHourChronoDisplay(durationInSeconds, displayMode='chrono') {
 		let durationInSecondsOriginal = durationInSeconds;
 		durationInSeconds = Math.abs(durationInSeconds);
 		let seconds = ( durationInSeconds % 60 );
@@ -47,12 +44,7 @@ class Duration {
 		return (durationInSecondsOriginal < 0 ? '- ' : '')+hours+':'+minutes+(displayMode==='input_time'?':':'.')+seconds;
 	}
 
-	static convertToDurationInHourStringDisplay(durationInSeconds, withSecondes, withMinutes, withLibelleMinute, libelleEntier) {
-		if (withSecondes == null) withSecondes = true;
-		if (withMinutes == null) withMinutes = true;
-		if (withLibelleMinute == null) withLibelleMinute = true;
-		if (libelleEntier == null) libelleEntier = false;
-		
+	static convertToDurationInHourStringDisplay(durationInSeconds, withSecondes=true, withMinutes=true, withLibelleMinute=true, libelleEntier=false) {
 		// Heures
 		let strHeure = '';
 		let nbHeures = this.getNbHoursOfDurationInSeconds(durationInSeconds);
@@ -100,7 +92,7 @@ class Duration {
 		return (strHeure+strMinute+strSeconde).trim();
 	}
 
-	static roundNbSeconds(durationInSeconds, roundPrecision, roundMode) {
+	static roundNbSeconds(durationInSeconds, roundPrecision, roundMode='close') {
 		let hours = Math.floor(durationInSeconds / 3600);
 		let minutes = Math.floor((durationInSeconds % 3600) / 60);
 		let seconds = durationInSeconds % 60;

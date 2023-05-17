@@ -50,42 +50,43 @@ class Email {
 class TelephoneNumber {
 	//this class works with libphonenumber-max.min.js
 
+	static setLocalCountryCode(countryCode) {
+		TelephoneNumber.localCountryCode = countryCode;
+	}
+
 	static setIntlTelInputUtilsPath(path) {
 		TelephoneNumber.intlTelInputUtilsPath = path;
 	}
 
-	static getCountryIsoCode(phoneNumber, localCountryIsoCode) {
-		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
+	static getCountryIsoCode(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		try {
-			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
 			return number != null ? number.country : null;
 		} catch (error) {
 			console.error(error);
 		}
 		return null;
-		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).country || '';
+		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase()).country || '';
 	}
-	static getCountryName(phoneNumber, localCountryIsoCode) {
+	static getCountryName(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		return Country.getCountryName(this.getCountryIsoCode(phoneNumber, localCountryIsoCode));
 	}
-	static getFlagImg(phoneNumber, localCountryIsoCode) {
+	static getFlagImg(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		return Country.getFlagImg(this.getCountryIsoCode(phoneNumber, localCountryIsoCode));
 	}
-	static formatNational(phoneNumber, localCountryIsoCode) {
-		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
+	static formatNational(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		try {
-			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
 			return number != null ? number.formatNational() : '';
 		} catch (error) {
 			console.error(error);
 		}
 		return '';
-		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatNational();
+		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase()).formatNational();
 	}
-	static formatInternational(phoneNumber, localCountryIsoCode) {
-		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
+	static formatInternational(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		try {
-			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
 			return number != null ? number.formatInternational() : '';
 		} catch (error) {
 			console.error(error);
@@ -93,20 +94,19 @@ class TelephoneNumber {
 		return '';
 		//return libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode).formatInternational();
 	}
-	static formatInternationalWithTelLink(phoneNumber, localCountryIsoCode) {
+	static formatInternationalWithTelLink(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		return '<a href="tel:'+phoneNumber+'">'+TelephoneNumber.formatInternational(phoneNumber, localCountryIsoCode)+'</a>';
 	}
-	static formatNationalWithFlagImg(phoneNumber, localCountryIsoCode) {
+	static formatNationalWithFlagImg(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;'+TelephoneNumber.formatNational(phoneNumber, localCountryIsoCode);
 	}
-	static formatNationalWithFlagImgAndTelLink(phoneNumber, localCountryIsoCode) {
+	static formatNationalWithFlagImgAndTelLink(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		return TelephoneNumber.getFlagImg(phoneNumber, localCountryIsoCode)+'&nbsp;<a href="tel:'+phoneNumber+'">'+TelephoneNumber.formatNational(phoneNumber, localCountryIsoCode)+'</a>';
 	}
 
-	static parse(phoneNumber, localCountryIsoCode) {
-		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
+	static parse(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		try {
-			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
 			return number != null ? number.formatInternational() : null;
 		} catch (error) {
 			console.error(error);
@@ -114,14 +114,13 @@ class TelephoneNumber {
 		return null;
 	}
 
-	static check(phoneNumber, localCountryIsoCode) {
-		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
+	static check(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		try {
-			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
 			return number != null ? number.isValid() : false;
 		} catch (error) { }
 		return false;
-		//var numberObject = libphonenumber.parse(phoneNumber, localCountryIsoCode);
+		//var numberObject = libphonenumber.parse(phoneNumber, localCountryIsoCode.toUpperCase());
 		//return (typeof numberObject.country !== 'undefined');
 	}
 
@@ -134,15 +133,13 @@ class TelephoneNumber {
 		return verifPhoneInt.exec(phoneNumber) != null;
 	}
 	
-	static getType(phoneNumber, localCountryIsoCode) {
-		localCountryIsoCode = (typeof localCountryIsoCode != 'undefined' ? localCountryIsoCode.toUpperCase() : serviceCountry);
-
+	static getType(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		if (phoneNumber == null || phoneNumber.length === 0) {
 			return 'MASKED';
 		}
 		
 		try {
-			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode);
+			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
 			return number != null ? number.getType() : null;
 		} catch (error) {
 			console.error(error);
@@ -173,7 +170,7 @@ class TelephoneNumber {
 
 	static setIntlTelInput(input, placeholderNumberType) {
 		return window.intlTelInput(input[0], {
-			initialCountry: serviceCountry,
+			initialCountry: TelephoneNumber.localCountryCode,
 			placeholderNumberType: placeholderNumberType || 'FIXED_LINE_OR_MOBILE',
 			utilsScript: typeof TelephoneNumber.intlTelInputUtilsPath != 'undefined' ? TelephoneNumber.intlTelInputUtilsPath : null
 		});

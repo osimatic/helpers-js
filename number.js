@@ -27,30 +27,30 @@ class NumberFormatter {
 	}
 }
 
-Number.prototype.format = Number.prototype.format || function(nbDecimal, locale) {
+Number.prototype.format = Number.prototype.format || function(nbDecimal=2, locale='fr-FR') {
 	return Number.format(this, nbDecimal, locale);
 }
 
 if (!Number.format) {
-	Number.format = function(number, nbDecimal, locale) {
-		return NumberFormatter.getDecimalFormatter(locale, (typeof nbDecimal != 'undefined' ? nbDecimal : 2)).format(number);
+	Number.format = function(number, nbDecimal=2, locale='fr-FR') {
+		return NumberFormatter.getDecimalFormatter(locale, nbDecimal).format(number);
 	};
 }
 
-Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency, nbDecimal, locale) {
+Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency, nbDecimal=2, locale='fr-FR') {
 	return Number.formatCurrency(this, currency, nbDecimal, locale);
 }
 
-Number.formatCurrency = Number.formatCurrency || function(number, currency, nbDecimal, locale) {
-	return NumberFormatter.getCurrencyFormatter(locale, currency, (typeof nbDecimal != 'undefined' ? nbDecimal : 2)).format(number);
+Number.formatCurrency = Number.formatCurrency || function(number, currency, nbDecimal=2, locale='fr-FR') {
+	return NumberFormatter.getCurrencyFormatter(locale, currency, nbDecimal).format(number);
 }
 
-Number.prototype.formatPercent = Number.prototype.formatPercent || function(nbDecimal, locale) {
+Number.prototype.formatPercent = Number.prototype.formatPercent || function(nbDecimal=2, locale='fr-FR') {
 	return Number.formatPercent(this, nbDecimal, locale);
 }
 
-Number.formatPercent = Number.formatPercent || function(number, nbDecimal, locale) {
-	return NumberFormatter.getPercentFormatter(locale, (typeof nbDecimal != 'undefined'?nbDecimal:2)).format(number);
+Number.formatPercent = Number.formatPercent || function(number, nbDecimal=2, locale='fr-FR') {
+	return NumberFormatter.getPercentFormatter(locale, nbDecimal).format(number);
 }
 
 /**
