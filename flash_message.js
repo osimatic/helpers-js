@@ -13,9 +13,8 @@ class FlashMessage {
 		if (null !== modal) {
 			modal.modal('hide');
 		}
-		if ($('div.snackbar').length !== 0) {
-			$('div.snackbar').remove();
-		}
+
+		$('div.snackbar').remove();
 		let snackbar = $('<div class="snackbar '+type+'"></div>');
 		$('html body').append(snackbar);
 		snackbar.html(message);

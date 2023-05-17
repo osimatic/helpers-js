@@ -337,10 +337,10 @@ class FormHelper {
 			button.data('btn-text', button.html());
 			//let text = '<span class="spinner"><i class=\'fa fa-circle-notch fa-spin\'></i></span>Traitement en cours…';
 			let text = '<i class=\'fa fa-circle-notch fa-spin\'></i> Traitement en cours…';
-			if (button.data('load-text') != undefined && button.data('load-text') != null && button.data('load-text') != '') {
+			if (button.data('load-text') != null && button.data('load-text') !== '') {
 				text = button.data('load-text');
 			}
-			if (button.data('loading-text') != undefined && button.data('loading-text') != null && button.data('loading-text') != '') {
+			if (button.data('loading-text') != null && button.data('loading-text') !== '') {
 				text = button.data('loading-text');
 			}
 			button.html(text);

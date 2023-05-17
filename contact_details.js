@@ -3,10 +3,10 @@ class PersonName {
 
 	static format(firstName, lastName) {
 		let str = '';
-		if (firstName != null && firstName != '') {
+		if (firstName != null && firstName !== '') {
 			str += ' '+firstName;
 		}
-		if (lastName != null && lastName != '') {
+		if (lastName != null && lastName !== '') {
 			str += ' '+lastName;
 		}
 		return str.trim();
