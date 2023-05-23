@@ -1,12 +1,12 @@
 
 class ImportFromCsv {
 
-	static initModal(modal, importColumns, requestImportData, specificDescDiv, additionalFormField) {
-		modal.find('.modal-body').empty().append($('.import_form_base').clone().removeClass('import_form_base hide'));
+	static initForm(div, importColumns, requestImportData, specificDescDiv, additionalFormField) {
+		div.empty().append($('.import_form_base').clone().removeClass('import_form_base hide'));
 
-		let formUpload = modal.find('.form_upload');
-		let formMatching = modal.find('.form_matching');
-		let divResult = modal.find('.csv_result');
+		let formUpload = div.find('.form_upload');
+		let formMatching = div.find('.form_matching');
+		let divResult = div.find('.csv_result');
 
 		function resetUi() {
 			formMatching.addClass('hide');
@@ -15,11 +15,11 @@ class ImportFromCsv {
 		}
 
 		if (typeof specificDescDiv != 'undefined' && specificDescDiv != null) {
-			modal.find('.specific_desc').append(specificDescDiv);
+			div.find('.specific_desc').append(specificDescDiv);
 		}
 
 		if (typeof additionalFormField != 'undefined' && additionalFormField != null) {
-			modal.find('.import_matching_select_content').after(additionalFormField);
+			div.find('.import_matching_select_content').after(additionalFormField);
 		}
 
 		formUpload.find('button[type="submit"]').click(function(event) {
