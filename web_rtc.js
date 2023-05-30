@@ -8,7 +8,7 @@ class WebRTC {
         this.turnSecret = turnSecret;
     }
 
-    static offer(stream, iceCandidateCallback) {
+    static offer(stream, iceCandidateCallback, iceGatheringStateChangeCallback, onIceCandidateErrorCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials(); 
@@ -25,6 +25,8 @@ class WebRTC {
                     }
                 );
 
+                peerConn.icecandidateerror = ((event) => onIceCandidateErrorCallback(event.url, event.errorText));
+                peerConn.onicegatheringstatechange = ((event) => iceGatheringStateChangeCallback(event));
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
                         iceCandidateCallback(event.candidate);
@@ -43,7 +45,7 @@ class WebRTC {
         });
     }
     
-    static answer(remoteDescription, onTrackCallback, iceCandidateCallback) {
+    static answer(remoteDescription, onTrackCallback, iceCandidateCallback, iceGatheringStateChangeCallback, onIceCandidateErrorCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials();
@@ -60,6 +62,8 @@ class WebRTC {
                     }
                 );
 
+                peerConn.icecandidateerror = ((event) => onIceCandidateErrorCallback(event.url, event.errorText));
+                peerConn.onicegatheringstatechange = ((event) => iceGatheringStateChangeCallback(event));
                 peerConn.onicecandidate = ((event) => {
                     if (event.candidate) {
                         iceCandidateCallback(event.candidate);
