@@ -17,8 +17,7 @@ class WebRTC {
             try {
                 let { username, password } = this.getTurnCredentials(); 
                 let peerConn = new RTCPeerConnection({ 
-                    sdpSemantics: 'unified-plan', //newer implementation of WebRTC,
-                    iceCandidatePoolSize: 2,
+                    iceCandidatePoolSize: 2, //prefetched ICE candidate pool (before connection)
                     iceServers: [{ 
                         urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
                         username: username, 
@@ -54,8 +53,7 @@ class WebRTC {
             try {
                 let { username, password } = this.getTurnCredentials();
                 let peerConn = new RTCPeerConnection({ 
-                    sdpSemantics: 'unified-plan', //newer implementation of WebRTC,
-                    iceCandidatePoolSize: 2,
+                    iceCandidatePoolSize: 2, //prefetched ICE candidate pool (before connection)
                     iceServers: [{ 
                         urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
                         username: username, 
