@@ -12,12 +12,11 @@ class WebRTC {
         this.signalingBus = signalingBus;
     }
 
-    static offer(videoBroadcasterId, stream, iceCandidateCallback, onIceCandidateErrorCallback, connectionStateChangeCallback) {
+    static offer(videoBroadcasterId, stream, iceCandidateCallback, connectionStateChangeCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials(); 
                 let peerConn = new RTCPeerConnection({ 
-                    iceCandidatePoolSize: 2, //prefetched ICE candidate pool (before connection)
                     iceServers: [{ 
                         urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
                         username: username, 
@@ -27,6 +26,8 @@ class WebRTC {
                     }] 
                 });
                 
+                peerConn.onconnectionstatechange = (event) => connectionStateChangeCallback(event, peerConn.connectionState);
+                peerConn.onicecandidate = (event) => iceCandidateCallback(event);
                 peerConn.onnegotiationneeded = async () => {
                     await peerConn.setLocalDescription(await peerConn.createOffer()); 
                     this.signalingBus.subscribe('answer', (payload) => peerConn.setRemoteDescription(payload.description));
@@ -34,12 +35,7 @@ class WebRTC {
                     this.signalingBus.publish('offer', { id: videoBroadcasterId, description: peerConn.localDescription }); 
                 };
 
-                peerConn.onconnectionstatechange = (event) => connectionStateChangeCallback(event, peerConn.connectionState);
-                peerConn.onicecandidate = (event) => iceCandidateCallback(event);
-                peerConn.onicecandidateerror = (event) => onIceCandidateErrorCallback(event.url, event.errorText);
-
                 stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
-                
                 resolve(peerConn);
             } catch (error) {
                 console.error(error);
@@ -48,12 +44,11 @@ class WebRTC {
         });
     }
 
-    static answer(videoBroadcasterId, remoteDescription, onTrackCallback, iceCandidateCallback, onIceCandidateErrorCallback, connectionStateChangeCallback) {        
+    static answer(videoBroadcasterId, remoteDescription, onTrackCallback, iceCandidateCallback, connectionStateChangeCallback) {        
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials();
                 let peerConn = new RTCPeerConnection({ 
-                    iceCandidatePoolSize: 2, //prefetched ICE candidate pool (before connection)
                     iceServers: [{ 
                         urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
                         username: username, 
@@ -65,11 +60,11 @@ class WebRTC {
 
                 peerConn.onconnectionstatechange = (event) => connectionStateChangeCallback(event, peerConn.connectionState);
                 peerConn.onicecandidate = async (event) => iceCandidateCallback(event);
-                peerConn.onicecandidateerror = (event) => onIceCandidateErrorCallback(event.url, event.errorText);
                 peerConn.ontrack = (event) => onTrackCallback(event.streams);
 
                 peerConn.setRemoteDescription(new RTCSessionDescription(remoteDescription));
                 await peerConn.setLocalDescription(await peerConn.createAnswer());
+                
                 this.signalingBus.subscribe('candidate', (payload) => peerConn.addIceCandidate(new RTCIceCandidate(payload.candidate)));
                 this.signalingBus.publish('answer', { id: videoBroadcasterId, description: peerConn.localDescription });
                
