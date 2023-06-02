@@ -125,6 +125,26 @@ class InputPeriod {
 
 // input period de type : <select class="period">Aujourd'hui / Ce mois-ci / etc. / Personnalisé</select>
 class FormDate {
+
+	static fillYearSelect(select, nbYearsBefore=5, nbYearsAfter=0) {
+		const currentDate = new Date();
+		for (let year=currentDate.getUTCFullYear()-nbYearsBefore; year<=(currentDate.getUTCFullYear()+nbYearsAfter); year++) {
+			select.append('<option value="'+year+'">'+year+'</option>');
+		}
+	}
+
+	static fillMonthSelect(select, locale) {
+		for (let month=1; month<=12; month++) {
+			select.append('<option value="'+month+'">'+DateTime.getMonthNameByMonth(month, locale).capitalize()+'</option>');
+		}
+	}
+
+	static fillDayOfWeekSelect(select, locale) {
+		for (let dayOfWeek=1; dayOfWeek<=7; dayOfWeek++) {
+			select.append('<option value="'+dayOfWeek+'">'+DateTime.getDayNameByDayOfWeek(dayOfWeek, locale).capitalize()+'</option>');
+		}
+	}
+
 	static initForm(form) {
 
 		function fillPeriodSelect(select) {
