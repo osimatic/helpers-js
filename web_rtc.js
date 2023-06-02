@@ -28,14 +28,14 @@ class WebRTC {
                 
                 peerConn.onconnectionstatechange = (event) => connectionStateChangeCallback(event, peerConn.connectionState);
                 peerConn.onicecandidate = (event) => iceCandidateCallback(event);
-                peerConn.onnegotiationneeded = async () => {
-                    await peerConn.setLocalDescription(await peerConn.createOffer()); 
-                    this.signalingBus.subscribe('answer', (payload) => peerConn.setRemoteDescription(payload.description));
-                    this.signalingBus.subscribe('candidate', (payload) => peerConn.addIceCandidate(new RTCIceCandidate(payload.candidate)));  
-                    this.signalingBus.publish('offer', { id: videoBroadcasterId, description: peerConn.localDescription }); 
-                };
 
                 stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
+                await peerConn.setLocalDescription(await peerConn.createOffer()); 
+                
+                this.signalingBus.subscribe('answer', (payload) => peerConn.setRemoteDescription(payload.description));
+                this.signalingBus.subscribe('candidate', (payload) => peerConn.addIceCandidate(new RTCIceCandidate(payload.candidate)));  
+                this.signalingBus.publish('offer', { id: videoBroadcasterId, description: peerConn.localDescription }); 
+
                 resolve(peerConn);
             } catch (error) {
                 console.error(error);
