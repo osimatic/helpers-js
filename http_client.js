@@ -28,14 +28,14 @@ class HTTPClient {
 		HTTPClient.onInvalidTokenCallback = callback;
 	}
 
-	static getHeaders(asObject) {
+	static getHeaders(asObject=false, additionalHeaders={}) {
 		HTTPClient.setAuthorizationToken(JwtSession.getToken());
 
 		if (typeof HTTPClient.headers == 'undefined') {
 			HTTPClient.headers = {};
 		}
 
-		if (typeof asObject != 'undefined' && asObject) {
+		if (asObject) {
 			return HTTPClient.headers;
 		}
 
@@ -43,6 +43,12 @@ class HTTPClient {
 		Object.entries(HTTPClient.headers).forEach(([key, value]) => {
 			httpHeaders.append(key, value);
 		});
+
+		if (typeof additionalHeaders == 'object') {
+			for (const [key, value] of Object.entries(additionalHeaders)) {
+				httpHeaders.append(key, value);
+			}
+		}
 
 		return httpHeaders;
 	}
@@ -137,6 +143,14 @@ class HTTPClient {
 		return data;
 	}
 
+	static formatJsonData(data) {
+		let formData = HTTPClient.formatFormData(data);
+
+		let object = {};
+		formData.forEach((value, key) => object[key] = value);
+		return JSON.stringify(object);
+	}
+
 	static logRequestFailure(response, json) {
 		console.error('Request failure. Status: '+response.statusText+' ; HTTP Code : '+response.status, json);
 	}
@@ -176,7 +190,7 @@ class HTTPClient {
 		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl, HTTPClient.onInvalidTokenCallback);
 	}
 
-	static async request(method, url, data, successCallback, errorCallback, formErrorCallback) {
+	static async request(method, url, data, successCallback=null, errorCallback=null, formErrorCallback=null, additionalHeaders={}) {
 		if (!window.fetch) {
 			return;
 		}
@@ -184,7 +198,7 @@ class HTTPClient {
 		let body = null;
 		method = method.toUpperCase();
 
-		let headers = HTTPClient.getHeaders();
+		let headers = HTTPClient.getHeaders(false, additionalHeaders);
 		if ('PATCH' === method) {
 			headers.append('Content-Type', 'application/x-www-form-urlencoded');
 			// 30/01/2023 : ajout encodeURIComponent() sinon les valeurs contenant des "+" pose pb (signe "+" retiré)
@@ -198,12 +212,16 @@ class HTTPClient {
 			data = null;
 		}
 
+		if (headers.get('Content-Type') === 'application/json') {
+			body = HTTPClient.formatJsonData(data);
+		}
+
 		const requestOptions = {
+			method: method,
 			headers: headers,
+			body: body,
 			mode: 'cors',
-			cache: 'no-cache',
-			method,
-			body
+			cache: 'no-cache'
 		}
 
 		const response = await fetch(url, requestOptions);
@@ -215,7 +233,7 @@ class HTTPClient {
 			}
 
 			if (HTTPClient.isExpiredToken(response, jsonData)) {
-				HTTPClient.refreshToken(() => HTTPClient.request(method, url, data, successCallback, errorCallback, formErrorCallback), errorCallback);
+				HTTPClient.refreshToken(() => HTTPClient.request(method, url, data, successCallback, errorCallback, formErrorCallback, additionalHeaders), errorCallback);
 				return;
 			}
 
@@ -250,15 +268,16 @@ class HTTPClient {
 		}
 	}
 
-	static download(method, url, data, errorCallback, completeCallback) {
+	static download(method, url, data, errorCallback=null, completeCallback=null, additionalHeaders={}) {
 		HTTPClient.requestBlob(method, url, data,
 			(blobData, response) => File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition')),
 			errorCallback,
-			completeCallback
+			completeCallback,
+			additionalHeaders
 		);
 	}
 
-	static async requestBlob(method, url, data, successCallback, errorCallback, completeCallback) {
+	static async requestBlob(method, url, data, successCallback=null, errorCallback=null, completeCallback=null, additionalHeaders={}) {
 		if (!window.fetch) {
 			return;
 		}
@@ -266,7 +285,7 @@ class HTTPClient {
 		let body = null;
 		method = method.toUpperCase();
 
-		let headers = HTTPClient.getHeaders();
+		let headers = HTTPClient.getHeaders(false, additionalHeaders);
 		if ('PATCH' === method) {
 			headers.append('Content-Type', 'application/x-www-form-urlencoded');
 			body = encodeURIComponent(new URLSearchParams(HTTPClient.formatFormData(data)).toString());
@@ -290,7 +309,7 @@ class HTTPClient {
 		const response = await fetch(url, requestOptions);
 		try {
 			if (response.status === 401 && response.statusText === 'Expired JWT Token') {
-				HTTPClient.refreshToken(() => HTTPClient.requestBlob(method, url, data, successCallback, errorCallback, completeCallback), errorCallback);
+				HTTPClient.refreshToken(() => HTTPClient.requestBlob(method, url, data, successCallback, errorCallback, completeCallback, additionalHeaders), errorCallback);
 				return;
 			}
 
@@ -323,7 +342,7 @@ class HTTPClient {
 		}
 	}
 
-	static refreshToken(completeCallback, errorCallback) {
+	static refreshToken(completeCallback, errorCallback=null) {
 		if (typeof HTTPClient.listCompleteCallbackAfterRefreshTokenFinished == 'undefined') {
 			HTTPClient.listCompleteCallbackAfterRefreshTokenFinished = [];
 		}
