@@ -144,6 +144,10 @@ class HTTPClient {
 	}
 
 	static formatJsonData(data) {
+		if (typeof data == 'string') {
+			return data;
+		}
+
 		let formData = HTTPClient.formatFormData(data);
 
 		let object = {};
@@ -199,21 +203,23 @@ class HTTPClient {
 		method = method.toUpperCase();
 
 		let headers = HTTPClient.getHeaders(false, additionalHeaders);
+
 		if ('PATCH' === method) {
 			headers.append('Content-Type', 'application/x-www-form-urlencoded');
 			// 30/01/2023 : ajout encodeURIComponent() sinon les valeurs contenant des "+" pose pb (signe "+" retiré)
 			body = encodeURIComponent(new URLSearchParams(HTTPClient.formatFormData(data)).toString());
 		}
 		else if ('POST' === method) {
-			body = HTTPClient.formatFormData(data);
+			if (headers.get('Content-Type') === 'application/json') {
+				body = HTTPClient.formatJsonData(data);
+			}
+			else {
+				body = HTTPClient.formatFormData(data);
+			}
 		}
 		else {
 			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
 			data = null;
-		}
-
-		if (headers.get('Content-Type') === 'application/json') {
-			body = HTTPClient.formatJsonData(data);
 		}
 
 		const requestOptions = {
@@ -291,7 +297,12 @@ class HTTPClient {
 			body = encodeURIComponent(new URLSearchParams(HTTPClient.formatFormData(data)).toString());
 		}
 		else if ('POST' === method) {
-			body = HTTPClient.formatFormData(data);
+			if (headers.get('Content-Type') === 'application/json') {
+				body = HTTPClient.formatJsonData(data);
+			}
+			else {
+				body = HTTPClient.formatFormData(data);
+			}
 		}
 		else {
 			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
