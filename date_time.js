@@ -91,8 +91,8 @@ class DateTime {
 	static getDateForInputDate(jsDate, timeZone="Europe/Paris") {
 		return this.getSqlDate(jsDate, timeZone);
 	}
-	static getTimeForInputTime(jsDate, timeZone="Europe/Paris") {
-		return jsDate.toLocaleTimeString('en-GB', {hour: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0')+':'+jsDate.toLocaleTimeString('en-GB', {minute: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0');
+	static getTimeForInputTime(jsDate, timeZone="Europe/Paris", withSeconds=false) {
+		return jsDate.toLocaleTimeString('en-GB', {hour: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0')+':'+jsDate.toLocaleTimeString('en-GB', {minute: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0')+(withSeconds?':'+jsDate.toLocaleTimeString('en-GB', {second: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0'):'');
 	}
 
 	static getTimestamp(jsDate) {
@@ -362,8 +362,8 @@ class TimestampUnix {
 	static getDateForInputDate(timestamp, timeZone="Europe/Paris") {
 		return DateTime.getDateForInputDate(this.parse(timestamp), timeZone);
 	}
-	static getTimeForInputTime(timestamp, timeZone="Europe/Paris") {
-		return DateTime.getTimeForInputTime(this.parse(timestamp), timeZone);
+	static getTimeForInputTime(timestamp, timeZone="Europe/Paris", withSeconds=false) {
+		return DateTime.getTimeForInputTime(this.parse(timestamp), timeZone, withSeconds);
 	}
 
 	static isDateEqual(timestamp1, timestamp2) {
