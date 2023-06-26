@@ -395,7 +395,7 @@ class SqlDate {
 		if (sqlDate == null) {
 			return null;
 		}
-		return new Date(sqlDate.substring(0, 4), sqlDate.substring(5, 7)-1, sqlDate.substring(8, 10), 0, 0, 0);
+		return new Date(Date.UTC(sqlDate.substring(0, 4), sqlDate.substring(5, 7)-1, sqlDate.substring(8, 10), 0, 0, 0));
 	}
 
 	static getCurrentSqlDate() {
@@ -441,10 +441,14 @@ class SqlTime {
 		if ((sqlTime.match(/\:/g) || []).length == 1) {
 			sqlTime += ':00';
 		}
-		let jsDate = new Date();
+
 		let arrayTime = sqlTime.split(':');
-		jsDate.setHours(arrayTime[0], arrayTime[1], arrayTime[2], 0);
-		return jsDate;
+		return new Date(Date.UTC(1970, 0, 1, arrayTime[0], arrayTime[1], arrayTime[2]));
+
+		/*let jsDate = new Date();
+		jsDate.setUTCFullYear(1970, 0, 1);
+		jsDate.setUTCHours(arrayTime[0], arrayTime[1], arrayTime[2], 0);
+		return jsDate;*/
 	}
 
 	static getCurrentSqlTime() {
@@ -489,7 +493,8 @@ class SqlDateTime {
 		if (sqlDateTime == null) {
 			return null;
 		}
-		return new Date(sqlDateTime.substring(0, 4), sqlDateTime.substring(5, 7)-1, sqlDateTime.substring(8, 10), sqlDateTime.substring(11, 13), sqlDateTime.substring(14, 16), sqlDateTime.substring(17, 19));
+		//return new Date(sqlDateTime.substring(0, 4), sqlDateTime.substring(5, 7)-1, sqlDateTime.substring(8, 10), sqlDateTime.substring(11, 13), sqlDateTime.substring(14, 16), sqlDateTime.substring(17, 19));
+		return new Date(Date.UTC(sqlDateTime.substring(0, 4), sqlDateTime.substring(5, 7)-1, sqlDateTime.substring(8, 10), sqlDateTime.substring(11, 13), sqlDateTime.substring(14, 16), sqlDateTime.substring(17, 19)));
 	}
 
 	static getDateDigitalDisplay(sqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
