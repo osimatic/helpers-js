@@ -84,19 +84,19 @@ class DateTime {
 		*/
 	}
 
-	static getSqlDateTime(jsDate) {
-		return this.getSqlDate(jsDate)+' '+this.getSqlTime(jsDate);
+	static getSqlDateTime(jsDate, timeZone="Europe/Paris") {
+		return this.getSqlDate(jsDate, timeZone)+' '+this.getSqlTime(jsDate, timeZone);
 	}
 
 	static getDateForInputDate(jsDate, timeZone="Europe/Paris") {
 		return this.getSqlDate(jsDate, timeZone);
 	}
-	static getTimeForInputTime(jsDate, timeZone="Europe/Paris") {
-		return jsDate.toLocaleTimeString('en-GB', {hour: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0')+':'+jsDate.toLocaleTimeString('en-GB', {minute: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0');
+	static getTimeForInputTime(jsDate, timeZone="Europe/Paris", withSeconds=false) {
+		return jsDate.toLocaleTimeString('en-GB', {hour: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0')+':'+jsDate.toLocaleTimeString('en-GB', {minute: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0')+(withSeconds?':'+jsDate.toLocaleTimeString('en-GB', {second: 'numeric', timeZone: timeZone, hour12: false}).padStart(2, '0'):'');
 	}
 
 	static getTimestamp(jsDate) {
-		return jsDate.getTime();
+		return jsDate.getTime()/1000;
 	}
 
 	static getDateDigitalDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
@@ -240,15 +240,35 @@ class DateTime {
 		return (jsDate1.getFullYear() == jsDate2.getFullYear() && jsDate1.getMonth() == jsDate2.getMonth() && jsDate1.getDate() == jsDate2.getDate());
 	}
 
-	static isDateInTheFuture(jsDate) {
+	static isDateInThePast(jsDate) {
 		jsDate.setHours(0);
 		jsDate.setMinutes(0);
 		jsDate.setSeconds(0);
+		jsDate.setMilliseconds(0);
 		let today = new Date();
 		today.setHours(0);
 		today.setMinutes(0);
 		today.setSeconds(0);
+		today.setMilliseconds(0);
+		return jsDate.getTime() < today.getTime();
+	}
+
+	static isDateInTheFuture(jsDate) {
+		jsDate.setHours(0);
+		jsDate.setMinutes(0);
+		jsDate.setSeconds(0);
+		jsDate.setMilliseconds(0);
+		let today = new Date();
+		today.setHours(0);
+		today.setMinutes(0);
+		today.setSeconds(0);
+		today.setMilliseconds(0);
 		return jsDate.getTime() > today.getTime();
+	}
+
+	static isDateTimeInThePast(jsDateTime) {
+		let today = new Date();
+		return jsDateTime < today;
 	}
 
 	static isDateTimeInTheFuture(jsDateTime) {
@@ -342,8 +362,8 @@ class TimestampUnix {
 	static getDateForInputDate(timestamp, timeZone="Europe/Paris") {
 		return DateTime.getDateForInputDate(this.parse(timestamp), timeZone);
 	}
-	static getTimeForInputTime(timestamp, timeZone="Europe/Paris") {
-		return DateTime.getTimeForInputTime(this.parse(timestamp), timeZone);
+	static getTimeForInputTime(timestamp, timeZone="Europe/Paris", withSeconds=false) {
+		return DateTime.getTimeForInputTime(this.parse(timestamp), timeZone, withSeconds);
 	}
 
 	static isDateEqual(timestamp1, timestamp2) {
@@ -352,6 +372,13 @@ class TimestampUnix {
 
 	static getNbDayBetweenTwo(timestamp1, timestamp2, asPeriod, timeZone="Europe/Paris") {
 		return DateTime.getNbDayBetweenTwo(this.parse(timestamp1), this.parse(timestamp2), asPeriod, timeZone);
+	}
+
+	static isDateInThePast(timestamp) {
+		return DateTime.isDateInThePast(this.parse(timestamp));
+	}
+	static isDateTimeInThePast(timestamp) {
+		return DateTime.isDateTimeInThePast(this.parse(timestamp));
 	}
 
 	static isDateInTheFuture(timestamp) {
@@ -368,18 +395,22 @@ class SqlDate {
 		if (sqlDate == null) {
 			return null;
 		}
-		return new Date(sqlDate.substring(0, 4), sqlDate.substring(5, 7)-1, sqlDate.substring(8, 10), 0, 0, 0);
+		return new Date(Date.UTC(sqlDate.substring(0, 4), sqlDate.substring(5, 7)-1, sqlDate.substring(8, 10), 0, 0, 0));
 	}
 
 	static getCurrentSqlDate() {
 		return DateTime.getSqlDate(new Date());
 	}
 
-	static getDateDigitalDisplay(sqlDate, locale="fr-FR") {
-		return SqlDateTime.getDateDigitalDisplay(sqlDate+" 00:00:00", locale);
+	static getDateDigitalDisplay(sqlDate, locale="fr-FR", timeZone="Europe/Paris") {
+		return SqlDateTime.getDateDigitalDisplay(sqlDate+" 00:00:00", locale, timeZone);
 	}
-	static getDateTextDisplay(sqlDate, locale="fr-FR") {
-		return SqlDateTime.getDateTextDisplay(sqlDate+" 00:00:00", locale);
+	static getDateTextDisplay(sqlDate, locale="fr-FR", timeZone="Europe/Paris") {
+		return SqlDateTime.getDateTextDisplay(sqlDate+" 00:00:00", locale, timeZone);
+	}
+
+	static getDateForInputDate(sqlDate, timeZone="Europe/Paris") {
+		return SqlDateTime.getDateForInputDate(sqlDate+" 00:00:00", timeZone);
 	}
 
 	static getYear(sqlDate) {
@@ -410,24 +441,32 @@ class SqlTime {
 		if ((sqlTime.match(/\:/g) || []).length == 1) {
 			sqlTime += ':00';
 		}
-		let jsDate = new Date();
+
 		let arrayTime = sqlTime.split(':');
-		jsDate.setHours(arrayTime[0], arrayTime[1], arrayTime[2], 0);
-		return jsDate;
+		return new Date(Date.UTC(1970, 0, 1, arrayTime[0], arrayTime[1], arrayTime[2]));
+
+		/*let jsDate = new Date();
+		jsDate.setUTCFullYear(1970, 0, 1);
+		jsDate.setUTCHours(arrayTime[0], arrayTime[1], arrayTime[2], 0);
+		return jsDate;*/
 	}
 
 	static getCurrentSqlTime() {
 		return DateTime.getSqlTime(new Date());
 	}
 
-	static getTimeDisplay(sqlTime, locale="fr-FR") {
-		return SqlDateTime.getTimeDisplay('1970-01-01 '+sqlTime, locale);
+	static getTimeDisplay(sqlTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return SqlDateTime.getTimeDisplay('1970-01-01 '+sqlTime, locale, timeZone);
 	}
-	static getTimeDigitalDisplay(sqlTime, locale="fr-FR") {
-		return SqlDateTime.getTimeDigitalDisplay('1970-01-01 '+sqlTime, locale);
+	static getTimeDigitalDisplay(sqlTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return SqlDateTime.getTimeDigitalDisplay('1970-01-01 '+sqlTime, locale, timeZone);
 	}
-	static getTimeDisplayWithNbDays(sqlTime, previousSqlTime) {
-		return SqlDateTime.getTimeDisplayWithNbDays('1970-01-01 '+sqlTime, '1970-01-01 '+previousSqlTime, locale);
+	static getTimeDisplayWithNbDays(sqlTime, previousSqlTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return SqlDateTime.getTimeDisplayWithNbDays('1970-01-01 '+sqlTime, '1970-01-01 '+previousSqlTime, locale, timeZone);
+	}
+
+	static getTimeForInputTime(sqlTime, timeZone="Europe/Paris", withSeconds=false) {
+		return SqlDateTime.getTimeForInputTime('1970-01-01 '+sqlTime, timeZone, withSeconds);
 	}
 }
 
@@ -454,28 +493,36 @@ class SqlDateTime {
 		if (sqlDateTime == null) {
 			return null;
 		}
-		return new Date(sqlDateTime.substring(0, 4), sqlDateTime.substring(5, 7)-1, sqlDateTime.substring(8, 10), sqlDateTime.substring(11, 13), sqlDateTime.substring(14, 16), sqlDateTime.substring(17, 19));
+		//return new Date(sqlDateTime.substring(0, 4), sqlDateTime.substring(5, 7)-1, sqlDateTime.substring(8, 10), sqlDateTime.substring(11, 13), sqlDateTime.substring(14, 16), sqlDateTime.substring(17, 19));
+		return new Date(Date.UTC(sqlDateTime.substring(0, 4), sqlDateTime.substring(5, 7)-1, sqlDateTime.substring(8, 10), sqlDateTime.substring(11, 13), sqlDateTime.substring(14, 16), sqlDateTime.substring(17, 19)));
 	}
 
-	static getDateDigitalDisplay(sqlDateTime, locale="fr-FR") {
-		return DateTime.getDateDigitalDisplay(this.parse(sqlDateTime), locale);
+	static getDateDigitalDisplay(sqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return DateTime.getDateDigitalDisplay(this.parse(sqlDateTime), locale, timeZone);
 	}
-	static getDateTextDisplay(sqlDateTime, locale="fr-FR") {
-		return DateTime.getDateTextDisplay(this.parse(sqlDateTime), locale);
-	}
-
-	static getTimeDisplay(sqlDateTime, locale="fr-FR") {
-		return DateTime.getTimeDisplay(this.parse(sqlDateTime), locale);
-	}
-	static getTimeDisplayWithNbDays(sqlDateTime, previousSqlDateTime) {
-		return DateTime.getTimeDisplayWithNbDays(this.parse(sqlDateTime), this.parse(previousSqlDateTime), locale);
-	}
-	static getTimeDigitalDisplay(sqlDateTime, locale="fr-FR") {
-		return DateTime.getTimeDigitalDisplay(this.parse(sqlDateTime), locale);
+	static getDateTextDisplay(sqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return DateTime.getDateTextDisplay(this.parse(sqlDateTime), locale, timeZone);
 	}
 
-	static getDateTimeDigitalDisplay(sqlDateTime, locale="fr-FR") {
-		return DateTime.getDateTimeDigitalDisplay(this.parse(sqlDateTime), locale);
+	static getTimeDisplay(sqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return DateTime.getTimeDisplay(this.parse(sqlDateTime), locale, timeZone);
+	}
+	static getTimeDisplayWithNbDays(sqlDateTime, previousSqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return DateTime.getTimeDisplayWithNbDays(this.parse(sqlDateTime), this.parse(previousSqlDateTime), locale, timeZone);
+	}
+	static getTimeDigitalDisplay(sqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return DateTime.getTimeDigitalDisplay(this.parse(sqlDateTime), locale, timeZone);
+	}
+
+	static getDateTimeDigitalDisplay(sqlDateTime, locale="fr-FR", timeZone="Europe/Paris") {
+		return DateTime.getDateTimeDigitalDisplay(this.parse(sqlDateTime), locale, timeZone);
+	}
+
+	static getDateForInputDate(sqlDateTime, timeZone="Europe/Paris") {
+		return DateTime.getDateForInputDate(this.parse(sqlDateTime), timeZone);
+	}
+	static getTimeForInputTime(sqlDateTime, timeZone="Europe/Paris", withSeconds=false) {
+		return DateTime.getTimeForInputTime(this.parse(sqlDateTime), timeZone, withSeconds);
 	}
 
 	static getYear(sqlDateTime) {

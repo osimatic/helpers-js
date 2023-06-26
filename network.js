@@ -1,22 +1,22 @@
 class Cookie {
-	static set(cname, cvalue, exdays) {
-		var d = new Date();
-		d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-		var expires = "expires=" + d.toUTCString();
-		document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+	static set(name, value, nbValidityDays=30) {
+		let d = new Date();
+		d.setTime(d.getTime() + (nbValidityDays * 24 * 60 * 60 * 1000));
+		let expires = "expires=" + d.toUTCString();
+		document.cookie = name + "=" + value + ";" + expires + ";path=/";
 	}
 
-	static get(cname) {
-		var name = cname + "=";
-		var decodedCookie = decodeURIComponent(document.cookie);
-		var ca = decodedCookie.split(';');
-		for (var i = 0; i < ca.length; i++) {
-			var c = ca[i];
+	static get(name) {
+		let nameWithSeparator = name + "=";
+		let decodedCookie = decodeURIComponent(document.cookie);
+		let ca = decodedCookie.split(';');
+		for (let i = 0; i < ca.length; i++) {
+			let c = ca[i];
 			while (c.charAt(0) == ' ') {
 				c = c.substring(1);
 			}
-			if (c.indexOf(name) === 0) {
-				return c.substring(name.length, c.length);
+			if (c.indexOf(nameWithSeparator) === 0) {
+				return c.substring(nameWithSeparator.length, c.length);
 			}
 		}
 		return null;
@@ -28,14 +28,11 @@ class Cookie {
 }
 
 class UrlAndQueryString {
-	static displayUrl(url, withLink) {
-		withLink = typeof withLink == 'undefined' ? true : withLink;
+	static displayUrl(url, withLink=true) {
 		return (withLink ? '<a href="' + url + '">' : '') + UrlAndQueryString.getHost(url, false) + (withLink ? '</a>' : '');
 	}
 
-	static displayUrlAndPath(url, withLink, displayPathIfEmpty) {
-		withLink = typeof withLink == 'undefined' ? true : withLink;
-		displayPathIfEmpty = typeof displayPathIfEmpty == 'undefined' ? false : displayPathIfEmpty;
+	static displayUrlAndPath(url, withLink=true, displayPathIfEmpty=false) {
 		let formattedUrl = UrlAndQueryString.getHostAndPath(url, false);
 		if (!displayPathIfEmpty && UrlAndQueryString.getPath(url) === '/') {
 			formattedUrl = formattedUrl.slice(-1) === '/' ? formattedUrl.slice(0, -1) : formattedUrl;
@@ -43,8 +40,7 @@ class UrlAndQueryString {
 		return (withLink ? '<a href="' + url + '">' : '') + formattedUrl + (withLink ? '</a>' : '');
 	}
 
-	static getHost(url, withProtocol) {
-		withProtocol = typeof withProtocol == 'undefined' ? true : withProtocol;
+	static getHost(url, withProtocol=true) {
 		if (typeof url == 'undefined') {
 			return withProtocol ? window.location.origin : window.location.host;
 		}
@@ -68,7 +64,7 @@ class UrlAndQueryString {
 		return url.search;
 	}
 
-	static getHostAndPath(url, withProtocol) {
+	static getHostAndPath(url, withProtocol=true) {
 		return UrlAndQueryString.getHost(url, withProtocol) + UrlAndQueryString.getPath(url);
 
 		//let strpos = url.indexOf('?');

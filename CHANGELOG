@@ -60,3 +60,9 @@ HTTPRequest -> HTTPClient
 
 1.0.106
 UrlAndQueryString.getPath() -> UrlAndQueryString.getHostAndPath()
+
+1.1.27
+var serviceCountry = 'XX' -> TelephoneNumber.setLocalCountryCode('XX')
+
+1.1.28
+ImportFromCsv.initModal() -> ImportFromCsv.initForm()

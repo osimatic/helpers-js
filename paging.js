@@ -144,9 +144,7 @@ class Navigation {
 		tab.show();
 	}
 
-	static addTabInHistory(tabId, queryStringKey, replace) {
-		queryStringKey = typeof queryStringKey != 'undefined' && null !== queryStringKey ? queryStringKey : 'tab';
-		replace = typeof replace != 'undefined' && null !== replace ? replace : true;
+	static addTabInHistory(tabId, queryStringKey='tab', replace=true) {
 		let url = window.location.href;
 		url = UrlAndQueryString.setParamOfUrl(queryStringKey, tabId, url);
 		if (replace) {

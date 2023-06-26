@@ -8,11 +8,15 @@ class Country {
 	}
 
 	static fillCountrySelect(select, defaultValue) {
-		Object.entries(Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="'+countryCode+'">'+countryName+'</option>'));
+		if (select.children().length === 0) {
+			Object.entries(Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="' + countryCode + '">' + countryName + '</option>'));
+		}
 		if (typeof defaultValue != 'undefined') {
 			select.val(defaultValue);
 		}
-		select.selectpicker('refresh');
+		if (typeof select.selectpicker != 'undefined') {
+			select.selectpicker('refresh');
+		}
 	}
 	static getCountryName(countryCode) {
 		if (Country.getCountries().hasOwnProperty(countryCode)) {

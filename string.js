@@ -54,12 +54,11 @@ String.prototype.truncateOnWord = String.prototype.truncateOnWord || function(li
 	}).join('');
 }
 
-String.prototype.truncateString = String.prototype.truncateString || function(length, from, ellipsis, split) {
+String.prototype.truncateString = String.prototype.truncateString || function(length, from, ellipsis='…', split=false) {
 	let str1, str2, len1, len2;
 	if (this.length <= length) {
 		return this.toString();
 	}
-	ellipsis = typeof ellipsis === 'undefined' ? '…' : ellipsis;
 	switch(from) {
 		case 'left':
 			str2 = split ? this.truncateOnWord(length, true) : this.slice(this.length - length);

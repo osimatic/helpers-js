@@ -1,7 +1,7 @@
 class FormHelper {
-	static init(form, onSubmitCallback, submitButton) {
+	static init(form, onSubmitCallback, submitButton=null) {
 		FormHelper.reset(form, submitButton);
-		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
+		submitButton = null != submitButton ? submitButton : form.find('button[name="validate"]');
 		submitButton.off('click').click(function(e) {
 			e.preventDefault();
 			FormHelper.buttonLoader($(this), 'loading');
@@ -13,8 +13,8 @@ class FormHelper {
 		return form;
 	}
 
-	static reset(form, submitButton) {
-		submitButton = typeof submitButton != 'undefined' && null != submitButton ? submitButton : form.find('button[name="validate"]');
+	static reset(form, submitButton=null) {
+		submitButton = null != submitButton ? submitButton : form.find('button[name="validate"]');
 		form.find('input[name]:not([type="checkbox"], [type="radio"]), select:not(.selectpicker), textarea').each((idx, el) => $(el).val('')).off('change');
 		form.find('select.selectpicker').each((idx, el) => $(el).val(''));
 		FormHelper.buttonLoader(submitButton, 'reset');
@@ -31,7 +31,7 @@ class FormHelper {
 			}
 
 			if (typeof value == 'object') {
-				var select = form.find('[name="'+key+'[]"]');
+				let select = form.find('[name="'+key+'[]"]');
 				select.find('option').prop('selected', false);
 				select.data('default_id', value.join(','));
 				$.each(value, function(key, val) {
@@ -40,7 +40,7 @@ class FormHelper {
 				return;
 			}
 
-			var input = form.find('[name="'+key+'"]');
+			let input = form.find('[name="'+key+'"]');
 
 			if (input.prop('type') === 'radio' || input.prop('type') === 'checkbox') {
 				input.prop('checked', false);
@@ -60,7 +60,7 @@ class FormHelper {
 	}
 
 	static getDataFromFormData(formData) {
-		var data = {};
+		let data = {};
 		for(let pair of formData.entries()) {
 			//console.log(pair[0]+ ', '+ pair[1]);
 			data[pair[0]] = pair[1];
@@ -100,20 +100,25 @@ class FormHelper {
 		return textarea.val().replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
 	}
 
-	static setOnInputChange(input, callback, doneTypingInterval) {
-		//setup before functions
-		let typingTimer;                //timer identifier
-		doneTypingInterval = typeof doneTypingInterval != 'undefined' && null !== doneTypingInterval ? doneTypingInterval : 700;  // time in ms
+	static setOnInputChange(input, callback, doneTypingInterval=700) {
+		// setup before functions
+		let typingTimer;  // timer identifier
 
-		//on keyup, start the countdown
+		// on keyup, start the countdown
 		input.on('keyup', function () {
 			clearTimeout(typingTimer);
-			typingTimer = setTimeout(callback, doneTypingInterval);
+			typingTimer = setTimeout(callback, doneTypingInterval); // time in ms
 		});
 
-		//on keydown, clear the countdown
+		// on keydown, clear the countdown
 		input.on('keydown', function () {
 			clearTimeout(typingTimer);
+		});
+
+		// on focusout, clear the countdown and call callback
+		input.on('focusout', function () {
+			clearTimeout(typingTimer);
+			callback();
 		});
 	}
 
@@ -332,10 +337,10 @@ class FormHelper {
 			button.data('btn-text', button.html());
 			//let text = '<span class="spinner"><i class=\'fa fa-circle-notch fa-spin\'></i></span>Traitement en cours…';
 			let text = '<i class=\'fa fa-circle-notch fa-spin\'></i> Traitement en cours…';
-			if (button.data('load-text') != undefined && button.data('load-text') != null && button.data('load-text') != '') {
+			if (button.data('load-text') != null && button.data('load-text') !== '') {
 				text = button.data('load-text');
 			}
-			if (button.data('loading-text') != undefined && button.data('loading-text') != null && button.data('loading-text') != '') {
+			if (button.data('loading-text') != null && button.data('loading-text') !== '') {
 				text = button.data('loading-text');
 			}
 			button.html(text);

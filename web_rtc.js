@@ -8,73 +8,69 @@ class WebRTC {
         this.turnSecret = turnSecret;
     }
 
-    static offer(stream, iceCandidateCallback) {
+    static setSignalingBus(signalingBus) {
+        this.signalingBus = signalingBus;
+    }
+
+    static offer(videoBroadcasterId, stream, iceCandidateCallback, connectionStateChangeCallback) {
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials(); 
-                let peerConn = new RTCPeerConnection(
-                    { 
-                        iceServers: [
-                            { 
-                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
-                                username: username, 
-                                credential: password 
-                            },
-                            { urls: this.stunUrl }
-                        ] 
-                    }
-                );
-
-                peerConn.onicecandidate = ((event) => {
-                    if (event.candidate) {
-                        iceCandidateCallback(event.candidate);
-                    }
+                let peerConn = new RTCPeerConnection({ 
+                    iceServers: [{ 
+                        urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
+                        username: username, 
+                        credential: password 
+                    }, { 
+                        urls: this.stunUrl 
+                    }] 
                 });
+                
+                peerConn.onconnectionstatechange = (event) => connectionStateChangeCallback(event, peerConn.connectionState);
+                peerConn.onicecandidate = (event) => iceCandidateCallback(event);
 
                 stream.getTracks().forEach(track => peerConn.addTrack(track, stream));
-
-                const offer = await peerConn.createOffer();
-                await peerConn.setLocalDescription(offer);
+                await peerConn.setLocalDescription(await peerConn.createOffer()); 
+                
+                this.signalingBus.subscribe('answer', (payload) => peerConn.setRemoteDescription(payload.description));
+                this.signalingBus.subscribe('candidate', (payload) => peerConn.addIceCandidate(new RTCIceCandidate(payload.candidate)));  
+                this.signalingBus.publish('offer', { id: videoBroadcasterId, description: peerConn.localDescription }); 
 
                 resolve(peerConn);
             } catch (error) {
+                console.error(error);
                 reject(error);
             }
         });
     }
-    
-    static answer(remoteDescription, onTrackCallback, iceCandidateCallback) {
+
+    static answer(videoBroadcasterId, remoteDescription, onTrackCallback, iceCandidateCallback, connectionStateChangeCallback) {        
         return new Promise(async (resolve, reject) => {
             try {
                 let { username, password } = this.getTurnCredentials();
-                let peerConn = new RTCPeerConnection(
-                    { 
-                        iceServers: [
-                            { 
-                                urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
-                                username: username, 
-                                credential: password 
-                            },
-                            { urls: this.stunUrl }
-                        ] 
-                    }
-                );
-
-                peerConn.onicecandidate = ((event) => {
-                    if (event.candidate) {
-                        iceCandidateCallback(event.candidate);
-                    }
+                let peerConn = new RTCPeerConnection({ 
+                    iceServers: [{ 
+                        urls: [this.turnUrl + '?transport=udp', this.turnUrl + '?transport=tcp'], 
+                        username: username, 
+                        credential: password 
+                    }, { 
+                        urls: this.stunUrl 
+                    }] 
                 });
 
+                peerConn.onconnectionstatechange = (event) => connectionStateChangeCallback(event, peerConn.connectionState);
+                peerConn.onicecandidate = async (event) => iceCandidateCallback(event);
                 peerConn.ontrack = (event) => onTrackCallback(event.streams);
+
+                peerConn.setRemoteDescription(new RTCSessionDescription(remoteDescription));
+                await peerConn.setLocalDescription(await peerConn.createAnswer());
                 
-                peerConn.setRemoteDescription(new RTCSessionDescription(remoteDescription))
-                
-                const answer = await peerConn.createAnswer();
-                await peerConn.setLocalDescription(answer);
-                
+                this.signalingBus.subscribe('candidate', (payload) => peerConn.addIceCandidate(new RTCIceCandidate(payload.candidate)));
+                this.signalingBus.publish('answer', { id: videoBroadcasterId, description: peerConn.localDescription });
+               
                 resolve(peerConn);
             } catch (error) {
+                console.error(error);
                 reject(error);
             }
         });
