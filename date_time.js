@@ -390,6 +390,9 @@ class TimestampUnix {
 
 }
 
+/**
+ * Les dates SQL fournies en paramètre doivent être en UTC.
+ */
 class SqlDate {
 	static parse(sqlDate) {
 		if (sqlDate == null) {
@@ -413,6 +416,10 @@ class SqlDate {
 		return SqlDateTime.getDateForInputDate(sqlDate+" 00:00:00", timeZone);
 	}
 
+	static getTimestamp(sqlDate) {
+		return SqlDateTime.getTimestamp(sqlDate+" 00:00:00");
+	}
+
 	static getYear(sqlDate) {
 		return SqlDateTime.getYear(sqlDate+" 00:00:00");
 	}
@@ -432,6 +439,9 @@ class SqlDate {
 
 }
 
+/**
+ * Les heures SQL fournies en paramètre doivent être en UTC.
+ */
 class SqlTime {
 	static parse(sqlTime) {
 		if (sqlTime == null) {
@@ -468,8 +478,16 @@ class SqlTime {
 	static getTimeForInputTime(sqlTime, timeZone="Europe/Paris", withSeconds=false) {
 		return SqlDateTime.getTimeForInputTime('1970-01-01 '+sqlTime, timeZone, withSeconds);
 	}
+
+	static getTimestamp(sqlTime) {
+		return SqlDateTime.getTimestamp('1970-01-01 '+sqlTime);
+	}
+
 }
 
+/**
+ * Les dates/heures SQL fournies en paramètre doivent être en UTC.
+ */
 class SqlDateTime {
 	static getCurrentSqlDateTime() {
 		return DateTime.getSqlDateTime(new Date());

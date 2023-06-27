@@ -66,3 +66,6 @@ var serviceCountry = 'XX' -> TelephoneNumber.setLocalCountryCode('XX')
 
 1.1.28
 ImportFromCsv.initModal() -> ImportFromCsv.initForm()
+
+1.1.44
+Toutes les fonctions des classes SqlTime, SqlDate et SqlDateTime prennent maintenant les dates et heures SQL en UTC. CECI EST TRES IMPORTANT SINON CELA FAUSSE LES DATES/HEURES SELON LES FUSEAUX HORAIRES.
