@@ -136,10 +136,6 @@ class JwtSession {
 		return JwtToken.getData(JwtSession.getToken(), key);
 	}
 
-	static setData(key, value) {
-		localStorage.setItem(key, value);
-	}
-
 	static isAnonymous() {
 		return localStorage.getItem('access_token') == null;
 	}
