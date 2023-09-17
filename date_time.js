@@ -180,7 +180,8 @@ class DateTime {
 
 	static getFirstDayOfWeek(date) {
 		let firstDayOfWeek = new Date(date);
-		firstDayOfWeek.setDate(date.getDate() - date.getDay() + 1); // First day is the day of the month - the day of the week
+		const day = date.getDay();
+		firstDayOfWeek.setDate(date.getDate() - day + (0 === day ? -6:1)); // First day is the day of the month - the day of the week
 		return firstDayOfWeek;
 	}
 
