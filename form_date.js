@@ -1,7 +1,7 @@
 ﻿// input period de type : Du <input type="date" name="start_date" /> au <input type="date" name="end_date" />
 class InputPeriod {
 
-	static addLinks(form, timeZone="Europe/Paris") {
+	static addLinks(form) {
 		let divParent = form.find('input[type="date"][data-add_period_select_links]').parent();
 		if (divParent.hasClass('input-group')) {
 			divParent = divParent.parent();
@@ -16,98 +16,98 @@ class InputPeriod {
 			+'<a href="#" class="period_select_current_year">Cette année</a>'
 			+'</div>'
 		);
-		this.init(form, timeZone);
+		this.init(form);
 	}
 
-	static init(form, timeZone="Europe/Paris") {
+	static init(form) {
 		let link;
 		//console.log(form.find('a.period_select_current_week'));
 
 		if ((link = form.find('a.period_select_today')).length) {
-			link.click(function() { InputPeriod.selectToday($(this), timeZone); return false; });
+			link.click(function() { InputPeriod.selectToday($(this)); return false; });
 		}
 		if ((link = form.find('a.period_select_yesterday')).length) {
-			link.click(function() { InputPeriod.selectPreviousDay($(this), 1, timeZone); return false; });
+			link.click(function() { InputPeriod.selectPreviousDay($(this), 1); return false; });
 		}
 		if ((link = form.find('a.period_select_tomorrow')).length) {
-			link.click(function() { InputPeriod.selectFollowingDay($(this), 1, timeZone); return false; });
+			link.click(function() { InputPeriod.selectFollowingDay($(this), 1); return false; });
 		}
 		if ((link = form.find('a.period_select_current_week')).length) {
-			link.click(function() { InputPeriod.selectCurrentWeek($(this), timeZone); return false; });
+			link.click(function() { InputPeriod.selectCurrentWeek($(this)); return false; });
 		}
 		if ((link = form.find('a.period_select_last_week')).length) {
-			link.click(function() { InputPeriod.selectPreviousWeek($(this), 1, timeZone); return false; });
+			link.click(function() { InputPeriod.selectPreviousWeek($(this), 1); return false; });
 		}
 		if ((link = form.find('a.period_select_current_month')).length) {
-			link.click(function() { InputPeriod.selectCurrentMonth($(this), timeZone); return false; });
+			link.click(function() { InputPeriod.selectCurrentMonth($(this)); return false; });
 		}
 		if ((link = form.find('a.period_select_last_month')).length) {
-			link.click(function() { InputPeriod.selectPreviousMonth($(this), 1, timeZone); return false; });
+			link.click(function() { InputPeriod.selectPreviousMonth($(this), 1); return false; });
 		}
 		if ((link = form.find('a.period_select_current_year')).length) {
-			link.click(function() { InputPeriod.selectCurrentYear($(this), timeZone); return false; });
+			link.click(function() { InputPeriod.selectCurrentYear($(this)); return false; });
 		}
 		if ((link = form.find('a.period_select_last_year')).length) {
-			link.click(function() { InputPeriod.selectCurrentYear($(this), 1, timeZone); return false; });
+			link.click(function() { InputPeriod.selectPreviousYear($(this), 1); return false; });
 		}
 	}
 
 
-	static selectToday(link, timeZone="Europe/Paris") {
+	static selectToday(link) {
 		let date = new Date();
-		this.selectPeriod(link, date, date, timeZone);
+		this.selectPeriod(link, date, date);
 	}
 
-	static selectPreviousDay(lien, nbDays, timeZone="Europe/Paris") {
-		this.selectFollowingDay(lien, -nbDays, timeZone);
+	static selectPreviousDay(lien, nbDays) {
+		this.selectFollowingDay(lien, -nbDays);
 	}
-	static selectFollowingDay(lien, nbDays, timeZone="Europe/Paris") {
+	static selectFollowingDay(lien, nbDays) {
 		let date = new Date();
 		date.setDate(date.getDate() + nbDays);
-		this.selectPeriod(lien, date, date, timeZone);
+		this.selectPeriod(lien, date, date);
 	}
 
-	static selectCurrentWeek(lien, timeZone="Europe/Paris") {
+	static selectCurrentWeek(lien) {
 		let date = new Date();
 		this.selectPeriod(lien, DateTime.getFirstDayOfWeek(date), DateTime.getLastDayOfWeek(date));
 	}
-	static selectPreviousWeek(lien, nbWeeks, timeZone="Europe/Paris") {
-		this.selectFollowingWeek(lien, -nbWeeks, timeZone);
+	static selectPreviousWeek(lien, nbWeeks) {
+		this.selectFollowingWeek(lien, -nbWeeks);
 	}
-	static selectFollowingWeek(lien, nbWeeks, timeZone="Europe/Paris") {
+	static selectFollowingWeek(lien, nbWeeks) {
 		let date = new Date();
 		date.setDate(date.getDate() + (7*nbWeeks));
-		this.selectPeriod(lien, DateTime.getFirstDayOfWeek(date), DateTime.getLastDayOfWeek(date), timeZone);
+		this.selectPeriod(lien, DateTime.getFirstDayOfWeek(date), DateTime.getLastDayOfWeek(date));
 	}
 
-	static selectCurrentMonth(lien, timeZone="Europe/Paris") {
+	static selectCurrentMonth(lien) {
 		let date = new Date();
-		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date), timeZone);
+		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date));
 	}
-	static selectPreviousMonth(lien, nbMonths, timeZone="Europe/Paris") {
-		this.selectFollowingMonth(lien, -nbMonths, timeZone);
+	static selectPreviousMonth(lien, nbMonths) {
+		this.selectFollowingMonth(lien, -nbMonths);
 	}
-	static selectFollowingMonth(lien, nbMonths, timeZone="Europe/Paris") {
+	static selectFollowingMonth(lien, nbMonths) {
 		let date = new Date();
 		date.setDate(1);
 		date.setMonth(date.getMonth() + nbMonths);
-		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date), timeZone);
+		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date));
 	}
 
-	static selectCurrentYear(lien, timeZone="Europe/Paris") {
-		this.selectFollowingYear(lien, 0, timeZone);
+	static selectCurrentYear(lien) {
+		this.selectFollowingYear(lien, 0);
 	}
-	static selectPreviousYear(lien, nbAnneesMoins, timeZone="Europe/Paris") {
-		this.selectFollowingYear(lien, -nbAnneesMoins, timeZone);
+	static selectPreviousYear(lien, nbAnneesMoins) {
+		this.selectFollowingYear(lien, -nbAnneesMoins);
 	}
-	static selectFollowingYear(lien, nbAnneesMoins, timeZone="Europe/Paris") {
+	static selectFollowingYear(lien, nbAnneesMoins) {
 		let date = new Date();
 		date.setFullYear(date.getFullYear() + nbAnneesMoins);
-		this.selectPeriod(lien, DateTime.getFirstDayOfYear(date), DateTime.getLastDayOfYear(date), timeZone);
+		this.selectPeriod(lien, DateTime.getFirstDayOfYear(date), DateTime.getLastDayOfYear(date));
 	}
 
 
-	static selectPeriod(link, startDate, endDate, timeZone="Europe/Paris") {
+	static selectPeriod(link, startDate, endDate) {
 		let inputPeriodStart = link.parent().parent().find('input[type="date"]').filter('[name="date_start"], [name="start_date"], [name="start_period"], [name="period_start_date"]');
 		let inputPeriodEnd = link.parent().parent().find('input[type="date"]').filter('[name="date_end"], [name="end_date"], [name="end_period"], [name="period_end_date"]');
 		if (inputPeriodStart.length === 0 || inputPeriodEnd.length === 0) {
@@ -115,8 +115,8 @@ class InputPeriod {
 			return;
 		}
 
-		inputPeriodStart.val(DateTime.getDateForInputDate(startDate, timeZone));
-		inputPeriodEnd.val(DateTime.getDateForInputDate(endDate, timeZone));
+		inputPeriodStart.val(DateTime.getDateForInputDate(startDate));
+		inputPeriodEnd.val(DateTime.getDateForInputDate(endDate));
 	}
 
 }
