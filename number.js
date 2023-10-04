@@ -67,6 +67,10 @@ Number.prototype.formatForDisplay = Number.prototype.formatForDisplay || functio
 	return (c ? num.replace('.', c) : num).replace(new RegExp(re, 'g'), '$&' + (s || ','));
 };
 
+Number.prototype.truncate = Number.prototype.truncate || function() {
+	return this < 0 ? Math.ceil(this) : Math.floor(this);
+}
+
 Number.prototype.padLeft2 = Number.prototype.padLeft2 || function() {
 	return Number.padLeft2(this);
 }
