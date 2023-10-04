@@ -63,7 +63,7 @@ class DateTimeFormatter {
 
 		return this.timeDigitalFormatter[timeZone+locale];
 	}
-} 
+}
 
 class DateTime {
 	static getSqlDate(jsDate, timeZone="Europe/Paris") {
@@ -147,15 +147,15 @@ class DateTime {
 	static getDay(jsDate) {
 		return jsDate.getUTCDate();
 	}
-	
+
 	static getDayOfMonth(jsDate) {
 		return jsDate.getUTCDate();
 	}
-	
+
 	static getDayOfWeek(jsDate) {
 		return jsDate.getUTCDay();
 	}
-	
+
 	static getDayName(jsDate, locale="fr-FR", isShort=false) {
 		return jsDate.toLocaleDateString(locale, {weekday: (isShort?'short':'long')});
 	}
@@ -277,7 +277,7 @@ class DateTime {
 		return jsDateTime > today;
 	}
 
-	static getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod, timeZone="Europe/Paris") {
+	static getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod=false, timeZone="Europe/Paris") {
 		//jsDate1.set
 		if (jsDate1 == null || jsDate2 == null) {
 			return 0;
@@ -371,7 +371,7 @@ class TimestampUnix {
 		return DateTime.isDateEqual(this.parse(timestamp1), this.parse(timestamp2));
 	}
 
-	static getNbDayBetweenTwo(timestamp1, timestamp2, asPeriod, timeZone="Europe/Paris") {
+	static getNbDayBetweenTwo(timestamp1, timestamp2, asPeriod=false, timeZone="Europe/Paris") {
 		return DateTime.getNbDayBetweenTwo(this.parse(timestamp1), this.parse(timestamp2), asPeriod, timeZone);
 	}
 
@@ -437,7 +437,9 @@ class SqlDate {
 	static isDateInTheFuture(sqlDate) {
 		return DateTime.isDateInTheFuture(SqlDateTime.parse(sqlDate + " 00:00:00"));
 	}
-
+	static getNbDayBetweenTwo(sqlDate1, sqlDate2, asPeriod=false) {
+		return DateTime.getNbDayBetweenTwo(SqlDateTime.parse(sqlDate1 + " 00:00:00"), SqlDateTime.parse(sqlDate2 + " 00:00:00"), asPeriod);
+	}
 }
 
 /**
@@ -448,7 +450,7 @@ class SqlTime {
 		if (sqlTime == null) {
 			return null;
 		}
-		
+
 		if ((sqlTime.match(/\:/g) || []).length == 1) {
 			sqlTime += ':00';
 		}
@@ -483,7 +485,6 @@ class SqlTime {
 	static getTimestamp(sqlTime) {
 		return SqlDateTime.getTimestamp('1970-01-01 '+sqlTime);
 	}
-
 }
 
 /**
@@ -569,7 +570,7 @@ class SqlDateTime {
 		return DateTime.isDateTimeInTheFuture(this.parse(sqlDateTime));
 	}
 
-	static getNbDayBetweenTwo(sqlDateTime1, sqlDateTime2, asPeriod) {
+	static getNbDayBetweenTwo(sqlDateTime1, sqlDateTime2, asPeriod=false) {
 		return DateTime.getNbDayBetweenTwo(this.parse(sqlDateTime1), this.parse(sqlDateTime2), asPeriod);
 	}
 
