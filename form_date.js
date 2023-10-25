@@ -63,7 +63,7 @@ class InputPeriod {
 	}
 	static selectFollowingDay(lien, nbDays) {
 		let date = new Date();
-		date.setDate(date.getDate() + nbDays);
+		date.setUTCDate(date.getUTCDate() + nbDays);
 		this.selectPeriod(lien, date, date);
 	}
 
@@ -76,7 +76,7 @@ class InputPeriod {
 	}
 	static selectFollowingWeek(lien, nbWeeks) {
 		let date = new Date();
-		date.setDate(date.getDate() + (7*nbWeeks));
+		date.setUTCDate(date.getUTCDate() + (7*nbWeeks));
 		this.selectPeriod(lien, DateTime.getFirstDayOfWeek(date), DateTime.getLastDayOfWeek(date));
 	}
 
@@ -89,8 +89,8 @@ class InputPeriod {
 	}
 	static selectFollowingMonth(lien, nbMonths) {
 		let date = new Date();
-		date.setDate(1);
-		date.setMonth(date.getMonth() + nbMonths);
+		date.setUTCDate(1);
+		date.setUTCMonth(date.getUTCMonth() + nbMonths);
 		this.selectPeriod(lien, DateTime.getFirstDayOfMonth(date), DateTime.getLastDayOfMonth(date));
 	}
 
@@ -102,7 +102,7 @@ class InputPeriod {
 	}
 	static selectFollowingYear(lien, nbAnneesMoins) {
 		let date = new Date();
-		date.setFullYear(date.getFullYear() + nbAnneesMoins);
+		date.setUTCFullYear(date.getUTCFullYear() + nbAnneesMoins);
 		this.selectPeriod(lien, DateTime.getFirstDayOfYear(date), DateTime.getLastDayOfYear(date));
 	}
 

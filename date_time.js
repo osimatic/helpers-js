@@ -161,7 +161,7 @@ class DateTime {
 	}
 
 	static getNbDaysInMonth(year, month) {
-		return new Date(year, month, 0).getDate();
+		return new Date(Date.UTC(year, month, 0)).getDate();
 	}
 
 	static getMonthNameByMonth(month, locale="fr-FR", isShort=false) {
@@ -180,61 +180,61 @@ class DateTime {
 
 	static getFirstDayOfWeek(date) {
 		let firstDayOfWeek = new Date(date);
-		const day = date.getDay();
-		firstDayOfWeek.setDate(date.getDate() - day + (0 === day ? -6:1)); // First day is the day of the month - the day of the week
+		const day = date.getUTCDay();
+		firstDayOfWeek.setUTCDate(date.getUTCDate() - day + (0 === day ? -6:1)); // First day is the day of the month - the day of the week
 		return firstDayOfWeek;
 	}
 
 	static getLastDayOfWeek(date) {
 		let lastDayOfWeek = this.getFirstDayOfWeek(date);
-		lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6); // last day is the first day + 6
+		lastDayOfWeek.setUTCDate(lastDayOfWeek.getUTCDate() + 6); // last day is the first day + 6
 		return lastDayOfWeek;
 	}
 
 	static getFirstDayOfMonth(date) {
-		return this.getFirstDayOfMonthAndYear(date.getFullYear(), date.getMonth()+1);
+		return this.getFirstDayOfMonthAndYear(date.getUTCFullYear(), date.getUTCMonth()+1);
 	}
 
 	static getLastDayOfMonth(date) {
-		return this.getLastDayOfMonthAndYear(date.getFullYear(), date.getMonth()+1);
+		return this.getLastDayOfMonthAndYear(date.getUTCFullYear(), date.getUTCMonth()+1);
 	}
 
 	static getFirstDayOfYear(date) {
-		date.setDate(1);
-		date.setMonth(0);
+		date.setUTCDate(1);
+		date.setUTCMonth(0);
 		return new Date(date);
 	}
 
 	static getLastDayOfYear(date) {
-		date.setDate(31);
-		date.setMonth(11);
+		date.setUTCDate(31);
+		date.setUTCMonth(11);
 		return new Date(date);
 	}
 
 	static getFirstDayOfWeekAndYear(year, week) {
-		let simple = new Date(year, 0, 1 + (week - 1) * 7);
+		let simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
 		let dow = simple.getDay();
 		let ISOweekStart = simple;
 		if (dow <= 4) {
-			ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+			ISOweekStart.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
 		}
 		else {
-			ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+			ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - simple.getUTCDay());
 		}
 		return ISOweekStart;
 	}
 	static getLastDayOfWeekAndYear(year, week) {
 		let firstDayOfWeek = this.getFirstDayOfWeekAndYear(year, week);
-		firstDayOfWeek.setDate(firstDayOfWeek.getDate()+6);
+		firstDayOfWeek.setUTCDate(firstDayOfWeek.getUTCDate()+6);
 		return firstDayOfWeek;
 	}
 
 	static getFirstDayOfMonthAndYear(year, month) {
-		return new Date(year, month-1, 1);
+		return new Date(Date.UTC(year, month-1, 1));
 	}
 
 	static getLastDayOfMonthAndYear(year, month) {
-		return new Date(year, month, 0);
+		return new Date(Date.UTC(year, month, 0));
 	}
 
 	static isDateEqual(jsDate1, jsDate2) {
