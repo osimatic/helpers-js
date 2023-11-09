@@ -264,18 +264,18 @@ class FormHelper {
 	}
 
 	static getFormErrorText(errors) {
-		let errorLabels = '';
+		let errorLabels = [];
 		for (let property in errors) {
 			// console.log(property);
 			if (typeof errors[property] != 'function') {
 				if (typeof errors[property]['error_description'] === 'undefined') {
-					errorLabels += '<span>' + errors[property] + '</span><br>';
+					errorLabels.push(errors[property]);
 				} else {
-					errorLabels += '<span>' + errors[property]['error_description'] + '</span><br>';
+					errorLabels.push(errors[property]['error_description']);
 				}
 			}
 		}
-		return errorLabels;
+		return errorLabels.removeEmptyValues().map(errorLabel => '<span>' + errorLabel + '</span>').join('<br/>');
 	}
 
 	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv) {

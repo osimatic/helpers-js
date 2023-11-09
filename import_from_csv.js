@@ -162,7 +162,7 @@ class ImportFromCsv {
 		tableContent += '<tbody>';
 		$.each(data, function (index, line) {
 			tableContent += '<tr data-line="'+(index+1)+'">';
-			tableContent += '<td class="gras text-end select_line_checkbox"><input type="checkbox" class="import_line_checkbox pull-left" checked="checked" /> '+(index+1)+'.</td>';
+			tableContent += '<td class="text-bold text-end select_line_checkbox"><input type="checkbox" class="import_line_checkbox pull-left" checked="checked" /> '+(index+1)+'.</td>';
 			$.each(line, function (key, value) {
 				tableContent += '<td data-key="'+key+'">'+(value!==null?value:'')+'</td>';
 			});
