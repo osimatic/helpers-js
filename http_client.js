@@ -156,6 +156,10 @@ class HTTPClient {
 	}
 
 	static logRequestFailure(response, json) {
+		if (null == response) {
+			console.error('Request failure : network error.');
+			return;
+		}
 		console.error('Request failure. Status: '+response.statusText+' ; HTTP Code : '+response.status, json);
 	}
 	static logJqueryRequestFailure(jqxhr, status, errorThrown) {
@@ -222,18 +226,20 @@ class HTTPClient {
 			data = null;
 		}
 
-		const requestOptions = {
-			method: method,
-			headers: headers,
-			body: body,
-			mode: 'cors',
-			cache: 'no-cache'
-		}
-
-		const response = await fetch(url, requestOptions);
-
+		let response = null;
 		let jsonData = {};
 		try {
+			const requestOptions = {
+				method: method,
+				headers: headers,
+				body: body,
+				mode: 'cors',
+				cache: 'no-cache'
+			}
+
+			// On met le fetch dans un try catch pour détecter les erreurs de connexion réseau (si pas de connexion, une exception est déclenchée par fetch)
+			response = await fetch(url, requestOptions);
+
 			if (response.status !== 204 && response.statusText !== 'No Content') {
 				jsonData = await response.json();
 			}
@@ -309,16 +315,19 @@ class HTTPClient {
 			data = null;
 		}
 
-		const requestOptions = {
-			method: method,
-			headers: headers,
-			body: body,
-			mode: 'cors',
-			cache: 'no-cache'
-		}
-
-		const response = await fetch(url, requestOptions);
+		let response = null;
 		try {
+			const requestOptions = {
+				method: method,
+				headers: headers,
+				body: body,
+				mode: 'cors',
+				cache: 'no-cache'
+			}
+
+			// On met le fetch dans un try catch pour détecter les erreurs de connexion réseau (si pas de connexion, une exception est déclenchée par fetch)
+			response = await fetch(url, requestOptions);
+
 			if (response.status === 401 && response.statusText === 'Expired JWT Token') {
 				HTTPClient.refreshToken(() => HTTPClient.requestBlob(method, url, data, successCallback, errorCallback, completeCallback, additionalHeaders), errorCallback);
 				return;
