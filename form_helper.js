@@ -234,7 +234,7 @@ class FormHelper {
 	// Messages erreur
 	// ------------------------------------------------------------
 
-	static extractErrorKeyOfJson(json, onlyIfUniqueError) {
+	static extractErrorKeyOfJson(json, onlyIfUniqueError=false) {
 		if (typeof json == 'undefined' || json == null) {
 			return null;
 		}
@@ -243,7 +243,7 @@ class FormHelper {
 			return json.error;
 		}
 
-		if (typeof onlyIfUniqueError != 'undefined' && onlyIfUniqueError && !json.length || json.length > 1) {
+		if (onlyIfUniqueError && !json.length || json.length > 1) {
 			return null;
 		}
 
@@ -267,18 +267,23 @@ class FormHelper {
 		let errorLabels = [];
 		for (let property in errors) {
 			// console.log(property);
-			if (typeof errors[property] != 'function') {
-				if (typeof errors[property]['error_description'] === 'undefined') {
-					errorLabels.push(errors[property]);
-				} else {
-					errorLabels.push(errors[property]['error_description']);
-				}
+			if (typeof errors[property] == 'function') {
+				continue;
 			}
+			if (typeof errors[property]['error_description'] !== 'undefined') {
+				errorLabels.push(errors[property]['error_description']);
+				continue;
+			}
+			if (Array.isArray(errors[property]) && errors[property].length === 2) {
+				errorLabels.push(errors[property][1]);
+				continue;
+			}
+			errorLabels.push(errors[property]);
 		}
 		return errorLabels.removeEmptyValues().map(errorLabel => '<span>' + errorLabel + '</span>').join('<br/>');
 	}
 
-	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv) {
+	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv=null) {
 		this.displayFormErrorsFromText(form, this.getFormErrorText(errors), errorWrapperDiv);
 		if (btnSubmit != null) {
 			FormHelper.buttonLoader(btnSubmit, 'reset');
@@ -290,10 +295,10 @@ class FormHelper {
 		}
 	}
 
-	static displayFormErrorsFromText(form, errorLabels, errorWrapperDiv) {
+	static displayFormErrorsFromText(form, errorLabels, errorWrapperDiv=null) {
 		let errorDiv = '<div class="alert alert-danger form_errors">'+errorLabels+'</div>';
 
-		if (typeof errorWrapperDiv != 'undefined' && errorWrapperDiv != null) {
+		if (null != errorWrapperDiv) {
 			errorWrapperDiv.append(errorDiv);
 			return;
 		}
