@@ -7,11 +7,11 @@ class Country {
 		return '<span><img src="'+Country.getFlagPath(countryCode)+'" alt="" title="'+Country.getCountryName(countryCode)+'" class="flag" /></span>'
 	}
 
-	static fillCountrySelect(select, defaultValue) {
+	static fillCountrySelect(select, defaultValue=null) {
 		if (select.children().length === 0) {
 			Object.entries(Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="' + countryCode + '">' + countryName + '</option>'));
 		}
-		if (typeof defaultValue != 'undefined') {
+		if (null != defaultValue) {
 			select.val(defaultValue);
 		}
 		if (typeof select.selectpicker != 'undefined') {
@@ -309,11 +309,7 @@ class PostalAddress {
 		});
 	}
 
-	static format(addressData, separator) {
-		if (typeof separator == 'undefined') {
-			separator = '<br/>';
-		}
-
+	static format(addressData, separator='<br/>') {
 		function empty(value) {
 			return typeof value == 'undefined' || value == null || value === '';
 		}
