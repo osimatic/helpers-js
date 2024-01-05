@@ -1,15 +1,15 @@
 class FlashMessage {
-	static displaySuccess(message, reload, modal=null) {
-		this.display('success', message, reload, modal);
+	static displaySuccess(message, reload=false, modal=null, onMessageHidden=null) {
+		this.display('success', message, reload, modal, onMessageHidden);
 	}
-	static displayWarning(message, modal=null) {
-		this.display('warning', message, false, modal);
+	static displayWarning(message, modal=null, onMessageHidden=null) {
+		this.display('warning', message, false, modal, onMessageHidden);
 	}
-	static displayError(message, modal=null) {
-		this.display('danger', message, false, modal);
+	static displayError(message, modal=null, onMessageHidden=null) {
+		this.display('danger', message, false, modal, onMessageHidden);
 	}
 
-	static display(type, message, reload, modal=null) {
+	static display(type, message, reload=false, modal=null, onMessageHidden=null) {
 		if (null !== modal) {
 			modal.modal('hide');
 		}
@@ -22,6 +22,9 @@ class FlashMessage {
 
 		setTimeout(function () {
 			$('div.snackbar').remove();
+			if (typeof onMessageHidden == 'function') {
+				onMessageHidden();
+			}
 		}, 6000);
 
 		if (true === reload) {
