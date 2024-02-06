@@ -1,7 +1,7 @@
 
 class MultipleActionInTable {
 	// init checkbox
-	static init(table) {
+	static init(table, cellCssClass='select') {
 		if (!table.hasClass('table-action_multiple')) {
 			return;
 		}
@@ -18,7 +18,7 @@ class MultipleActionInTable {
 		}
 
 		if (table.find('thead tr th[data-key="select"]').length === 0) {
-			table.find('thead tr').prepend($('<th class="select no-sort" data-key="select"></th>'));
+			table.find('thead tr').prepend($('<th class="'+cellCssClass+'" data-key="select"></th>'));
 		}
 		table.find('tbody tr:not(.no_items)').each(function(idx, tr) {
 			if ($(tr).find('td.select').length === 0) {
