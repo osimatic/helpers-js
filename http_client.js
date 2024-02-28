@@ -345,9 +345,13 @@ class HTTPClient {
 				}
 			}
 			else {
-				HTTPClient.logRequestFailure(response, null);
+				let json = null;
+				if (response.headers.get('Content-Type') === 'application/json') {
+					json = await response.json();
+				}
+				HTTPClient.logRequestFailure(response, json);
 				if (typeof errorCallback == 'function') {
-					errorCallback(response);
+					errorCallback(response, json);
 				}
 			}
 		}
