@@ -1,5 +1,9 @@
 
 class HTTPClient {
+	static setAuthorizationToken(authorizationToken) {
+		HTTPClient.authorizationToken = authorizationToken;
+	}
+
 	// URL appelée pour rafraichir le token. Le token est mis à jour dans JwtSession. En cas de succès, on appelle HTTPClient.onSuccessRefreshTokenCallback et on réexécute toutes les requêtes HTTP en attente de nouveau token. En cas d'échec, on redirige vers HTTPClient.onInvalidRefreshTokenRedirectUrl et/ou on appelle HTTPClient.onInvalidRefreshTokenCallback.
 	static setRefreshTokenUrl(url) {
 		HTTPClient.refreshTokenUrl = url;
@@ -28,11 +32,25 @@ class HTTPClient {
 		HTTPClient.onInvalidTokenCallback = callback;
 	}
 
-	static getHeaders(asObject=false, additionalHeaders={}) {
-		HTTPClient.setAuthorizationToken(JwtSession.getToken());
+	static getHeaders(asObject=false, additionalHeaders={}, addAuthorizationHeader=true) {
+		let httpHeadersData = {};
 
-		if (typeof HTTPClient.headers == 'undefined') {
-			HTTPClient.headers = {};
+		if (typeof HTTPClient.headers != 'undefined' && null != HTTPClient.headers) {
+			HTTPClient.headers['Authorization'] = null;
+			httpHeadersData = HTTPClient.headers;
+		}
+
+		if (addAuthorizationHeader) {
+			const authorizationToken = typeof HTTPClient.authorizationToken != 'undefined' && null != HTTPClient.authorizationToken ? HTTPClient.authorizationToken : JwtSession.getToken();
+			if (null != authorizationToken && '' !== authorizationToken) {
+				httpHeadersData['Authorization'] = 'Bearer ' + authorizationToken;
+			}
+		}
+
+		if (null != additionalHeaders && typeof additionalHeaders == 'object') {
+			for (const [key, value] of Object.entries(additionalHeaders)) {
+				httpHeadersData[key] = value;
+			}
 		}
 
 		if (asObject) {
@@ -43,13 +61,6 @@ class HTTPClient {
 		Object.entries(HTTPClient.headers).forEach(([key, value]) => {
 			httpHeaders.append(key, value);
 		});
-
-		if (typeof additionalHeaders == 'object') {
-			for (const [key, value] of Object.entries(additionalHeaders)) {
-				httpHeaders.append(key, value);
-			}
-		}
-
 		return httpHeaders;
 	}
 
@@ -67,18 +78,6 @@ class HTTPClient {
 		}
 
 		HTTPClient.headers[key] = value;
-	}
-
-	static setAuthorizationToken(authorizationToken) {
-		if (typeof HTTPClient.headers == 'undefined') {
-			HTTPClient.headers = {};
-		}
-
-		if (typeof authorizationToken == 'undefined' || null == authorizationToken) {
-			return;
-		}
-
-		HTTPClient.headers['Authorization'] = 'Bearer ' + authorizationToken;
 	}
 
 	static convertObjectToFormData(obj) {
@@ -198,7 +197,7 @@ class HTTPClient {
 		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl, HTTPClient.onInvalidTokenCallback);
 	}
 
-	static async request(method, url, data, successCallback=null, errorCallback=null, formErrorCallback=null, additionalHeaders={}) {
+	static async request(method, url, data, successCallback=null, errorCallback=null, formErrorCallback=null, additionalHeaders={}, sendAuthorizationHeader=true) {
 		if (!window.fetch) {
 			return;
 		}
@@ -206,7 +205,7 @@ class HTTPClient {
 		let body = null;
 		method = method.toUpperCase();
 
-		let headers = HTTPClient.getHeaders(false, additionalHeaders);
+		let headers = HTTPClient.getHeaders(false, additionalHeaders, sendAuthorizationHeader);
 
 		if ('PATCH' === method || 'DELETE' === method) {
 			headers.append('Content-Type', 'application/x-www-form-urlencoded');
@@ -415,7 +414,10 @@ class HTTPClient {
 				if (typeof errorCallback == 'function') {
 					errorCallback();
 				}
-			}
+			},
+			null,
+			null,
+			false
 		);
 	}
 
