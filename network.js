@@ -40,6 +40,12 @@ class UrlAndQueryString {
 		return (withLink ? '<a href="' + url + '">' : '') + formattedUrl + (withLink ? '</a>' : '');
 	}
 
+	static urlify(text) {
+		return text.replace(/(https?:\/\/[^\s]+)/g, url => '<a href="' + url + '">' + url + '</a>');
+		// or alternatively
+		// return text.replace(urlRegex, '<a href="$1">$1</a>')
+	}
+
 	static getHost(url, withProtocol=true) {
 		if (typeof url == 'undefined') {
 			return withProtocol ? window.location.origin : window.location.host;
