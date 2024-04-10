@@ -175,7 +175,7 @@ class Duration {
 	}
 
 	static getNbMinutesOfHundredthOfAnHour(durationAsHundredthOfAnHour) {
-		return Math.floor(Math.getDecimals(Math.roundDecimal(durationAsHundredthOfAnHour, 2)) / 100 * 60);
+		return Math.floor(Math.getDecimals(Number.roundDecimal(durationAsHundredthOfAnHour, 2)) / 100 * 60);
 	}
 
 

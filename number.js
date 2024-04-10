@@ -88,7 +88,7 @@ Number.roundDecimal = Number.roundDecimal || function(number, precision) {
 }
 
 Math.getDecimals = Math.getDecimals || function(number) {
-	return parseInt((number+"").split(".")[1]);
+	return parseInt((number+"").split(".")[1] || 0);
 }
 
 if (!Number.random) {
