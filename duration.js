@@ -1,6 +1,8 @@
 
 class Duration {
 
+	// ---------- Nb jours ----------
+
 	static formatNbDays(nbDays, locale='fr-FR') {
 		return new Intl.NumberFormat(locale, {
 			minimumFractionDigits: 2,
@@ -14,15 +16,7 @@ class Duration {
 		return '<span class="text-'+(nbDays<0?'danger':'success')+'">'+this.formatNbDays(nbDays)+'</span>';
 	}
 
-	static convertToDurationAsCentieme(durationInSeconds) {
-		let hour = Math.floor(durationInSeconds / 3600);
-		let minutes = durationInSeconds % 3600;
-		minutes = Math.floor(minutes / 60);
-		// minutes = minutes - (minutes % 60);
-		let minCentieme = Math.round( (minutes / 60 ) * 100 );
-		return hour+(minCentieme/100);
-		//return parseFloat(hour+'.'+minCentieme);
-	}
+	// ---------- Durée en seconde ----------
 
 	static convertToDurationAsInputTimeValue(durationInSeconds) {
 		return Duration.convertToDurationInHourChronoDisplay(Math.abs(durationInSeconds), 'input_time');
@@ -163,6 +157,27 @@ class Duration {
 	static getNbSecondsRemainingOfDurationInSeconds(durationInSeconds) {
 		return durationInSeconds % 60;
 	}
+
+	// ---------- Durée en centième d'heure ----------
+
+	static convertToDurationAsHundredthOfAnHour(durationInSeconds) {
+		let hour = Math.floor(durationInSeconds / 3600);
+		let minutes = durationInSeconds % 3600;
+		minutes = Math.floor(minutes / 60);
+		// minutes = minutes - (minutes % 60);
+		let minCentieme = Math.round( (minutes / 60 ) * 100 );
+		return hour+(minCentieme/100);
+		//return parseFloat(hour+'.'+minCentieme);
+	}
+
+	static getNbHoursOfHundredthOfAnHour(durationAsHundredthOfAnHour) {
+		return Math.trunc(durationAsHundredthOfAnHour);
+	}
+
+	static getNbMinutesOfHundredthOfAnHour(durationAsHundredthOfAnHour) {
+		return Math.floor(Math.getDecimals(Math.roundDecimal(durationAsHundredthOfAnHour, 2)) / 100 * 60);
+	}
+
 
 }
 

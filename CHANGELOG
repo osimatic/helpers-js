@@ -69,3 +69,8 @@ ImportFromCsv.initModal() -> ImportFromCsv.initForm()
 
 1.1.44
 Toutes les fonctions des classes SqlTime, SqlDate et SqlDateTime prennent maintenant les dates et heures SQL en UTC. CECI EST TRES IMPORTANT SINON CELA FAUSSE LES DATES/HEURES SELON LES FUSEAUX HORAIRES.
+
+1.1.66
+Duration.convertToDurationAsCentieme() -> Duration.convertToDurationAsHundredthOfAnHour()
+
+
