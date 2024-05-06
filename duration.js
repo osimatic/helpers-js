@@ -18,6 +18,17 @@ class Duration {
 
 	// ---------- Durée en seconde ----------
 
+	static convertInputTimeValueToDuration(inputTimeValue) {
+		if (null === inputTimeValue || -1 === inputTimeValue.indexOf(':')) {
+			return 0;
+		}
+		let arrayTime = inputTimeValue.split(':');
+		const nbHours = typeof arrayTime[0] != 'undefined' ? parseInt(arrayTime[0]) || 0 : 0;
+		const nbMinutes = typeof arrayTime[1] != 'undefined' ? parseInt(arrayTime[1]) || 0 : 0;
+		const nbSeconds = typeof arrayTime[2] != 'undefined' ? parseInt(arrayTime[2]) || 0 : 0;
+		return nbHours * 3600 + nbMinutes * 60 + nbSeconds;
+	}
+
 	static convertToDurationAsInputTimeValue(durationInSeconds) {
 		return Duration.convertToDurationInHourChronoDisplay(Math.abs(durationInSeconds), 'input_time');
 	}
