@@ -180,7 +180,7 @@ class TelephoneNumber {
 	}
 
 	static getEnteredNumberInInternationalFormat(intlTelInput) {
-		return intlTelInput.getNumber(intlTelInputUtils.numberFormat.E164);
+		return intlTelInput.getNumber(window.intlTelInput.utils.numberFormat.E164);
 	}
 
 	static formatNumberFromIntlTelInput(intlTelInput) {
