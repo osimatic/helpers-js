@@ -96,7 +96,7 @@ class DateTime {
 	}
 
 	static getTimestamp(jsDate) {
-		return jsDate.getTime()/1000;
+		return Math.trunc(jsDate.getTime()/1000);
 	}
 
 	static getDateDigitalDisplay(jsDate, locale="fr-FR", timeZone="Europe/Paris") {
@@ -297,6 +297,20 @@ class DateTime {
 			//jsDate2.setUTCHours(0, 0, 0);
 		}
 		return parseInt(Math.round((timestamp2-timestamp1)/86400));
+	}
+
+	static addDays(date, days) {
+		date.setUTCDate(date.getUTCDate() + days);
+		return date;
+	}
+
+	static addMonths(date, months) {
+		let d = date.getDate();
+		date.setMonth(date.getMonth() + +months);
+		if (date.getDate() !== d) {
+			date.setDate(0);
+		}
+		return date;
 	}
 }
 
@@ -575,6 +589,5 @@ class SqlDateTime {
 	}
 
 }
-
 
 module.exports = { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime };
