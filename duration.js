@@ -34,6 +34,8 @@ class Duration {
 	}
 
 	static convertToDurationInHourChronoDisplay(durationInSeconds, displayMode='chrono') {
+		durationInSeconds = Math.round(durationInSeconds);
+
 		let durationInSecondsOriginal = durationInSeconds;
 		durationInSeconds = Math.abs(durationInSeconds);
 		let seconds = ( durationInSeconds % 60 );
@@ -50,6 +52,8 @@ class Duration {
 	}
 
 	static convertToDurationInHourStringDisplay(durationInSeconds, withSecondes=true, withMinutes=true, withLibelleMinute=true, libelleEntier=false) {
+		durationInSeconds = Math.round(durationInSeconds);
+
 		// Heures
 		let strHeure = '';
 		let nbHeures = this.getNbHoursOfDurationInSeconds(durationInSeconds);
