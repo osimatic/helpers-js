@@ -7,9 +7,12 @@ class Country {
 		return '<span><img src="'+Country.getFlagPath(countryCode)+'" alt="" title="'+Country.getCountryName(countryCode)+'" class="flag" /></span>'
 	}
 
-	static fillCountrySelect(select, defaultValue=null) {
+	static fillCountrySelect(select, defaultValue=null, countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
 		if (select.children().length === 0) {
-			Object.entries(Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="' + countryCode + '">' + countryName + '</option>'));
+			if (addNoneValue) {
+				select.append('<option value="">'+noneLabel+'</option>');
+			}
+			Object.entries(null != countriesList ? countriesList : Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="' + countryCode + '">' + countryName + '</option>'));
 		}
 		if (null != defaultValue) {
 			select.val(defaultValue);
