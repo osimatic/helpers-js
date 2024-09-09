@@ -26,6 +26,11 @@ class OpenStreetMap {
 			return;
 		}
 
+		let container = L.DomUtil.get(mapId);
+		if (container != null) {
+			container._leaflet_id = null;
+		}
+
 		this.map = L.map(mapId, options || {});
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
