@@ -54,11 +54,11 @@ class HTTPClient {
 		}
 
 		if (asObject) {
-			return HTTPClient.headers;
+			return httpHeadersData;
 		}
 
 		let httpHeaders = new Headers();
-		Object.entries(HTTPClient.headers).forEach(([key, value]) => {
+		Object.entries(httpHeadersData).forEach(([key, value]) => {
 			httpHeaders.append(key, value);
 		});
 		return httpHeaders;
