@@ -1,4 +1,8 @@
 class GoogleRecaptcha {
+	static setConfig(config) {
+		this.config = config;
+	}
+
 	static onLoad() {
 		console.log('GoogleRecaptcha.onLoad');
 		if (typeof grecaptcha == 'undefined' || typeof grecaptcha.render != 'function') {
@@ -24,14 +28,10 @@ class GoogleRecaptcha {
 		});*/
 	}
 
-	static addRenderCallback(callback) {
-		if (typeof GoogleRecaptcha.googleCaptchaRendersCallback == 'undefined') {
-			GoogleRecaptcha.googleCaptchaRendersCallback = [];
-		}
-
-		GoogleRecaptcha.googleCaptchaRendersCallback.push(callback);
-		console.log('GoogleRecaptcha.addRenderCallback');
-		GoogleRecaptcha.onLoad();
+	static render(id) {
+		GoogleRecaptcha.addRenderCallback(() => {
+			GoogleRecaptcha.reset(id);
+		});
 	}
 
 	static reset(id) {
@@ -46,7 +46,7 @@ class GoogleRecaptcha {
 
 		if (typeof GoogleRecaptcha.grecaptchaWidgets[id] == 'undefined') {
 			try {
-				GoogleRecaptcha.grecaptchaWidgets[id] = grecaptcha.render(id, googleReCaptchaDatas);
+				GoogleRecaptcha.grecaptchaWidgets[id] = grecaptcha.render(id, this.config);
 			}
 			catch (e) {
 				console.error('Exception during grecaptcha.render', e);
@@ -55,6 +55,16 @@ class GoogleRecaptcha {
 		else {
 			grecaptcha.reset(GoogleRecaptcha.grecaptchaWidgets[id]);
 		}
+	}
+
+	static addRenderCallback(callback) {
+		if (typeof GoogleRecaptcha.googleCaptchaRendersCallback == 'undefined') {
+			GoogleRecaptcha.googleCaptchaRendersCallback = [];
+		}
+
+		GoogleRecaptcha.googleCaptchaRendersCallback.push(callback);
+		console.log('GoogleRecaptcha.addRenderCallback');
+		GoogleRecaptcha.onLoad();
 	}
 }
 
