@@ -42,6 +42,9 @@ Array.prototype.filterUnique = function() {
 	return this.filter((v, i, a) => a.indexOf(v) === i);
 };
 
+Array.generate = ({from = 0, to, step = 1, length = Math.ceil((to - from) / step)}) =>
+	Array.from({length}, (_, i) => from + i * step);
+
 Array.getValuesByKeyInArrayOfArrays = function(array, key) {
 	let listeValues = [];
 	for (let i in array) {
