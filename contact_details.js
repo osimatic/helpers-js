@@ -179,6 +179,10 @@ class TelephoneNumber {
 		});
 	}
 
+	static getIntlTelInputInstance(input) {
+		return window.intlTelInput.getInstance(input[0]);
+	}
+
 	static getEnteredNumberInInternationalFormat(intlTelInput) {
 		return intlTelInput.getNumber(window.intlTelInput.utils.numberFormat.E164);
 	}

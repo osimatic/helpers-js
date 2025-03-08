@@ -363,6 +363,260 @@ class FormHelper {
 
 }
 
+class ArrayField {
+	static init(formGroupDiv, defaultValues, options = {
+		entering_field_in_table: true,
+		item_name: null,
+		list_empty_text: null,
+		add_one_button_enabled: true,
+		add_one_button_label: null,
+		add_multi_button_enabled: false,
+		add_multi_button_label: null,
+		input_name: null,
+		init_callback: null,
+		update_list_callback: null,
+		get_errors_callback: null,
+
+	}) {
+		function isOptionDefined(optionName) {
+			return typeof options[optionName] != 'undefined' && null !== options[optionName];
+		}
+
+		let itemsList = defaultValues;
+
+		if (!formGroupDiv.find('table').length) {
+			formGroupDiv.append($('<table class="table table-sm"><tbody></tbody></table>'));
+		}
+		if (!formGroupDiv.find('.list_empty').length) {
+			formGroupDiv.append($('<div class="list_empty">'+(isOptionDefined('list_empty_text') ? options['list_empty_text'] : '<em>aucun</em>')+'</div>'));
+		}
+		if (!options['entering_field_in_table'] && !formGroupDiv.find('.add_one, .add_multi').length) {
+			let divLinks = formGroupDiv.find('.links');
+			if (!divLinks.length) {
+				divLinks = $('<div class="links text-center"></div>');
+				formGroupDiv.append(divLinks);
+			}
+
+			if (options['add_one_button_enabled']) {
+				divLinks.append($('<a href="#" class="add_one btn btn-sm btn-success">'+(isOptionDefined('add_one_button_label') ? options['add_one_button_label'] : 'Ajouter')+'</a>'));
+			}
+			if (options['add_multi_button_enabled']) {
+				divLinks.append($('<a href="#" class="add_multi btn btn-sm btn-success">'+(isOptionDefined('add_multi_button_label') ? options['add_multi_button_label'] : 'Ajout multiple')+'</a>'));
+			}
+			formGroupDiv.append(divLinks);
+		}
+
+		if (options['entering_field_in_table']) {
+
+		}
+		else {
+
+		}
+
+		function addLine(item) {
+			const table = formGroupDiv.find('table').removeClass('hide');
+			let tr;
+			if (table.find('tbody tr.base').length) {
+				tr = table.find('tbody tr.base').clone().removeClass('hide').removeClass('base');
+			}
+			else {
+				if (options['entering_field_in_table']) {
+					tr = $('<tr>' +
+						'<td><input type="text" name="'+options['input_name']+'"></td>' +
+						'<td class="text-end">' +
+						'<a href="#" title="Ajouter" class="add btn btn-sm btn-success"><i class="fas fa-plus"></i></a>' +
+						'<a href="#" title="Supprimer" class="remove btn btn-sm btn-danger"><i class="fas fa-times"></i></a>' +
+						'</td>' +
+						'</tr>');
+				}
+				else {
+					tr = $('<tr>' +
+						'<td><input type="hidden" name="'+options['input_name']+'"> <span class="value"></span></td>' +
+						'<td class="text-end"><a href="#" title="Supprimer" class="remove btn btn-sm btn-danger"><i class="fas fa-times"></i></a></td>' +
+						'</tr>');
+				}
+			}
+			tr.find('a.add').click(function () {
+				addLine();
+				return false;
+			});
+			tr.find('a.remove').click(function () {
+				const tr = $(this).closest('tr');
+				itemsList.unsetVal(tr.data('item'));
+				tr.remove();
+				onUpdateList();
+				return false;
+			});
+
+			if (typeof item != 'undefined' && null !== item) {
+				tr.data('item', item);
+				tr.find('input').val(item);
+				tr.find('span.value').text(item);
+			}
+
+			table.find('tbody').append(tr);
+			return tr;
+		}
+
+		function onUpdateList() {
+			formGroupDiv.find('.list_empty, table').addClass('hide');
+
+			// Maj tableau
+			if (itemsList.length) {
+				let table = formGroupDiv.find('table').removeClass('hide');
+				table.find('tbody').empty();
+				itemsList.forEach(itemsList, item => addLine(item));
+			}
+			else {
+				formGroupDiv.find('.list_empty').removeClass('hide');
+			}
+
+			if (typeof options['update_list_callback'] == 'function') {
+				options['update_list_callback'](itemsList);
+			}
+
+			cancelAdd();
+		}
+
+		function startAdd() {
+			formGroupDiv.find('a.add_one, a.add_multi').addClass('hide').closest('.links').addClass('hide');
+			formGroupDiv.find('.item_add_one, .item_add_multi').addClass('hide');
+			formGroupDiv.find('.item_add_one, .item_add_multi').find('input[type="text"], textarea').val('');
+		}
+		function cancelAdd() {
+			formGroupDiv.find('a.add_one, a.add_multi').removeClass('hide').closest('.links').removeClass('hide');
+			formGroupDiv.find('.item_add_one, .item_add_multi').addClass('hide');
+		}
+
+		function addItemsInList(items) {
+			if (!Array.isArray(items)) {
+				items = [items];
+			}
+
+			for (let i = 0; i < items.length; i++) {
+				if (itemsList.indexOf(items[i]) === -1) {
+					itemsList.push(items[i]);
+				}
+			}
+
+			onUpdateList();
+		}
+
+		function submitAddNewItem(item, divAdd) {
+			const items = Array.isArray(item) ? item : [item];
+
+			divAdd.find('.errors').addClass('hide');
+
+			if (typeof options['format_entered_value_callback'] == 'function') {
+				items.map(item => options['format_entered_value_callback'](item, divAdd));
+			}
+
+			if (typeof options['get_errors_callback'] == 'function') {
+				const errors = options['get_errors_callback'](items, itemsList, divAdd);
+				if (errors.length) {
+					displayErrors(divAdd, errors);
+					return;
+				}
+			}
+
+			addItemsInList(items);
+		}
+
+		function displayErrors(divAdd, errors) {
+			if (!Array.isArray(errors)) {
+				errors = [errors];
+			}
+			divAdd.find('.errors').text(errors.join('<br/>')).removeClass('hide');
+		}
+
+		function initLinkAddOne() {
+			if (!formGroupDiv.find('a.add_one').length || !formGroupDiv.find('a.add_one:not([disabled])').length) {
+				return;
+			}
+
+			let divAdd = formGroupDiv.find('.item_add_one');
+			if (!divAdd.length) {
+				divAdd = $(
+					'<div class="item_add_one">' +
+						'<div class="alert alert-danger pt-1 pb-1 errors hide"></div>' +
+						'<div class="form-inline">' +
+							'<input type="text" class="form-control" placeholder="'+options['item_name']+'" value="" /> &nbsp;' +
+							'<a href="#" title="Ajouter" class="add btn btn-success"><i class="fas fa-plus"></i></a> &nbsp;' +
+							'<a href="#" class="cancel">Annuler</a>' +
+						'</div>' +
+						(isOptionDefined('form_desc')?'<br><span class="form-text">'+options['form_desc']+'</span>':'') +
+					'</div>'
+				);
+				formGroupDiv.append(divAdd);
+			}
+
+			divAdd.find('a.cancel').off('click').click(function () {
+				cancelAdd();
+				return false;
+			});
+			divAdd.find('a.add').off('click').click(function () {
+				submitAddNewItem(divAdd.find('input[type="text"]').val());
+				return false;
+			});
+
+			formGroupDiv.find('a.add_one').off('click').click(function () {
+				startAdd();
+				formGroupDiv.find('.item_add_one').removeClass('hide');
+				return false;
+			});
+		}
+
+		function initLinkAddMulti() {
+			if (!formGroupDiv.find('a.add_multi').length || !formGroupDiv.find('a.add_multi:not([disabled])').length) {
+				return;
+			}
+
+			let divAdd = formGroupDiv.find('.item_add_multi');
+			if (!divAdd.length) {
+				divAdd = $(
+					'<div class="item_add_multi">' +
+						'<div class="alert alert-danger pt-1 pb-1 errors hide"></div>' +
+						'<div class="form-group">' +
+							'<label>Liste à ajouter :</label>' +
+							'<textarea name="emails" class="form-control" rows="10"></textarea>' +
+							'<span class="form-text">Un élément par ligne.</span>' +
+						'</div>' +
+						'<div class="form-inline">' +
+							'<a href="#" title="Ajouter" class="add btn btn-success"><i class="fas fa-plus"></i></a> &nbsp;' +
+							'<a href="#" class="cancel">Annuler</a>' +
+						'</div>' +
+					'</div>'
+				);
+				formGroupDiv.append(divAdd);
+			}
+
+			divAdd.find('a.cancel').off('click').click(function () {
+				cancelAdd();
+				return false;
+			});
+			divAdd.find('a.add').off('click').click(function () {
+				const items = divAdd.find('textarea').val().normalizeBreaks("\n").split(/\n/ms).filter(value => value.length > 0);
+				submitAddNewItem(items);
+				return false;
+			});
+
+			formGroupDiv.find('a.add_multi').off('click').click(function () {
+				startAdd();
+				formGroupDiv.find('.item_add_multi').removeClass('hide');
+				return false;
+			});
+		}
+
+		initLinkAddOne();
+		initLinkAddMulti();
+		onUpdateList();
+
+		if (typeof options['init_callback'] == 'function') {
+			options['init_callback'](formGroupDiv, onUpdateList, addItemsInList);
+		}
+	}
+}
+
 class EditValue {
 	static init(valueDiv, onSubmitCallback, getInputCallback) {
 		let link = $('<a href="#" class="text-warning"><i class="fas fa-pencil-alt"></i></a>');
@@ -408,4 +662,4 @@ class EditValue {
 	}
 }
 
-module.exports = { FormHelper, EditValue };
+module.exports = { FormHelper, ArrayField, EditValue };
