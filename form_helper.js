@@ -364,9 +364,11 @@ class FormHelper {
 }
 
 class ArrayField {
-	static init(formGroupDiv, defaultValues, options = {
+	static init(formGroupDiv, defaultValues=[], options = {
 		entering_field_in_table: true,
 		item_name: null,
+		nb_min_lines: 5,
+		nb_max_lines: null,
 		list_empty_text: null,
 		add_one_button_enabled: true,
 		add_one_button_label: null,
@@ -406,13 +408,6 @@ class ArrayField {
 			formGroupDiv.append(divLinks);
 		}
 
-		if (options['entering_field_in_table']) {
-
-		}
-		else {
-
-		}
-
 		function addLine(item) {
 			const table = formGroupDiv.find('table').removeClass('hide');
 			let tr;
@@ -420,29 +415,44 @@ class ArrayField {
 				tr = table.find('tbody tr.base').clone().removeClass('hide').removeClass('base');
 			}
 			else {
+				let links = '';
 				if (options['entering_field_in_table']) {
-					tr = $('<tr>' +
-						'<td><input type="text" name="'+options['input_name']+'"></td>' +
-						'<td class="text-end">' +
-						'<a href="#" title="Ajouter" class="add btn btn-sm btn-success"><i class="fas fa-plus"></i></a>' +
-						'<a href="#" title="Supprimer" class="remove btn btn-sm btn-danger"><i class="fas fa-times"></i></a>' +
+					links += '<a href="#" title="Ajouter" class="add btn btn-sm btn-success ms-1"><i class="fas fa-plus"></i></a>';
+				}
+				links += '<a href="#" title="Supprimer" class="remove btn btn-sm btn-danger ms-1"><i class="fas fa-times"></i></a>';
+
+				tr = $(
+					'<tr>' +
+						'<td class="table-input" style="vertical-align: middle">' +
+							(options['entering_field_in_table'] ? '<input type="text" name="'+options['input_name']+'" class="form-control pt-1 pb-1">' : '<input type="hidden" name="'+options['input_name']+'"> <span class="value"></span>') +
 						'</td>' +
-						'</tr>');
-				}
-				else {
-					tr = $('<tr>' +
-						'<td><input type="hidden" name="'+options['input_name']+'"> <span class="value"></span></td>' +
-						'<td class="text-end"><a href="#" title="Supprimer" class="remove btn btn-sm btn-danger"><i class="fas fa-times"></i></a></td>' +
-						'</tr>');
-				}
+						'<td class="table-links text-end" style="vertical-align: middle">'+links+'</td>' +
+					'</tr>'
+				);
 			}
+
 			tr.find('a.add').click(function () {
+				const tr = $(this).closest('tr');
+				const tableBody = tr.closest('tbody');
+
+				if (isOptionDefined('nb_max_lines') && tableBody.find('tr').length >= options['nb_max_lines']) {
+					return false;
+				}
 				addLine();
+				onUpdateList();
 				return false;
 			});
 			tr.find('a.remove').click(function () {
 				const tr = $(this).closest('tr');
-				itemsList.unsetVal(tr.data('item'));
+				const tableBody = tr.closest('tbody');
+				if (options['entering_field_in_table'] && tableBody.find('tr').length <= 1) {
+					return false;
+				}
+
+				if (!options['entering_field_in_table'] || '' !== tr.data('item')) {
+					itemsList.unsetVal(tr.data('item'));
+				}
+
 				tr.remove();
 				onUpdateList();
 				return false;
@@ -462,13 +472,21 @@ class ArrayField {
 			formGroupDiv.find('.list_empty, table').addClass('hide');
 
 			// Maj tableau
-			if (itemsList.length) {
-				let table = formGroupDiv.find('table').removeClass('hide');
-				table.find('tbody').empty();
-				itemsList.forEach(itemsList, item => addLine(item));
+			let table = formGroupDiv.find('table');
+			const tableLines = table.find('tbody tr:not(.base)');
+			if ((options['entering_field_in_table'] && tableLines.length ) || (!options['entering_field_in_table'] && itemsList.length)) {
+				table.removeClass('hide');
 			}
 			else {
 				formGroupDiv.find('.list_empty').removeClass('hide');
+			}
+
+			tableLines.find('a').prop('disabled', false).removeClass('disabled');
+			if (isOptionDefined('nb_max_lines') && tableLines.length >= options['nb_max_lines']) {
+				tableLines.find('a.add').prop('disabled', true).addClass('disabled');
+			}
+			if (options['entering_field_in_table'] && tableLines.length <= 1) {
+				tableLines.find('a.remove').prop('disabled', true).addClass('disabled');
 			}
 
 			if (typeof options['update_list_callback'] == 'function') {
@@ -496,6 +514,7 @@ class ArrayField {
 			for (let i = 0; i < items.length; i++) {
 				if (itemsList.indexOf(items[i]) === -1) {
 					itemsList.push(items[i]);
+					addLine(items[i]);
 				}
 			}
 
@@ -513,7 +532,7 @@ class ArrayField {
 
 			if (typeof options['get_errors_callback'] == 'function') {
 				const errors = options['get_errors_callback'](items, itemsList, divAdd);
-				if (errors.length) {
+				if (null !== errors && errors.length) {
 					displayErrors(divAdd, errors);
 					return;
 				}
@@ -555,7 +574,7 @@ class ArrayField {
 				return false;
 			});
 			divAdd.find('a.add').off('click').click(function () {
-				submitAddNewItem(divAdd.find('input[type="text"]').val());
+				submitAddNewItem(divAdd.find('input[type="text"]').val(), divAdd);
 				return false;
 			});
 
@@ -596,7 +615,7 @@ class ArrayField {
 			});
 			divAdd.find('a.add').off('click').click(function () {
 				const items = divAdd.find('textarea').val().normalizeBreaks("\n").split(/\n/ms).filter(value => value.length > 0);
-				submitAddNewItem(items);
+				submitAddNewItem(items, divAdd);
 				return false;
 			});
 
@@ -609,6 +628,14 @@ class ArrayField {
 
 		initLinkAddOne();
 		initLinkAddMulti();
+
+		itemsList.forEach(item => addLine(item));
+		if (options['entering_field_in_table']) {
+			for (let i=itemsList.length; i <= options['nb_min_lines']; i++) {
+				addLine();
+			}
+		}
+
 		onUpdateList();
 
 		if (typeof options['init_callback'] == 'function') {
