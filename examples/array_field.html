@@ -1,0 +1,186 @@
+<form action="#">
+	<div class="form-group field_emails">
+		<label>Liste des adresses email :</label>
+		<div class="hide list_empty"><em>aucune</em><br></div>
+		<table class="table table-sm">
+			<tbody>
+			<tr class="hide base">
+				<td><input type="hidden" name="emails[]"> <span class="value"></span></td>
+				<td class="text-end"><a href="#" title="Supprimer" class="remove btn btn-sm btn-danger"><i class="fas fa-times"></i></a></td>
+			</tr>
+			</tbody>
+		</table>
+		<div class="links text-center">
+			<a href="#" class="add_one btn btn-sm btn-success">Ajouter une adresse email</a>
+		</div>
+		<div class="item_add_one">
+			<div class="alert alert-danger pt-1 pb-1 errors hide"></div>
+			<div class="form-inline">
+				<input type="text" class="form-control" value="" placeholder="Adresse email" size="40" /> &nbsp;
+				<a href="#" title="Ajouter" class="add btn btn-success"><i class="fas fa-plus"></i></a>
+				&nbsp; <a href="#" class="cancel">Annuler</a>
+			</div>
+		</div>
+		<div class="item_add_mutli">
+			<div class="alert alert-danger pt-1 pb-1 errors hide"></div>
+			<div class="form-group">
+				<label>Liste des adresses email :</label>
+				<textarea name="phone_numbers" class="form-control" rows="10"></textarea>
+				<span class="form-text">Une adresse email par ligne.</span>
+			</div>
+			<div class="form-inline">
+				<a href="#" title="Ajouter" class="add btn btn-success"><i class="fas fa-plus"></i></a>
+				&nbsp; <a href="#" class="cancel">Annuler</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-group field_phone_numbers">
+		<label>Liste des numéros de téléphone :</label>
+		<div class="hide list_empty"><em>aucun</em><br></div>
+		<table class="table table-sm">
+			<tbody>
+			<tr class="hide base">
+				<td><input type="hidden" name="phone_numbers[]"> <span class="value"></span></td>
+				<td class="text-end"><a href="#" title="Supprimer" class="remove btn btn-sm btn-danger"><i class="fas fa-times"></i></a></td>
+			</tr>
+			</tbody>
+		</table>
+		<div class="links text-center">
+			<a href="#" class="add_one btn btn-sm btn-success">Ajouter un numéro de téléphone</a>
+		</div>
+		<div class="item_add_one">
+			<div class="alert alert-danger pt-1 pb-1 errors hide"></div>
+			<div class="form-inline">
+				<input type="text" class="form-control" value="" placeholder="Numéro de téléphone" size="40" /> &nbsp;
+				<a href="#" title="Ajouter" class="add btn btn-success"><i class="fas fa-plus"></i></a>
+				&nbsp; <a href="#" class="cancel">Annuler</a>
+			</div>
+		</div>
+		<div class="item_add_mutli">
+			<div class="alert alert-danger pt-1 pb-1 errors hide"></div>
+			<div class="form-group">
+				<label>Pays des numéros de téléphone :</label>
+				<select name="country" class="form-control"></select>
+			</div>
+			<div class="form-group">
+				<label>Liste des numéros de téléphone :</label>
+				<textarea name="phone_numbers" class="form-control" rows="10"></textarea>
+				<span class="form-text">Un numéro de téléphone par ligne.</span>
+			</div>
+			<div class="form-inline">
+				<a href="#" title="Ajouter" class="add btn btn-success"><i class="fas fa-plus"></i></a>
+				&nbsp; <a href="#" class="cancel">Annuler</a>
+			</div>
+		</div>
+	</div>
+</form>
+
+<script>
+	const form = $('form');
+	ArrayField.init(form.find('.field_emails'), ['email@company.com'], {
+		entering_field_in_table: false,
+		item_name: 'Adresse email',
+		get_errors_callback: (email, itemsList) => {
+			if (Array.isArray(email) && email.length > 1) {
+				const emails = email;
+				if (emails.length === 0) {
+					return 'Veuillez saisir au moins une adresse email.';
+				}
+
+				let errors = [];
+				for (let i = 0; i < emails.length; i++) {
+					if (false === Email.validateEmail(emails[i])) {
+						errors.push(('L’adresse email n°{0} est incorrecte.').format(i + 1));
+						continue;
+					}
+
+					if (itemsList.indexOf(emails[i]) !== -1) {
+						errors.push(('L’adresse email n°{0} a déjà été ajoutée.').format(i + 1));
+						continue;
+					}
+				}
+
+				return errors.length ? errors : null;
+			}
+
+			email = Array.isArray(email) ? email[0] : email;
+
+			if (null == email || '' === email) {
+				return 'Veuillez saisir une adresse email.';
+			}
+			if (false === Email.validateEmail(email)) {
+				return 'Cette adresse email est incorrecte.';
+			}
+			if (itemsList.indexOf(email) !== -1) {
+				return 'Cette adresse email a déjà été ajoutée.';
+			}
+			return null;
+		},
+	});
+
+	ArrayField.init(form.find('field_phone_numbers'), ['+33601020304'], {
+		entering_field_in_table: false,
+		item_name: 'Numéro de téléphone',
+		init_callback: (div) => {
+			let itiPhoneNumberField = TelephoneNumber.setIntlTelInput(div.find('.item_add_one input[type="text"]'));
+			Location.fillCountrySelect(div.find('select[name="country"]'), 'FR');
+		},
+		format_entered_value_callback: (value, addDiv) => {
+			if (addDiv.hasClass('item_add_one')) {
+				const itiPhoneNumberField = TelephoneNumber.getIntlTelInputInstance(addDiv.find('input[type="text"]'));
+				return TelephoneNumber.getEnteredNumberInInternationalFormat(itiPhoneNumberField);
+			}
+
+			let country = addDiv.find('select[name="country"]').val();
+			if (false !== TelephoneNumber.check(value, country)) {
+				return TelephoneNumber.parse(value, country);
+			}
+			return value;
+		},
+		get_errors_callback: (phoneNumber, itemsList, addDiv) => {
+			if (Array.isArray(phoneNumber) && phoneNumber.length > 1) {
+				const phoneNumbers = phoneNumber;
+
+				if (phoneNumbers.length === 0) {
+					return 'Veuillez saisir au moins un numéro de téléphone.';
+				}
+
+				let country = addDiv.find('select[name="country"]').val();
+
+				let errors = [];
+				for (let i = 0; i < phoneNumbers.length; i++) {
+					if (false === TelephoneNumber.check(phoneNumbers[i], country)) {
+						errors.push(('Le numéro de téléphone n°{0} est incorrect.').format(i + 1));
+						continue;
+					}
+
+					let phoneNumber = TelephoneNumber.parse(phoneNumbers[i], country);
+					if (null === phoneNumber) {
+						continue;
+					}
+
+					if (itemsList.indexOf(phoneNumber) !== -1) {
+						errors.push(('Le numéro de téléphone n°{0} a déjà été ajouté.').format(i + 1));
+						continue;
+					}
+				}
+
+				return errors.length ? errors : null;
+			}
+
+			phoneNumber = Array.isArray(phoneNumber) ? phoneNumber[0] : phoneNumber;
+
+			const itiPhoneNumberField = TelephoneNumber.getIntlTelInputInstance(addDiv.find('input[type="text"]'));
+			if (null == phoneNumber || '' === phoneNumber) {
+				return 'Veuillez saisir un numéro de téléphone.';
+			}
+			if (!TelephoneNumber.check(phoneNumber, itiPhoneNumberField.defaultCountry)) {
+				return 'Ce numéro de téléphone est incorrect.';
+			}
+			if (itemsList.indexOf(phoneNumber) !== -1) {
+				return 'Ce numéro de téléphone a déjà été ajouté.';
+			}
+		},
+	});
+</script>
