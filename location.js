@@ -427,6 +427,16 @@ class GeographicCoordinates {
 	static check(str) {
 		return /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/.test(str);
 	}
+
+	static parse(str) {
+		if (null === str || '' === str || 'NaN,NaN' === str) {
+			return null;
+		}
+
+		return str.split(',').map(str => str.trim()).join(',');
+	}
+
+
 }
 
 module.exports = { Country, PostalAddress, GeographicCoordinates };
