@@ -500,6 +500,7 @@ class ArrayField {
 			formGroupDiv.find('a.add_one, a.add_multi').addClass('hide').closest('.links').addClass('hide');
 			formGroupDiv.find('.item_add_one, .item_add_multi').addClass('hide');
 			formGroupDiv.find('.item_add_one, .item_add_multi').find('input[type="text"], textarea').val('');
+			formGroupDiv.find('.item_add_one, .item_add_multi').find('.errors').addClass('hide');
 		}
 		function cancelAdd() {
 			formGroupDiv.find('a.add_one, a.add_multi').removeClass('hide').closest('.links').removeClass('hide');
@@ -522,12 +523,10 @@ class ArrayField {
 		}
 
 		function submitAddNewItem(item, divAdd) {
-			const items = Array.isArray(item) ? item : [item];
-
-			divAdd.find('.errors').addClass('hide');
+			let items = Array.isArray(item) ? item : [item];
 
 			if (typeof options['format_entered_value_callback'] == 'function') {
-				items.map(item => options['format_entered_value_callback'](item, divAdd));
+				items = items.map(item => options['format_entered_value_callback'](item, divAdd));
 			}
 
 			if (typeof options['get_errors_callback'] == 'function') {
