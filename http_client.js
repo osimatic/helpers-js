@@ -13,6 +13,10 @@ class HTTPClient {
 		HTTPClient.refreshTokenCallback = callback;
 	}
 
+	static setGetRefreshTokenCallback(callback) {
+		HTTPClient.getRefreshTokenCallback = callback;
+	}
+
 	static setOnSuccessRefreshTokenCallback(callback) {
 		HTTPClient.onSuccessRefreshTokenCallback = callback;
 	}
@@ -194,7 +198,11 @@ class HTTPClient {
 	}
 
 	static onInvalidToken() {
-		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl, HTTPClient.onInvalidTokenCallback);
+		if (typeof HTTPClient.onInvalidTokenCallback == 'function') {
+			HTTPClient.onInvalidTokenCallback();
+			return;
+		}
+		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl);
 	}
 
 	static async request(method, url, data, successCallback=null, errorCallback=null, formErrorCallback=null, additionalHeaders={}, sendAuthorizationHeader=true) {
@@ -399,18 +407,30 @@ class HTTPClient {
 			return;
 		}
 
+		const refreshToken = typeof HTTPClient.getRefreshTokenCallback == 'function' ? HTTPClient.getRefreshTokenCallback() : JwtSession.getRefreshToken();
+
 		console.log('HTTPClient.refreshToken : Appel HTTP vers HTTPClient.refreshTokenUrl');
 		let payload = new FormData();
-		payload.append('refresh_token', JwtSession.getRefreshToken());
+		payload.append('refresh_token', refreshToken);
 
 		HTTPClient.request('POST', HTTPClient.refreshTokenUrl, payload,
 			(data) => {
-				JwtSession.updateToken(data['token'], data['refresh_token'], HTTPClient.onSuccessRefreshTokenCallback);
-				HTTPClient.setAuthorizationToken(JwtSession.getToken());
+				if (typeof HTTPClient.onSuccessRefreshTokenCallback == 'function') {
+					HTTPClient.onSuccessRefreshTokenCallback(data['token'], data['refresh_token']);
+				}
+				else {
+					JwtSession.updateToken(data['token'], data['refresh_token']);
+					HTTPClient.setAuthorizationToken(JwtSession.getToken());
+				}
 				onRefreshTokenComplete();
 			},
 			() => {
-				JwtSession.expireSession(HTTPClient.onInvalidRefreshTokenRedirectUrl, HTTPClient.onInvalidRefreshTokenCallback);
+				if (typeof HTTPClient.onInvalidRefreshTokenCallback == 'function') {
+					HTTPClient.onInvalidRefreshTokenCallback();
+				}
+				else {
+					JwtSession.expireSession(HTTPClient.onInvalidRefreshTokenRedirectUrl);
+				}
 				if (typeof errorCallback == 'function') {
 					errorCallback();
 				}

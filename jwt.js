@@ -32,6 +32,9 @@ class JwtToken {
 }
 
 class JwtSession {
+	/*static setStorage(storage) {
+		JwtSession.storage = storage;
+	}*/
 	static setOnLoginCallback(callback) {
 		JwtSession.onLoginCallback = callback;
 	}
@@ -45,18 +48,28 @@ class JwtSession {
 		JwtSession.onSessionExpireCallback = callback;
 	}
 
+	static getItemInStorage(key) {
+		return localStorage.getItem(key);
+	}
+	static setItemInStorage(key, value) {
+		localStorage.setItem(key, value);
+	}
+	static removeItemInStorage(key) {
+		localStorage.removeItem(key);
+	}
+
 	static getToken() {
-		return localStorage.getItem('access_token');
+		return JwtSession.getItemInStorage('access_token');
 	}
 	static setToken(token) {
-		localStorage.setItem('access_token', token);
+		JwtSession.setItemInStorage('access_token', token);
 	}
 
 	static getRefreshToken() {
-		return localStorage.getItem('refresh_token');
+		return JwtSession.getItemInStorage('refresh_token');
 	}
 	static setRefreshToken(token) {
-		localStorage.setItem('refresh_token', token);
+		JwtSession.setItemInStorage('refresh_token', token);
 	}
 
 	static login(data, redirectUrl, onComplete) {
@@ -64,7 +77,7 @@ class JwtSession {
 		JwtSession.setToken(data['access_token'] || data['token']);
 		JwtSession.setRefreshToken(data['refresh_token']);
 
-		localStorage.removeItem('real_users');
+		JwtSession.removeItemInStorage('real_users');
 
 		if (typeof JwtSession.onLoginCallback == 'function') {
 			JwtSession.onLoginCallback();
@@ -90,16 +103,16 @@ class JwtSession {
 			JwtSession.onNewTokenCallback();
 		}
 		if (typeof onComplete == 'function') {
-			onComplete();
+			onComplete(accessToken, refreshToken);
 		}
 	}
 
 	static logout(redirectUrl, onComplete) {
 		console.log('JwtSession.logout()');
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('refresh_token');
+		JwtSession.removeItemInStorage('access_token');
+		JwtSession.removeItemInStorage('refresh_token');
 
-		localStorage.removeItem('real_users');
+		JwtSession.removeItemInStorage('real_users');
 
 		if (typeof JwtSession.onLogoutCallback == 'function') {
 			JwtSession.onLogoutCallback();
@@ -115,10 +128,10 @@ class JwtSession {
 
 	static expireSession(redirectUrl, onComplete) {
 		console.log('JwtSession.expireSession()');
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('refresh_token');
+		JwtSession.removeItemInStorage('access_token');
+		JwtSession.removeItemInStorage('refresh_token');
 
-		localStorage.removeItem('real_users');
+		JwtSession.removeItemInStorage('real_users');
 
 		if (typeof JwtSession.onSessionExpireCallback == 'function') {
 			JwtSession.onSessionExpireCallback();
@@ -137,7 +150,7 @@ class JwtSession {
 	}
 
 	static isAnonymous() {
-		return localStorage.getItem('access_token') == null;
+		return JwtSession.getItemInStorage('access_token') == null;
 	}
 
 	static isGranted(role) {
@@ -159,8 +172,8 @@ class JwtSession {
 
 	static getRealLoggedUsers() {
 		let realUsers = [];
-		if (localStorage.getItem('real_users') != null) {
-			realUsers = JSON.parse(localStorage.getItem('real_users'));
+		if (JwtSession.getItemInStorage('real_users') != null) {
+			realUsers = JSON.parse(JwtSession.getItemInStorage('real_users'));
 		}
 		return realUsers;
 	}
@@ -174,7 +187,7 @@ class JwtSession {
 			access_token: JwtSession.getToken(),
 			refresh_token: JwtSession.getRefreshToken(),
 		});
-		localStorage.setItem('real_users', JSON.stringify(realUsers));
+		JwtSession.setItemInStorage('real_users', JSON.stringify(realUsers));
 
 		// on enregistre la session de l'utilisateur simulé
 		JwtSession.setToken(loginData['access_token'] || loginData['token']);
@@ -200,7 +213,7 @@ class JwtSession {
 			return;
 		}
 
-		localStorage.setItem('real_users', JSON.stringify(realUsers));
+		JwtSession.setItemInStorage('real_users', JSON.stringify(realUsers));
 
 		JwtSession.setToken(loginData['access_token'] || loginData['token']);
 		JwtSession.setRefreshToken(loginData['refresh_token']);
