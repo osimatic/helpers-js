@@ -218,12 +218,14 @@ class ImportFromCsv {
 		});
 	}
 
-	static getErrorsHtmlOfImportData(json, divResult) {
+	static getErrorsHtmlOfImportData(json, divResult=null) {
 		let resultError = errorMessageImportFailed;
 		resultError += '<ul>';
 		$.each(json, function(idx, errorData) {
 			console.error(errorData);
-			divResult.find('table tr[data-line="'+errorData.line+'"]').addClass('danger');
+			if (null != divResult) {
+				divResult.find('table tr[data-line="'+errorData.line+'"]').addClass('danger');
+			}
 
 			resultError += '<li>'+lineLabel.format(errorData.line)+'<ul>';
 			$.each(errorData.errors, function(index, error) {
@@ -233,6 +235,21 @@ class ImportFromCsv {
 		});
 		resultError +='</ul>';
 		return resultError;
+	}
+
+	static isImportErrors(json) {
+		if (!Array.isArray(json)) {
+			return false;
+		}
+
+		for (let key in json) {
+			let value = json[key];
+			if (typeof value == 'object' && typeof value['line'] != 'undefined' && typeof value['errors'] != 'undefined') {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	static getTabLink(formMatching) {
