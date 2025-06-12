@@ -37,6 +37,13 @@ Array.prototype.intersect = function(array1, array2) {
 	return array1.filter(value => array2.includes(value));
 }
 
+Array.prototype.diff = function(array1, array2) {
+	function notContainedIn(arr) {
+		return element => arr.indexOf(element) === -1;
+	}
+	return array1.filter(notContainedIn(array2)).concat(array2.filter(notContainedIn(array1)));
+}
+
 Array.prototype.filterUnique = function() {
 	//let onlyUnique = (([value, index, self]) => self.indexOf(value) === index);
 	return this.filter((v, i, a) => a.indexOf(v) === i);
