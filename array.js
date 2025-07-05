@@ -12,6 +12,16 @@ Array.prototype.unsetVal = function(val) {
 	}
 };
 
+Array.prototype.unsetValues = function(values) {
+	values.forEach(val => this.unsetVal(val));
+};
+
+Array.prototype.pushVal = function(val) {
+	if (this.indexOf(val) === -1) {
+		this.push(val);
+	}
+};
+
 Array.prototype.inArray = function(p_val) {
 	return this.indexOf(p_val) > -1;
 };
