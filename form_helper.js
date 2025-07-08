@@ -258,6 +258,30 @@ class FormHelper {
 		return null;
 	}
 
+	static extractErrorMessageOfJson(json, onlyIfUniqueError=false) {
+		if (typeof json == 'undefined' || json == null) {
+			return null;
+		}
+
+		if (typeof json.error != 'undefined') {
+			return json.error;
+		}
+
+		if (onlyIfUniqueError && !json.length || json.length > 1) {
+			return null;
+		}
+
+		if (typeof json[0] != 'undefined' && typeof json[0].error != 'undefined') {
+			return json[0].error;
+		}
+
+		if (typeof json[0] != 'undefined' && Array.isArray(json[0]) && json[0].length === 2) {
+			return json[0][1];
+		}
+
+		return null;
+	}
+
 	static hideFormErrors(form) {
 		form.find('div.form_errors').remove();
 		return form;
