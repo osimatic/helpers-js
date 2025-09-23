@@ -597,7 +597,7 @@ class ArrayField {
 				return false;
 			});
 			divAdd.find('a.add').off('click').click(function () {
-				submitAddNewItem(divAdd.find('input[type="text"]').val(), divAdd);
+				submitAddNewItem(divAdd.find('input.form-control[type="text"]').val(), divAdd);
 				return false;
 			});
 
