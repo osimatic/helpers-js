@@ -121,7 +121,7 @@ class DateTime {
 
 	static getTimeDisplayWithNbDays(jsDate, jsPreviousDate, locale="fr-FR", timeZone="Europe/Paris") {
 		let str = this.getTimeDisplay(jsDate, locale, timeZone);
-		if (jsPreviousDate != 0 && jsPreviousDate != null) {
+		if (jsPreviousDate !== 0 && jsPreviousDate != null) {
 			let nbDaysDiff = this.getNbDayBetweenTwo(jsPreviousDate, jsDate, false);
 			if (nbDaysDiff > 0) {
 				str += ' (J+'+nbDaysDiff+')';
@@ -238,7 +238,7 @@ class DateTime {
 	}
 
 	static isDateEqual(jsDate1, jsDate2) {
-		return (jsDate1.getFullYear() == jsDate2.getFullYear() && jsDate1.getMonth() == jsDate2.getMonth() && jsDate1.getDate() == jsDate2.getDate());
+		return (jsDate1.getFullYear() === jsDate2.getFullYear() && jsDate1.getMonth() === jsDate2.getMonth() && jsDate1.getDate() === jsDate2.getDate());
 	}
 
 	static isDateInThePast(jsDate) {
@@ -465,7 +465,7 @@ class SqlTime {
 			return null;
 		}
 
-		if ((sqlTime.match(/\:/g) || []).length == 1) {
+		if ((sqlTime.match(/\:/g) || []).length === 1) {
 			sqlTime += ':00';
 		}
 

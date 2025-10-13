@@ -51,18 +51,20 @@ class Duration {
 		return (durationInSecondsOriginal < 0 ? '- ' : '')+hours+':'+minutes+(displayMode==='input_time'?':':'.')+seconds;
 	}
 
-	static convertToDurationInHourStringDisplay(durationInSeconds, withSecondes=true, withMinutes=true, withLibelleMinute=true, libelleEntier=false) {
+	static convertToDurationInHourStringDisplay(durationInSeconds, withSeconds=true, withMinutes=true, withMinuteLabel=true, fullLabel=false, hideHourIfZeroHour=false) {
 		durationInSeconds = Math.round(durationInSeconds);
 
 		// Heures
 		let strHeure = '';
 		let nbHeures = this.getNbHoursOfDurationInSeconds(durationInSeconds);
-		strHeure += nbHeures;
-		if (libelleEntier) {
-			strHeure += ' heure'+(nbHeures>1?'s':'');
-		}
-		else {
-			strHeure += 'h';
+		if (!hideHourIfZeroHour || nbHeures > 0) {
+			strHeure += nbHeures;
+			if (fullLabel) {
+				strHeure += ' heure'+(nbHeures>1?'s':'');
+			}
+			else {
+				strHeure += 'h';
+			}
 		}
 		
 		// Minutes
@@ -73,8 +75,8 @@ class Duration {
 			strMinute += ' ';
 			//strMinute += sprintf('%02d', nbMinutes);
 			strMinute += nbMinutes.toString().padStart(2, '0');
-			if (withLibelleMinute) {
-				if (libelleEntier) {
+			if (withMinuteLabel) {
+				if (fullLabel) {
 					strMinute += ' minute'+(nbMinutes>1?'s':'');
 				}
 				else {
@@ -85,12 +87,12 @@ class Duration {
 		
 		// Secondes
 		let strSeconde = '';
-		if (withSecondes) {
+		if (withSeconds) {
 			let nbSecondes = this.getNbSecondsRemainingOfDurationInSeconds(durationInSeconds);
 			strSeconde += ' ';
 			//strSeconde += sprintf('%02d', nbSecondes);
 			strSeconde += nbSecondes.toString().padStart(2, '0');
-			if (libelleEntier) {
+			if (fullLabel) {
 				strSeconde += ' seconde'+(nbSecondes>1?'s':'');
 			}
 			else {
