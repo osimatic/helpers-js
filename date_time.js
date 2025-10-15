@@ -122,7 +122,7 @@ class DateTime {
 	static getTimeDisplayWithNbDays(jsDate, jsPreviousDate, locale="fr-FR", timeZone="Europe/Paris") {
 		let str = this.getTimeDisplay(jsDate, locale, timeZone);
 		if (jsPreviousDate !== 0 && jsPreviousDate != null) {
-			let nbDaysDiff = this.getNbDayBetweenTwo(jsPreviousDate, jsDate, false);
+			let nbDaysDiff = DatePeriod.getNbDayBetweenTwo(jsPreviousDate, jsDate, false);
 			if (nbDaysDiff > 0) {
 				str += ' (J+'+nbDaysDiff+')';
 			}
@@ -277,6 +277,27 @@ class DateTime {
 		return jsDateTime > today;
 	}
 
+	static addDays(date, days) {
+		date.setUTCDate(date.getUTCDate() + days);
+		return date;
+	}
+
+	static addMonths(date, months) {
+		let d = date.getDate();
+		date.setMonth(date.getMonth() + +months);
+		if (date.getDate() !== d) {
+			date.setDate(0);
+		}
+		return date;
+	}
+
+	/** @deprecated use DatePeriod.getNbDayBetweenTwo instead */
+	static getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod=false, timeZone="Europe/Paris") {
+		return DatePeriod.getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod, timeZone);
+	}
+}
+
+class DatePeriod {
 	static getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod=false, timeZone="Europe/Paris") {
 		//jsDate1.set
 		if (jsDate1 == null || jsDate2 == null) {
@@ -299,18 +320,34 @@ class DateTime {
 		return parseInt(Math.round((timestamp2-timestamp1)/86400));
 	}
 
-	static addDays(date, days) {
-		date.setUTCDate(date.getUTCDate() + days);
-		return date;
-	}
-
-	static addMonths(date, months) {
-		let d = date.getDate();
-		date.setMonth(date.getMonth() + +months);
-		if (date.getDate() !== d) {
-			date.setDate(0);
+	static getPeriodLabels(data, period, locale = 'fr-FR', timeZone = 'Europe/Paris') {
+		if (!data || data.length === 0) {
+			return [];
 		}
-		return date;
+
+		if (period === 'month') {
+			data.map(yearAndMonth => {
+				const [year, month] = yearAndMonth.split('-').map(Number);
+				return DateTime.getMonthNameByMonth(month, locale).capitalize()+' '+year;
+			});
+		}
+		if (period === 'week') {
+			return data.map(yearAndWeek => {
+				const [year, weekStr] = yearAndWeek.split('-S');
+				const week = parseInt(weekStr, 10);
+				return 'S'+week+' '+year;
+			});
+		}
+		if (period === 'day_of_week') {
+			return data.map(weekDay => DateTime.getDayNameByDayOfWeek(weekDay, locale).capitalize());
+		}
+		if (period === 'day_of_month') {
+			return data.map(sqlDate => SqlDate.getDateDigitalDisplay(sqlDate, locale, timeZone));
+		}
+		if (period === 'hour') {
+			return data.map(hour => String(hour).padStart(2, '0')+'h');
+		}
+		return data;
 	}
 }
 
@@ -386,7 +423,7 @@ class TimestampUnix {
 	}
 
 	static getNbDayBetweenTwo(timestamp1, timestamp2, asPeriod=false, timeZone="Europe/Paris") {
-		return DateTime.getNbDayBetweenTwo(this.parse(timestamp1), this.parse(timestamp2), asPeriod, timeZone);
+		return DatePeriod.getNbDayBetweenTwo(this.parse(timestamp1), this.parse(timestamp2), asPeriod, timeZone);
 	}
 
 	static isDateInThePast(timestamp) {
@@ -452,7 +489,7 @@ class SqlDate {
 		return DateTime.isDateInTheFuture(SqlDateTime.parse(sqlDate + " 00:00:00"));
 	}
 	static getNbDayBetweenTwo(sqlDate1, sqlDate2, asPeriod=false) {
-		return DateTime.getNbDayBetweenTwo(SqlDateTime.parse(sqlDate1 + " 00:00:00"), SqlDateTime.parse(sqlDate2 + " 00:00:00"), asPeriod);
+		return DatePeriod.getNbDayBetweenTwo(SqlDateTime.parse(sqlDate1 + " 00:00:00"), SqlDateTime.parse(sqlDate2 + " 00:00:00"), asPeriod);
 	}
 }
 
@@ -585,9 +622,9 @@ class SqlDateTime {
 	}
 
 	static getNbDayBetweenTwo(sqlDateTime1, sqlDateTime2, asPeriod=false) {
-		return DateTime.getNbDayBetweenTwo(this.parse(sqlDateTime1), this.parse(sqlDateTime2), asPeriod);
+		return DatePeriod.getNbDayBetweenTwo(this.parse(sqlDateTime1), this.parse(sqlDateTime2), asPeriod);
 	}
 
 }
 
-module.exports = { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime };
+module.exports = { DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime };

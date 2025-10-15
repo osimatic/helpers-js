@@ -12,7 +12,7 @@ const { HTTPRequest, Cookie, UrlAndQueryString } = require('./network');
 const { IBAN, BankCard } = require('./bank');
 const { AudioMedia, VideoMedia, UserMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
-const { DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
+const { DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
 const { FormHelper, EditValue } = require('./form_helper');
@@ -41,6 +41,7 @@ const { WebRTC } = require('./web_rtc');
 const { EventBus } = require('./event_bus');
 
 // exports surcouche lib externe
+const { Chartjs } = require('./chartjs');
 const { GoogleCharts } = require('./google_charts');
 const { GoogleRecaptcha } = require('./google_recaptcha');
 const { GoogleMap } = require('./google_maps');
@@ -49,8 +50,8 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPClient, HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork, NumberFormatter
+	HTTPClient, HTTPRequest, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork, NumberFormatter,
 	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
-	GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
+	Chartjs, GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };

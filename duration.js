@@ -69,9 +69,8 @@ class Duration {
 		
 		// Minutes
 		let strMinute = '';
-		let nbMinutes = 0;
 		if (withMinutes) {
-			nbMinutes = this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
+			let nbMinutes = this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
 			strMinute += ' ';
 			//strMinute += sprintf('%02d', nbMinutes);
 			strMinute += nbMinutes.toString().padStart(2, '0');
