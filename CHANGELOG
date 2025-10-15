@@ -73,4 +73,6 @@ Toutes les fonctions des classes SqlTime, SqlDate et SqlDateTime prennent mainte
 1.1.66
 Duration.convertToDurationAsCentieme() -> Duration.convertToDurationAsHundredthOfAnHour()
 
+1.3.0
+HTTPRequest -> HTTPClient
 
