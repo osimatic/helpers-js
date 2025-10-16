@@ -51,7 +51,7 @@ class Password {
 			if (score >= 5) { color = 'success'; text = 'Fort'; }
 
 			strengthBar.removeClass('bg-danger bg-warning bg-success').addClass('bg-'+color);
-			strengthText.removeClass('text-bg-danger text-bg-warning text-bg-success').addClass('text-bg-'+color);
+			strengthText.removeClass('text-bg-danger text-bg-warning text-bg-success hide').addClass(password === '' ? 'hide' : 'text-bg-'+color);
 			strengthBar.width(width+'%');
 			strengthText.text(text);
 		}
