@@ -21,43 +21,112 @@ class Browser {
 }
 
 class UserAgent {
+	static getInfosDisplay(userAgentData, separator=' — ') {
+		let components = [];
+		if (null !== userAgentData['os']) {
+			components.push(userAgentData['os']);
+		}
+		if (null !== userAgentData['browser']) {
+			components.push(userAgentData['browser']);
+		}
+		if (null !== userAgentData['device']) {
+			components.push(userAgentData['device']);
+		}
+		return components.join(separator);
+	}
+
+	static getData(userAgent) {
+		if (typeof UAParser == 'undefined') {
+			return;
+		}
+
+		const parsedData = UAParser(userAgent);
+
+		let os = null;
+		if (typeof parsedData['os']['name'] != 'undefined') {
+			os = parsedData['os']['name'];
+			if (typeof parsedData['os']['version'] != 'undefined') {
+				os += ' '+parsedData['os']['version'];
+			}
+
+			os = os.trim();
+		}
+
+		let browser = null;
+		if (typeof parsedData['browser']['name'] != 'undefined') {
+			browser = parsedData['browser']['name'];
+			if (typeof parsedData['browser']['major'] != 'undefined') {
+				browser += ' '+parsedData['browser']['major'];
+			}
+			else if (typeof parsedData['browser']['version'] != 'undefined') {
+				browser += ' '+parsedData['browser']['version'];
+			}
+
+			browser = browser.trim();
+		}
+
+		let device = null;
+		if (typeof parsedData['device']['type'] != 'undefined') {
+			device = parsedData['device']['type'];
+			if (typeof parsedData['device']['vendor'] != 'undefined') {
+				device += ' '+parsedData['device']['vendor'];
+			}
+			if (typeof parsedData['device']['model'] != 'undefined') {
+				device += ' '+parsedData['device']['model'];
+			}
+
+			device = device.trim();
+		}
+
+		return {
+			os: os !== null && os !== '' ? os : null,
+			browser: browser !== null && browser !== '' ? browser : null,
+			device: device !== null && device !== '' ? device : null,
+		};
+	}
+
+	static getOsIcon(osName) {
+		osName = osName.toUpperCase();
+		if (osName === 'WINDOWS') {
+			return '<i class="fab fa-windows"></i>';
+		}
+		if (osName === 'LINUX') {
+			return '<i class="fab fa-linux"></i>';
+		}
+		if (osName === 'MACOS' || osName === 'IOS') {
+			return '<i class="fab fa-apple"></i>';
+		}
+		if (osName === 'ANDROID') {
+			return '<i class="fab fa-android"></i>';
+		}
+		return '';
+	}
+
 	static getOsDisplay(osName) {
-		let str = '';
-		if (osName === 'Windows') {
-			str += '<i class="fab fa-windows"></i>';
-		}
-		if (osName === 'Linux') {
-			str += '<i class="fab fa-linux"></i>';
-		}
-		if (osName === 'macOS' || osName === 'iOS') {
-			str += '<i class="fab fa-apple"></i>';
-		}
-		if (osName === 'Android') {
-			str += '<i class="fab fa-android"></i>';
-		}
-		str += ' '+osName;
-		return str.trim();
+		return (UserAgent.getOsIcon()+' '+osName).trim();
 	}
 	
+	static getBrowserIcon(browserName) {
+		browserName = browserName.toUpperCase();
+		if (browserName === 'CHROME') {
+			return '<i class="fab fa-chrome"></i>';
+		}
+		if (browserName === 'FIREFOX') {
+			return '<i class="fab fa-firefox"></i>';
+		}
+		if (browserName === 'EDGE') {
+			return '<i class="fab fa-edge"></i>';
+		}
+		if (browserName === 'SAFARI') {
+			return '<i class="fab fa-safari"></i>';
+		}
+		if (browserName === 'OPERA') {
+			return '<i class="fab fa-opera"></i>';
+		}
+		return '';
+	}
 	static getBrowserDisplay(browserName) {
-		let str = '';
-		if (browserName === 'Chrome') {
-			str += '<i class="fab fa-chrome"></i>';
-		}
-		if (browserName === 'Firefox') {
-			str += '<i class="fab fa-firefox"></i>';
-		}
-		if (browserName === 'Edge') {
-			str += '<i class="fab fa-edge"></i>';
-		}
-		if (browserName === 'Safari') {
-			str += '<i class="fab fa-safari"></i>';
-		}
-		if (browserName === 'Opera') {
-			str += '<i class="fab fa-opera"></i>';
-		}
-		str += ' '+browserName;
-		return str.trim();
+		return (UserAgent.getBrowserIcon(browserName)+' '+browserName).trim();
 	}
 
 	static getDeviceDisplay(device) {
