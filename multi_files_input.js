@@ -1,5 +1,6 @@
 class MultiFilesInput {
-	static init(fileInput, filesList, nbMaxFiles, maxFileSize) {
+	static init(fileInput, setFilesList, nbMaxFiles, maxFileSize) {
+		let filesList = [];
 		const formGroup = fileInput.closest('.form-group');
 
 		if (formGroup.find('.multi_files_input_dropzone').length === 0) {
@@ -18,7 +19,7 @@ class MultiFilesInput {
 		}
 
 		const dropzone = fileInput.parent().find('.multi_files_input_dropzone');
-		const filesPreview = fileInput.parent().find('.multi_files_input_files_preview');
+		const filesPreview = fileInput.parent().find('.multi_files_input_files_preview').empty();
 
 		fileInput.addClass('hide');
 
@@ -61,6 +62,7 @@ class MultiFilesInput {
 					continue;
 				}
 				filesList.push(f);
+				setFilesList(filesList);
 				renderPreview(f);
 			}
 		}
@@ -68,12 +70,12 @@ class MultiFilesInput {
 		function renderPreview(file) {
 			const id = 'f_' + Math.random().toString(36).slice(2, 9);
 			const wrap = $(`
-					<div class="border rounded p-2 d-inline-flex align-items-center" data-file-id="${id}" style="background:white;">
-						<div class="me-2 preview-thumb" style="width:64px; height:48px; display:flex; align-items:center; justify-content:center; overflow:hidden;"></div>
-						<div class="small text-truncate" style="max-width:160px;">${file.name}</div>
-						<button type="button" class="btn-close btn-close-small ms-2" aria-label="Supprimer" style="margin-left:8px;"></button>
-					</div>
-				`);
+				<div class="border rounded p-2 d-inline-flex align-items-center" data-file-id="${id}" style="background:white;">
+					<div class="me-2 preview-thumb" style="width:64px; height:48px; display:flex; align-items:center; justify-content:center; overflow:hidden;"></div>
+					<div class="small text-truncate" style="max-width:160px;">${file.name}</div>
+					<button type="button" class="btn-close btn-close-small ms-2" aria-label="Supprimer" style="margin-left:8px;"></button>
+				</div>
+			`);
 			filesPreview.append(wrap);
 			filesPreview.removeClass('hide');
 
@@ -93,6 +95,7 @@ class MultiFilesInput {
 				// remove by reference: find corresponding file by name+size (best-effort)
 				const name = file.name, size = file.size;
 				filesList = filesList.filter(f => !(f.name === name && f.size === size));
+				setFilesList(filesList);
 				$(this).closest('[data-file-id]').remove();
 
 				if (filesList.length === 0) {
@@ -102,3 +105,5 @@ class MultiFilesInput {
 		}
 	}
 }
+
+module.exports = { MultiFilesInput };
