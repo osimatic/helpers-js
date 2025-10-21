@@ -29,17 +29,17 @@ class MultiFilesInput {
 			e.stopPropagation();
 			fileInput.trigger('click');
 		});
-		dropzone.off('click').on('dragover', function (e) {
+		dropzone.off('dragover').on('dragover', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			$(this).addClass('border-primary');
 		});
-		dropzone.off('click').on('dragleave', function (e) {
+		dropzone.off('dragleave').on('dragleave', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			$(this).removeClass('border-primary');
 		});
-		dropzone.off('click').on('drop', function (e) {
+		dropzone.off('drop').on('drop', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			$(this).removeClass('border-primary');
