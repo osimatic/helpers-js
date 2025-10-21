@@ -24,29 +24,29 @@ class MultiFilesInput {
 		fileInput.addClass('hide');
 
 		// Dropzone interactions
-		dropzone.on('click', function (e) {
+		dropzone.off('click').on('click', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			fileInput.trigger('click');
 		});
-		dropzone.on('dragover', function (e) {
+		dropzone.off('click').on('dragover', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			$(this).addClass('border-primary');
 		});
-		dropzone.on('dragleave', function (e) {
+		dropzone.off('click').on('dragleave', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			$(this).removeClass('border-primary');
 		});
-		dropzone.on('drop', function (e) {
+		dropzone.off('click').on('drop', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 			$(this).removeClass('border-primary');
 			const dtFiles = (e.originalEvent.dataTransfer || {}).files || [];
 			handleFiles(Array.from(dtFiles));
 		});
-		fileInput.on('change', (e) => {
+		fileInput.off('change').on('change', (e) => {
 			handleFiles(Array.from(e.target.files));
 			fileInput.val('');
 		});
@@ -90,7 +90,7 @@ class MultiFilesInput {
 				wrap.find('.preview-thumb').html(`<i class="fas fa-file fa-2x text-muted"></i>`);
 			}
 
-			wrap.find('.btn-close').on('click', function () {
+			wrap.find('.btn-close').off('click').on('click', function () {
 				const idx = $(this).closest('[data-file-id]').index();
 				// remove by reference: find corresponding file by name+size (best-effort)
 				const name = file.name, size = file.size;

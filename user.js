@@ -78,7 +78,7 @@ class Password {
 			+'</div>'
 		);
 		input.change(() => update(input));
-		input.on('input', () => update(input));
+		input.off('input').on('input', () => update(input));
 		update(input);
 	}
 }

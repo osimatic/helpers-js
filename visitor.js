@@ -37,7 +37,7 @@ class UserAgent {
 
 	static getData(userAgent) {
 		if (typeof UAParser == 'undefined') {
-			return;
+			return null;
 		}
 
 		const parsedData = UAParser(userAgent);
