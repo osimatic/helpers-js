@@ -5,7 +5,7 @@
  */
 class OpenStreetMap {
 
-	constructor(mapId, options) {
+	constructor(mapContainer, options) {
 		/*let [lat, lng] = button.data('coordinates').split(',');
 		let map = L.map('modal_map_canvas2').setView([lat, lng], 17);
 
@@ -20,24 +20,32 @@ class OpenStreetMap {
 
 		this.markers = [];
 		this.locations = [];
-		this.mapId = mapId;
 
-		if (!$('#'+mapId).length) {
+		this.map = OpenStreetMap.createMap(mapContainer, options);
+		if (null === this.map) {
 			return;
 		}
 
-		let container = L.DomUtil.get(mapId);
+		this.centerOnFrance();
+	}
+
+	static createMap(mapContainer, options) {
+		if (!mapContainer.length) {
+			return null;
+		}
+
+		const container = L.DomUtil.get(mapContainer[0]);
 		if (container != null) {
 			container._leaflet_id = null;
 		}
 
-		this.map = L.map(mapId, options || {});
+		const map = L.map(mapContainer[0], options || {});
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(this.map);
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+		}).addTo(map);
 
-		this.centerOnFrance();
+		return map;
 	}
 
 	static getUrl(latitude, longitude) {
