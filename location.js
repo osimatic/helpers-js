@@ -523,6 +523,37 @@ class GeographicCoordinates {
 		return { type: 'Point', coordinates: [Number(long), Number(lat)] };
 	}
 
+	static getAllLatLongsFromGeoJsonList(geoJsonList) {
+		if (typeof geoJsonList == 'string') {
+			geoJsonList = JSON.parse(geoJsonList);
+		}
+
+		const arr = [];
+		for (const geoJsonItem of geoJsonList) {
+			if (!geoJsonItem) {
+				continue;
+			}
+
+			if (geoJsonItem.type === 'Point') {
+				const [lon, lat] = geoJsonItem.coordinates || [];
+				arr.push([lat, lon]);
+				continue;
+			}
+
+			if (geoJsonItem.type === 'Polygon') {
+				for (const ring of geoJsonItem.coordinates || []) {
+					for (const [lon,lat] of ring) {
+						arr.push([lat, lon]);
+					}
+				}
+				continue;
+			}
+		}
+
+		return arr;
+	}
+
+
 	static haversine(lat1, long1, lat2, long2) {
 		const R = 6371000;
 		const toRad = d => d * Math.PI / 180;
