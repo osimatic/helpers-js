@@ -296,20 +296,24 @@ class Country {
 
 class PostalAddress {
 	static setAutocomplete(input, onPlaceChanged) {
-		let autocomplete = new google.maps.places.Autocomplete(
+		const autocomplete = new google.maps.places.Autocomplete(
 			input[0],
 			{types: ['geocode']}
 		);
-		//console.log(autocomplete);
 
 		// When the user selects an address from the dropdown, populate the address fields in the form.
+
+		if (typeof onPlaceChanged != 'function') {
+			return;
+		}
+
 		autocomplete.addListener('place_changed', function() {
 			let place = autocomplete.getPlace();
 			input.val('');
-			if (typeof onPlaceChanged == 'function') {
-				onPlaceChanged(place['formatted_address']);
-			}
+			onPlaceChanged(place);
 		});
+
+		return autocomplete;
 	}
 
 	static format(addressData, separator='<br/>') {
@@ -423,20 +427,112 @@ class PostalAddress {
 	}
 }
 
+class Polygon {
+	static format(geoJsonPolygon) {
+		if (typeof geoJsonPolygon == 'string') {
+			geoJsonPolygon = JSON.parse(geoJsonPolygon);
+		}
+
+		const rings = geoJsonPolygon.coordinates || [];
+		const ring0 = rings[0] || [];
+		const n = ring0.length ? ring0.length - (JSON.stringify(ring0[0])===JSON.stringify(ring0[ring0.length-1]) ? 1 : 0) : 0;
+		if (ring0.length === 0) {
+			return {label:'Polygon (vide)', title:''};
+		}
+
+		const [firstLon, firstLat] = ring0[0];
+
+		const maxShow = Math.min(5, ring0.length);
+		const concise = ring0.slice(0, maxShow).map(([lon,lat]) => GeographicCoordinates.format(lat, lon)).join(' · ');
+		const more = ring0.length > maxShow ? ` … (+${ring0.length - maxShow} sommets)` : '';
+
+		return {
+			label: `Polygon • sommets: ${n} • départ: ${GeographicCoordinates.format(firstLat, firstLon)}`,
+			title: `Sommets: ${concise}${more}`
+		};
+	}
+
+	static convertToGeoJson(latlngs) {
+		let rings = [];
+		if (Array.isArray(latlngs) && Array.isArray(latlngs[0])) {
+			for (const ring of latlngs) {
+				rings.push(ring.map(ll => [Number(ll.lng), Number(ll.lat)]));
+			}
+		}
+		else {
+			rings = [latlngs.map(ll => [Number(ll.lng), Number(ll.lat)])];
+		}
+		rings = rings.map(r => {
+			if (r.length >= 3) {
+				const [lon0,lat0] = r[0];
+				const [lonL,latL] = r[r.length-1];
+				if (lon0 !== lonL || lat0 !== latL) r.push([lon0,lat0]);
+			}
+			return r;
+		});
+		return { type: 'Polygon', coordinates: rings };
+	}
+}
+
 class GeographicCoordinates {
 	static check(str) {
 		return /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/.test(str);
 	}
 
-	static parse(str) {
+	static parse(str, asString=false) {
 		if (null === str || '' === str || 'NaN,NaN' === str) {
 			return null;
 		}
 
-		return str.split(',').map(str => str.trim()).join(',');
+		str = (str||'').replace(';', ',').trim().replace(/\s+/g, '');
+		const parts = str.split(',');
+		if (parts.length !== 2) {
+			return null;
+		}
+
+		const lat = parseFloat(parts[0]);
+		const lon = parseFloat(parts[1]);
+		if (!isFinite(lat) || !isFinite(lon)) {
+			return null;
+		}
+
+		return asString ? str.join(',') : [lat, lon];
 	}
 
+	static toFixed(latOrLong, fractionDigit=6) {
+		return Number(latOrLong).toFixed(fractionDigit);
+	}
+
+	static format(lat, long, fractionDigit=6) {
+		return GeographicCoordinates.toFixed(lat, fractionDigit)+','+GeographicCoordinates.toFixed(long, fractionDigit);
+	}
+
+	static formatPoint(geoJsonPoint, fractionDigit=6) {
+		if (typeof geoJsonPoint == 'string') {
+			geoJsonPoint = JSON.parse(geoJsonPoint);
+		}
+
+		const [long, lat] = geoJsonPoint.coordinates || [];
+		if (typeof long == 'undefined' || typeof lat == 'undefined') {
+			return '';
+		}
+		return GeographicCoordinates.format(lat, long, fractionDigit);
+	}
+
+	static convertToGeoJson(lat, long) {
+		return { type: 'Point', coordinates: [Number(long), Number(lat)] };
+	}
+
+	static haversine(lat1, long1, lat2, long2) {
+		const R = 6371000;
+		const toRad = d => d * Math.PI / 180;
+		const dLat = toRad(lat2 - lat1);
+		const dLong = toRad(long2 - long1);
+		const d1 = toRad(lat1), d2 = toRad(lat2);
+		const a = Math.sin(dLat/2)**2 + Math.cos(d1)*Math.cos(d2)*Math.sin(dLong/2)**2;
+		return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+	}
 
 }
 
-module.exports = { Country, PostalAddress, GeographicCoordinates };
+module.exports = { Country, PostalAddress, GeographicCoordinates, Polygon };

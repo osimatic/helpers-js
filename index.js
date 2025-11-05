@@ -16,7 +16,7 @@ const { DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = r
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
 const { FormHelper, EditValue } = require('./form_helper');
-const { Country, PostalAddress, GeographicCoordinates } = require('./location');
+const { Country, PostalAddress, GeographicCoordinates, Polygon } = require('./location');
 const { HexColor, RgbColor } = require('./draw');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
@@ -52,7 +52,7 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, HexColor, RgbColor, SocialNetwork, NumberFormatter, Password,
+	HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, NumberFormatter, Password,
 	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	Chartjs, GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
