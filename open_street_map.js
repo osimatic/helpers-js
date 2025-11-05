@@ -5,7 +5,7 @@
  */
 class OpenStreetMap {
 
-	constructor(mapContainer, options) {
+	constructor(mapContainer, options={}) {
 		/*let [lat, lng] = button.data('coordinates').split(',');
 		let map = L.map('modal_map_canvas2').setView([lat, lng], 17);
 
@@ -29,7 +29,7 @@ class OpenStreetMap {
 		this.centerOnFrance();
 	}
 
-	static createMap(mapContainer, options) {
+	static createMap(mapContainer, options={}) {
 		if (!mapContainer.length) {
 			return null;
 		}
@@ -39,11 +39,13 @@ class OpenStreetMap {
 			container._leaflet_id = null;
 		}
 
-		const map = L.map(mapContainer[0], options || {});
+		const map = L.map(mapContainer[0], options);
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		}).addTo(map);
+
+		OpenStreetMap.centerOnFrance(map);
 
 		return map;
 	}
@@ -55,7 +57,7 @@ class OpenStreetMap {
 
 	static getUrlFromCoordinates(locationCoordinates) {
 		locationCoordinates = locationCoordinates.split(',');
-		return this.getUrl(parseFloat(locationCoordinates[0]), parseFloat(locationCoordinates[1]));
+		return OpenStreetMap.getUrl(parseFloat(locationCoordinates[0]), parseFloat(locationCoordinates[1]));
 	}
 
 	setZoom(zoom) {
@@ -112,19 +114,43 @@ class OpenStreetMap {
 	}
 
 	centerOnFrance() {
-		this.map.setView([46.52863469527167, 2.43896484375], 6);
+		OpenStreetMap.centerOnFrance(this.map);
+	}
+
+	static centerOnFrance(map) {
+		map.setView([46.52863469527167, 2.43896484375], 6);
 	}
 
 	centerOnMarkers(padding) {
-		this.map.invalidateSize(false);
+		OpenStreetMap.centerMapToLocations(this.map, this.locations, padding);
+	}
 
-		if (this.locations.length === 0) {
+	static centerMapToLocations(map, locationsList, padding=[20,20], maxZoom=18) {
+		if (!map || locationsList.length === 0) {
 			return;
 		}
 
-		this.map.fitBounds(new L.LatLngBounds(this.locations), {
-			padding: typeof padding != 'undefined' ? padding : [0, 0]
-		});
+		map.invalidateSize(false);
+
+		const bounds = L.latLngBounds(locationsList);
+		map.fitBounds(bounds, { padding: padding });
+		if (map.getZoom() > maxZoom) {
+			map.setZoom(maxZoom);
+		}
+	}
+
+	static centerMapToGooglePlace(map, place) {
+		if (place && place.geometry && place.geometry.location) {
+			const loc = place.geometry.location;
+			OpenStreetMap.centerMapToCoordinates(map, loc.lat(), loc.lng());
+		}
+	}
+
+	static centerMapToCoordinates(map, lat, long) {
+		if (!map) {
+			return;
+		}
+		map.setView([lat, long], Math.max(map.getZoom(), 15));
 	}
 
 	connectMarkers() {
@@ -144,7 +170,6 @@ class OpenStreetMap {
 		listLineCoordinates.forEach(line => {
 			L.polyline(line, {color: '#728bec'}).addTo(this.map);
 		});
-
 	}
 }
 
