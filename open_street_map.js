@@ -121,6 +121,103 @@ class OpenStreetMap {
 		map.setView([46.52863469527167, 2.43896484375], 6);
 	}
 
+	static COUNTRY_BOUNDING_BOXES = {
+		// Europe
+		"fr": [[41.333, -5.142], [51.091, 9.559]], // France,
+		"de": [[47.270, 5.866],  [55.058, 15.041]], // Germany
+		"es": [[27.642, -18.167],[43.792, 4.327]], // Spain incl. Canaries (approx)
+		"it": [[36.619, 6.627],  [47.095, 18.520]], // Italy
+		"pt": [[36.840, -9.500], [42.280, -6.190]], // Portugal
+		"be": [[49.497, 2.545],  [51.505, 6.407]], // Belgium
+		"nl": [[50.753, 3.358],  [53.555, 7.227]], // Netherlands
+		"ch": [[45.818, 5.957],  [47.808, 10.492]], // Switzerland
+		"at": [[46.372, 9.530],  [49.021, 17.162]], // Austria
+		"gb": [[49.959, -8.649], [59.478, 1.759]], // United Kingdom,
+		"ie": [[51.390, -10.480],[55.387, -5.432]], // Ireland
+		"pl": [[49.003, 14.123], [54.836, 24.145]], // Poland
+		"se": [[55.340, 11.112], [69.061, 24.177]], // Sweden
+		"no": [[57.980, 4.500],  [71.188, 31.078]], // Norway (Mainland approx)
+		"fi": [[59.810, 20.556], [70.092, 31.586]], // Finland
+		"dk": [[54.560, 8.089],  [57.752, 12.690]], // Denmark
+
+		// Afrique / Moyen-Orient
+		"ma": [[27.662, -13.172],[35.922, -0.996]], // Morocco
+		"dz": [[18.976, -8.669], [37.093, 11.999]], // Algeria
+		"tn": [[30.233, 7.524],  [37.544, 11.598]], // Tunisia
+		"eg": [[21.725, 24.700], [31.667, 36.895]], // Egypt
+		"za": [[-34.833, 16.470],[-22.126, 32.893]], // South Africa
+		"sa": [[15.615, 34.495], [32.154, 55.666]], // Saudi Arabia
+		"ae": [[22.634, 51.570], [26.084, 56.383]], // United Arab Emirates
+		"il": [[29.487, 34.268], [33.277, 35.876]], // Israel
+
+		// Amériques
+		"us": [[24.396, -124.848],[49.384, -66.885]], // United States (Contiguous)
+		"ca": [[41.675, -141.000],[83.113, -52.648]], // Canada
+		"mx": [[14.538, -118.365],[32.720, -86.711]], // Mexico
+		"br": [[-33.751, -73.987],[5.271, -34.729]], // Brazil
+		"ar": [[-55.051, -73.582],[-21.781, -53.591]], // Argentina
+
+		// Asie / Océanie
+		"cn": [[18.159, 73.499], [53.560, 134.772]], // China (mainland approx)
+		"in": [[6.554, 68.176],  [35.674, 97.402]], // India
+		"jp": [[24.249, 122.938],[45.557, 153.987]], // Japan
+		"au": [[-43.740, 112.921],[-10.668, 153.639]], // Australia
+		"nz": [[-47.290, 166.509],[-34.392, 178.517]], // New Zealand
+	};
+
+	static getCountryBoundingBox(countryIsoCode) {
+		if (!countryIsoCode) {
+			return null;
+		}
+
+		const key = countryIsoCode.toLowerCase().trim();
+		return OpenStreetMap.COUNTRY_BOUNDING_BOXES[key] ? OpenStreetMap.COUNTRY_BOUNDING_BOXES[key] : null;
+	}
+
+	static centerMapOnCountry(map, countryIsoCode, opts = {}) {
+		if (!map) {
+			return;
+		}
+
+		const boundingBox = OpenStreetMap.getCountryBoundingBox(countryIsoCode);
+		if (null === boundingBox) {
+			return;
+		}
+
+		const padding = Array.isArray(opts.padding) ? opts.padding : [20, 20];
+		const minZoom = Number.isFinite(opts.minZoom) ? opts.minZoom : 3;
+		const maxZoomSmall = Number.isFinite(opts.maxZoomSmall) ? opts.maxZoomSmall : 10;
+		const maxZoomTiny  = Number.isFinite(opts.maxZoomTiny)  ? opts.maxZoomTiny  : 12;
+
+		// Estimation de "taille" en degrés
+		const [[S, W], [N, E]] = boundingBox;
+		const latSpan = Math.max(0.0001, Math.abs(N - S));
+		const lonSpan = Math.max(0.0001, Math.abs(E - W));
+		const areaDeg = latSpan * lonSpan;
+
+		// Heuristique de zoom maximal selon la taille du pays (en degrés²)
+		// (fitBounds choisira le zoom, plafonné par maxZoom ci-dessous)
+		let maxZoom;
+		if (areaDeg > 200) {        // très grand (US, CA, AU, BR, CN)
+			maxZoom = 7;
+		} else if (areaDeg > 50) {  // grand
+			maxZoom = 8;
+		} else if (areaDeg > 20) {  // moyen+
+			maxZoom = 9;
+		} else if (areaDeg > 5) {   // moyen/petit
+			maxZoom = maxZoomSmall;   // ~10
+		} else {                    // petit/micro-état
+			maxZoom = maxZoomTiny;    // ~12
+		}
+
+		// fitBounds avec maxZoom pour éviter d'over-zoomer les petits pays
+		const bounds = L.latLngBounds([ [S, W], [N, E] ]);
+		map.fitBounds(bounds, { padding, maxZoom });
+		if (map.getZoom() < minZoom) {
+			map.setZoom(minZoom);
+		}
+	}
+
 	centerOnMarkers(padding) {
 		OpenStreetMap.centerMapToLocations(this.map, this.locations, padding);
 	}
