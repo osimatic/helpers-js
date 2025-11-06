@@ -447,8 +447,8 @@ class Polygon {
 		const more = ring0.length > maxShow ? ` … (+${ring0.length - maxShow} sommets)` : '';
 
 		return {
-			label: `Polygon • sommets: ${n} • départ: ${GeographicCoordinates.format(firstLat, firstLon)}`,
-			title: `Sommets: ${concise}${more}`
+			label: `Polygone de ${n} sommets (départ : ${GeographicCoordinates.format(firstLat, firstLon)})`,
+			title: `Sommets : ${concise}${more}`
 		};
 	}
 
@@ -466,11 +466,84 @@ class Polygon {
 			if (r.length >= 3) {
 				const [lon0,lat0] = r[0];
 				const [lonL,latL] = r[r.length-1];
-				if (lon0 !== lonL || lat0 !== latL) r.push([lon0,lat0]);
+				if (lon0 !== lonL || lat0 !== latL) {
+					r.push([lon0,lat0]);
+				}
 			}
 			return r;
 		});
 		return { type: 'Polygon', coordinates: rings };
+	}
+
+
+	// Test "sur le segment" en degrés (plan local) — suffisant pour le bord du polygone
+	static isPointOnSegmentDeg(lat, lon, A, B, EPS = 1e-12) {
+		const [x,  y ] = [lon, lat];
+		const [x1, y1] = A;       // A = [lon,lat]
+		const [x2, y2] = B;       // B = [lon,lat]
+		const cross = (x - x1)*(y2 - y1) - (y - y1)*(x2 - x1);
+		if (Math.abs(cross) > EPS) {
+			return false;
+		}
+
+		const dot  = (x - x1)*(x2 - x1) + (y - y1)*(y2 - y1);
+		if (dot < -EPS) {
+			return false;
+		}
+
+		const len2 = (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1);
+		return dot - len2 <= EPS;
+	}
+
+	// Ray-casting + bords inclus pour un anneau (tableau de [lon,lat])
+	static isPointInRing(lat, lon, ring) {
+		const n0 = ring.length;
+		if (n0 < 3) {
+			return false;
+		}
+
+		// fermer si nécessaire
+		const closed = ring[n0-1][0] === ring[0][0] && ring[n0-1][1] === ring[0][1];
+		const pts = closed ? ring : [...ring, ring[0]];
+		const n = pts.length;
+
+		// bord inclus
+		for (let i = 0; i < n - 1; i++) {
+			if (Polygon.isPointOnSegmentDeg(lat, lon, pts[i], pts[i+1])) {
+				return true;
+			}
+		}
+
+		// ray casting (x=lon, y=lat)
+		let inside = false;
+		for (let i = 0, j = n - 1; i < n; j = i++) {
+			const [xi, yi] = pts[i];
+			const [xj, yj] = pts[j];
+			const intersect = ((yi > lat) !== (yj > lat)) &&
+				(lon < ( (xj - xi) * (lat - yi) / ((yj - yi) || 1e-20) + xi ));
+			if (intersect) inside = !inside;
+		}
+		return inside;
+	}
+
+	// Polygone avec trous: inside = dans outer ET pas dans un trou
+	static isPointInPolygon(lat, lon, geoJsonPolygon) {
+		const rings = geoJsonPolygon.coordinates;
+		if (!Array.isArray(rings) || rings.length === 0) {
+			return false;
+		}
+
+		if (!Polygon.isPointInRing(lat, lon, rings[0])) {
+			return false; // outer
+		}
+
+		for (let k = 1; k < rings.length; k++) {
+			if (Polygon.isPointInRing(lat, lon, rings[k])) {
+				return false; // dans un trou
+			}
+		}
+
+		return true;
 	}
 }
 
@@ -553,6 +626,32 @@ class GeographicCoordinates {
 		return arr;
 	}
 
+	static isPointCorrespondingToLocationsList(lat, lon, locationsList, tolMeters = 1.0) {
+		for (const it of locationsList) {
+			if (!it) {
+				continue;
+			}
+
+			if (typeof it === 'string') {
+				const p = GeographicCoordinates.parse(it);
+				if (p && GeographicCoordinates.haversine(lat,lon,p[0],p[1]) <= tolMeters) {
+					return true;
+				}
+			}
+			else if (it.type === 'Point') {
+				const p = it.coordinates || [];
+				if (p && GeographicCoordinates.haversine(lat,lon,p[1],p[0]) <= tolMeters) {
+					return true;
+				}
+			}
+			else if (it.type === 'Polygon' && Array.isArray(it.coordinates)) {
+				if (Polygon.isPointInPolygon(lat, lon, it)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	static haversine(lat1, long1, lat2, long2) {
 		const R = 6371000;
