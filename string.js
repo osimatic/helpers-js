@@ -136,12 +136,41 @@ String.prototype.isNumeric = String.prototype.isNumeric || function() {
 	return IsNumber;
 }
 
+String.prototype.isBase64 = String.prototype.isBase64 || function() {
+	// Vérifie les caractères autorisés par le base64
+	if (!/^[A-Za-z0-9+/=]+$/.test(this)) return false;
+
+	// Longueur multiple de 4
+	if (this.length % 4 !== 0) return false;
+
+	try {
+		atob(this); // Tentative de décodage
+		return true; // OK → c’est du base64
+	} catch (e) {
+		return false; // Erreur → pas du base64
+	}
+}
+
 // s'utilise : "ma chaine {0} de caracteres"
 if (!String.format) {
 	String.format = function(format) {
 		let args = Array.prototype.slice.call(arguments, 1);
 		return format.replace(/{(\d+)}/g, (match, number) => (typeof args[number] != 'undefined' ? args[number] : match));
 	};
+}
+
+if (!JSON.encodeJsonForDataAttr) {
+	JSON.encodeJsonForDataAttr = function(obj) {
+		const json = JSON.stringify(obj);
+		return btoa(encodeURIComponent(json));
+	}
+}
+
+if (!JSON.decodeJsonFromDataAttr) {
+	JSON.decodeJsonFromDataAttr = function(str) {
+		const json = decodeURIComponent(atob(str));
+		return JSON.parse(json);
+	}
 }
 
 /*

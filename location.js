@@ -429,9 +429,7 @@ class PostalAddress {
 
 class Polygon {
 	static format(geoJsonPolygon) {
-		if (typeof geoJsonPolygon == 'string') {
-			geoJsonPolygon = JSON.parse(geoJsonPolygon);
-		}
+		geoJsonPolygon = typeof geoJsonPolygon == 'string' ? JSON.parse(geoJsonPolygon) : geoJsonPolygon;
 
 		const rings = geoJsonPolygon.coordinates || [];
 		const ring0 = rings[0] || [];
@@ -443,13 +441,26 @@ class Polygon {
 		const [firstLon, firstLat] = ring0[0];
 
 		const maxShow = Math.min(5, ring0.length);
-		const concise = ring0.slice(0, maxShow).map(([lon,lat]) => GeographicCoordinates.format(lat, lon)).join(' · ');
+		const concise = ring0.slice(0, maxShow).map(([long,lat]) => GeographicCoordinates.format(lat, long)).join(' · ');
 		const more = ring0.length > maxShow ? ` … (+${ring0.length - maxShow} sommets)` : '';
 
 		return {
 			label: `Polygone de ${n} sommets (départ : ${GeographicCoordinates.format(firstLat, firstLon)})`,
 			title: `Sommets : ${concise}${more}`
 		};
+	}
+
+	static getStartCoordinates(geoJsonPolygon, asString=false) {
+		geoJsonPolygon = typeof geoJsonPolygon == 'string' ? JSON.parse(geoJsonPolygon) : geoJsonPolygon;
+
+		const rings = geoJsonPolygon.coordinates || [];
+		const ring0 = rings[0] || [];
+		if (ring0.length === 0) {
+			return null;
+		}
+
+		const [firstLon, firstLat] = ring0[0];
+		return asString ? firstLat+','+firstLon : [firstLat, firstLon];
 	}
 
 	static convertToGeoJson(latlngs) {
@@ -475,12 +486,44 @@ class Polygon {
 		return { type: 'Polygon', coordinates: rings };
 	}
 
+	static toLatLngRings(geoJsonPolygon) {
+		geoJsonPolygon = typeof geoJsonPolygon == 'string' ? JSON.parse(geoJsonPolygon) : geoJsonPolygon;
+
+		const polygonCoords = geoJsonPolygon.coordinates;
+		if (!Array.isArray(polygonCoords) || polygonCoords.length === 0) {
+			return false;
+		}
+
+		// polygonCoords: [ [ [long,lat], ... ] , ... ]
+		const rings = [];
+		for (const ring of polygonCoords) {
+			const latlngRing = [];
+			for (const coord of ring) {
+				if (!Array.isArray(coord) || coord.length < 2) {
+					continue;
+				}
+				const [long, lat] = coord;
+				latlngRing.push([lat, long]);
+			}
+			if (latlngRing.length > 0) {
+				// Fermer l'anneau si nécessaire (Leaflet accepte ouvert/fermé, on nettoie par sécurité)
+				const first = latlngRing[0];
+				const last = latlngRing[latlngRing.length - 1];
+				if (first[0] !== last[0] || first[1] !== last[1]) {
+					latlngRing.push([first[0], first[1]]);
+				}
+				rings.push(latlngRing);
+			}
+		}
+		return rings;
+	}
+
 
 	// Test "sur le segment" en degrés (plan local) — suffisant pour le bord du polygone
-	static isPointOnSegmentDeg(lat, lon, A, B, EPS = 1e-12) {
-		const [x,  y ] = [lon, lat];
-		const [x1, y1] = A;       // A = [lon,lat]
-		const [x2, y2] = B;       // B = [lon,lat]
+	static isPointOnSegmentDeg(lat, long, A, B, EPS = 1e-12) {
+		const [x,  y ] = [long, lat];
+		const [x1, y1] = A;       // A = [long,lat]
+		const [x2, y2] = B;       // B = [long,lat]
 		const cross = (x - x1)*(y2 - y1) - (y - y1)*(x2 - x1);
 		if (Math.abs(cross) > EPS) {
 			return false;
@@ -495,8 +538,8 @@ class Polygon {
 		return dot - len2 <= EPS;
 	}
 
-	// Ray-casting + bords inclus pour un anneau (tableau de [lon,lat])
-	static isPointInRing(lat, lon, ring) {
+	// Ray-casting + bords inclus pour un anneau (tableau de [long,lat])
+	static isPointInRing(lat, long, ring) {
 		const n0 = ring.length;
 		if (n0 < 3) {
 			return false;
@@ -509,42 +552,43 @@ class Polygon {
 
 		// bord inclus
 		for (let i = 0; i < n - 1; i++) {
-			if (Polygon.isPointOnSegmentDeg(lat, lon, pts[i], pts[i+1])) {
+			if (Polygon.isPointOnSegmentDeg(lat, long, pts[i], pts[i+1])) {
 				return true;
 			}
 		}
 
-		// ray casting (x=lon, y=lat)
+		// ray casting (x=long, y=lat)
 		let inside = false;
 		for (let i = 0, j = n - 1; i < n; j = i++) {
 			const [xi, yi] = pts[i];
 			const [xj, yj] = pts[j];
 			const intersect = ((yi > lat) !== (yj > lat)) &&
-				(lon < ( (xj - xi) * (lat - yi) / ((yj - yi) || 1e-20) + xi ));
+				(long < ( (xj - xi) * (lat - yi) / ((yj - yi) || 1e-20) + xi ));
 			if (intersect) inside = !inside;
 		}
 		return inside;
 	}
 
 	// Polygone avec trous: inside = dans outer ET pas dans un trou
-	static isPointInPolygon(lat, lon, geoJsonPolygon) {
+	static isPointInPolygon(lat, long, geoJsonPolygon) {
 		const rings = geoJsonPolygon.coordinates;
 		if (!Array.isArray(rings) || rings.length === 0) {
 			return false;
 		}
 
-		if (!Polygon.isPointInRing(lat, lon, rings[0])) {
+		if (!Polygon.isPointInRing(lat, long, rings[0])) {
 			return false; // outer
 		}
 
 		for (let k = 1; k < rings.length; k++) {
-			if (Polygon.isPointInRing(lat, lon, rings[k])) {
+			if (Polygon.isPointInRing(lat, long, rings[k])) {
 				return false; // dans un trou
 			}
 		}
 
 		return true;
 	}
+
 }
 
 class GeographicCoordinates {
@@ -564,12 +608,12 @@ class GeographicCoordinates {
 		}
 
 		const lat = parseFloat(parts[0]);
-		const lon = parseFloat(parts[1]);
-		if (!isFinite(lat) || !isFinite(lon)) {
+		const long = parseFloat(parts[1]);
+		if (!isFinite(lat) || !isFinite(long)) {
 			return null;
 		}
 
-		return asString ? str.join(',') : [lat, lon];
+		return asString ? str.join(',') : [lat, long];
 	}
 
 	static toFixed(latOrLong, fractionDigit=6) {
@@ -581,11 +625,7 @@ class GeographicCoordinates {
 	}
 
 	static formatPoint(geoJsonPoint, fractionDigit=6) {
-		if (typeof geoJsonPoint == 'string') {
-			geoJsonPoint = JSON.parse(geoJsonPoint);
-		}
-
-		const [long, lat] = geoJsonPoint.coordinates || [];
+		const [lat, long] = GeographicCoordinates.parseFromGeoJson(geoJsonPoint);
 		if (typeof long == 'undefined' || typeof lat == 'undefined') {
 			return '';
 		}
@@ -596,10 +636,19 @@ class GeographicCoordinates {
 		return { type: 'Point', coordinates: [Number(long), Number(lat)] };
 	}
 
-	static getAllLatLongsFromGeoJsonList(geoJsonList) {
-		if (typeof geoJsonList == 'string') {
-			geoJsonList = JSON.parse(geoJsonList);
+	static parseFromGeoJson(geoJsonPoint, asString=false) {
+		geoJsonPoint = typeof geoJsonPoint == 'string' ? JSON.parse(geoJsonPoint) : geoJsonPoint;
+
+		const [long, lat] = geoJsonPoint.coordinates || [];
+		if (typeof long == 'undefined' || typeof lat == 'undefined') {
+			return null;
 		}
+
+		return asString ? lat+','+long : [lat, long];
+	}
+
+	static getAllLatLongsFromGeoJsonList(geoJsonList) {
+		geoJsonList = typeof geoJsonList == 'string' ? JSON.parse(geoJsonList) : geoJsonList;
 
 		const arr = [];
 		for (const geoJsonItem of geoJsonList) {
@@ -608,15 +657,15 @@ class GeographicCoordinates {
 			}
 
 			if (geoJsonItem.type === 'Point') {
-				const [lon, lat] = geoJsonItem.coordinates || [];
-				arr.push([lat, lon]);
+				const [long, lat] = geoJsonItem.coordinates || [];
+				arr.push([lat, long]);
 				continue;
 			}
 
 			if (geoJsonItem.type === 'Polygon') {
 				for (const ring of geoJsonItem.coordinates || []) {
-					for (const [lon,lat] of ring) {
-						arr.push([lat, lon]);
+					for (const [long,lat] of ring) {
+						arr.push([lat, long]);
 					}
 				}
 				continue;
@@ -626,7 +675,7 @@ class GeographicCoordinates {
 		return arr;
 	}
 
-	static isPointCorrespondingToLocationsList(lat, lon, locationsList, tolMeters = 1.0) {
+	static isPointCorrespondingToLocationsList(lat, long, locationsList, tolMeters = 1.0) {
 		for (const it of locationsList) {
 			if (!it) {
 				continue;
@@ -634,18 +683,18 @@ class GeographicCoordinates {
 
 			if (typeof it === 'string') {
 				const p = GeographicCoordinates.parse(it);
-				if (p && GeographicCoordinates.haversine(lat,lon,p[0],p[1]) <= tolMeters) {
+				if (p && GeographicCoordinates.haversine(lat,long,p[0],p[1]) <= tolMeters) {
 					return true;
 				}
 			}
 			else if (it.type === 'Point') {
 				const p = it.coordinates || [];
-				if (p && GeographicCoordinates.haversine(lat,lon,p[1],p[0]) <= tolMeters) {
+				if (p && GeographicCoordinates.haversine(lat,long,p[1],p[0]) <= tolMeters) {
 					return true;
 				}
 			}
 			else if (it.type === 'Polygon' && Array.isArray(it.coordinates)) {
-				if (Polygon.isPointInPolygon(lat, lon, it)) {
+				if (Polygon.isPointInPolygon(lat, long, it)) {
 					return true;
 				}
 			}
