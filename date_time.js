@@ -298,6 +298,16 @@ class DateTime {
 }
 
 class DatePeriod {
+	static isSameDay(jsDate1, jsDate2) {
+		return jsDate1.getFullYear() === jsDate2.getFullYear() &&
+			jsDate1.getMonth() === jsDate2.getMonth() &&
+			jsDate1.getDate() === jsDate2.getDate();
+	}
+
+	static isHalfDay(partOfDay) {
+		return partOfDay === DatePeriod.PART_OF_DAY_MORNING || partOfDay === DatePeriod.PART_OF_DAY_AFTERNOON;
+	}
+
 	static getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod=false, timeZone="Europe/Paris") {
 		//jsDate1.set
 		if (jsDate1 == null || jsDate2 == null) {
@@ -626,5 +636,10 @@ class SqlDateTime {
 	}
 
 }
+
+// Part of day
+DatePeriod.PART_OF_DAY_MORNING 		= 'MORNING';
+DatePeriod.PART_OF_DAY_AFTERNOON 	= 'AFTERNOON';
+
 
 module.exports = { DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime };
