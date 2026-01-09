@@ -289,7 +289,14 @@ class HTTPClient {
 
 	static download(method, url, data, errorCallback=null, completeCallback=null, additionalHeaders={}) {
 		HTTPClient.requestBlob(method, url, data,
-			(blobData, response) => File.download(blobData, response.headers.get('content-type'), response.headers.get('content-disposition')),
+			(blobData, response) => {
+				const contentType = response.headers.get('content-type');
+				// Si la réponse est du JSON, on ne télécharge pas de fichier
+				if (contentType && contentType.includes('application/json')) {
+					return;
+				}
+				File.download(blobData, contentType, response.headers.get('content-disposition'));
+			},
 			errorCallback,
 			completeCallback,
 			additionalHeaders
@@ -346,9 +353,17 @@ class HTTPClient {
 			}
 
 			if (response.ok) {
-				const blobData = await response.blob();
-				if (typeof successCallback == 'function') {
-					successCallback(blobData, response);
+				if (response.headers.get('Content-Type') === 'application/json') {
+					const json = await response.json();
+					if (typeof successCallback == 'function') {
+						successCallback(json, response);
+					}
+				}
+				else {
+					const blobData = await response.blob();
+					if (typeof successCallback == 'function') {
+						successCallback(blobData, response);
+					}
 				}
 			}
 			else {
