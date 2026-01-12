@@ -629,7 +629,11 @@ class GeographicCoordinates {
 	}
 
 	static formatPoint(geoJsonPoint, fractionDigit=6) {
-		const [lat, long] = GeographicCoordinates.parseFromGeoJson(geoJsonPoint);
+		const coords = GeographicCoordinates.parseFromGeoJson(geoJsonPoint);
+		if (coords == null) {
+			return '';
+		}
+		const [lat, long] = coords;
 		if (typeof long == 'undefined' || typeof lat == 'undefined') {
 			return '';
 		}

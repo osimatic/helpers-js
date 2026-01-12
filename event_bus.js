@@ -30,9 +30,9 @@ class EventBus {
 
         if (!!handlers === false) {
             return;
-        } 
+        }
 
-		handlers.splice(handlers.indexOf(handler));
+		handlers.splice(handlers.indexOf(handler), 1);
     }
 }
 

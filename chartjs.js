@@ -298,7 +298,7 @@ class Chartjs {
 	}
 
 	static getAutoGranularity(data) {
-		const dates = Object.keys(data);
+		const dates = Object.keys(data).sort();
 		const days = (new Date(dates[dates.length - 1]) - new Date(dates[0])) / (1000 * 60 * 60 * 24);
 		if (days > 90) return 'month';
 		if (days > 30) return 'week';

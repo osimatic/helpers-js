@@ -51,6 +51,50 @@ describe('Country', () => {
 			const path = Country.getFlagPath('US');
 			expect(path).toContain('us.png');
 		});
+
+		test('should use custom flags path when set', () => {
+			Country.setFlagsPath('/custom/flags/');
+			const path = Country.getFlagPath('FR');
+			expect(path).toBe('/custom/flags/fr.png');
+
+			// Reset for other tests
+			Country.flagsPath = undefined;
+		});
+
+		test('should use default path when not set', () => {
+			Country.flagsPath = undefined;
+			const path = Country.getFlagPath('DE');
+			expect(path).toBe('/de.png');
+		});
+	});
+
+	describe('getFlagImg', () => {
+		test('should return HTML img tag', () => {
+			const html = Country.getFlagImg('FR');
+			expect(html).toContain('<img');
+			expect(html).toContain('src=');
+			expect(html).toContain('fr.png');
+			expect(html).toContain('class="flag"');
+		});
+
+		test('should include country name in title', () => {
+			const html = Country.getFlagImg('US');
+			expect(html).toContain('title="United States"');
+		});
+
+		test('should wrap img in span', () => {
+			const html = Country.getFlagImg('GB');
+			expect(html).toMatch(/^<span>/);
+			expect(html).toMatch(/<\/span>$/);
+		});
+	});
+
+	describe('getCountryList', () => {
+		test('should return the same as getCountries (deprecated)', () => {
+			const list = Country.getCountryList();
+			const countries = Country.getCountries();
+			expect(list).toEqual(countries);
+		});
 	});
 });
 
@@ -159,6 +203,33 @@ describe('GeographicCoordinates', () => {
 		});
 	});
 
+	describe('formatPoint', () => {
+		test('should format GeoJSON Point with default 6 decimals', () => {
+			const geoJsonPoint = { type: 'Point', coordinates: [2.3522123, 48.8566789] };
+			const formatted = GeographicCoordinates.formatPoint(geoJsonPoint);
+			expect(formatted).toBe('48.856679,2.352212');
+		});
+
+		test('should format GeoJSON Point with custom decimals', () => {
+			const geoJsonPoint = { type: 'Point', coordinates: [2.3522, 48.8566] };
+			const formatted = GeographicCoordinates.formatPoint(geoJsonPoint, 2);
+			expect(formatted).toBe('48.86,2.35');
+		});
+
+		test('should return empty string for invalid GeoJSON Point', () => {
+			const invalidPoint1 = { type: 'Point', coordinates: [] };
+			const invalidPoint2 = { type: 'Point' };
+			expect(GeographicCoordinates.formatPoint(invalidPoint1)).toBe('');
+			expect(GeographicCoordinates.formatPoint(invalidPoint2)).toBe('');
+		});
+
+		test('should handle GeoJSON Point as JSON string', () => {
+			const geoJsonStr = '{"type":"Point","coordinates":[2.3522,48.8566]}';
+			const formatted = GeographicCoordinates.formatPoint(geoJsonStr, 4);
+			expect(formatted).toBe('48.8566,2.3522');
+		});
+	});
+
 	describe('haversine', () => {
 		test('should calculate distance between two points', () => {
 			// Paris to London: ~344 km
@@ -205,6 +276,21 @@ describe('GeographicCoordinates', () => {
 				}
 			];
 			expect(GeographicCoordinates.isPointCorrespondingToLocationsList(48.85, 2.35, locationsList)).toBe(true);
+		});
+
+		test('should skip null/undefined items in list', () => {
+			const locationsList = [null, undefined, { type: 'Point', coordinates: [2.3522, 48.8566] }];
+			expect(GeographicCoordinates.isPointCorrespondingToLocationsList(48.8566, 2.3522, locationsList, 1)).toBe(true);
+		});
+
+		test('should handle invalid string coordinates in list', () => {
+			const locationsList = ['invalid', '48.8566,2.3522'];
+			expect(GeographicCoordinates.isPointCorrespondingToLocationsList(48.8566, 2.3522, locationsList, 1)).toBe(true);
+		});
+
+		test('should handle invalid Point without coordinates', () => {
+			const locationsList = [{ type: 'Point' }, { type: 'Point', coordinates: [2.3522, 48.8566] }];
+			expect(GeographicCoordinates.isPointCorrespondingToLocationsList(48.8566, 2.3522, locationsList, 1)).toBe(true);
 		});
 	});
 

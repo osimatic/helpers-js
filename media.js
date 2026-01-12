@@ -137,7 +137,7 @@ class VideoMedia {
 //Source : https://www.npmjs.com/package/mic-check
 class UserMedia {
 	static hasGetUserMedia() {
-		return !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+		return !!(typeof navigator !== 'undefined' && (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia));
 	}
 
 	/** SystemPermissionDenied => (macOS) browser does not have permission to access cam/mic */
@@ -152,12 +152,12 @@ class UserMedia {
 			return;
 		}*/
 
-		return new Promise((resolve, reject) => {	
+		return new Promise((resolve, reject) => {
 			const bowser = require('bowser');
 			const browser = bowser.getParser(window.navigator.userAgent);
 			const browserName = browser.getBrowserName();
 
-			navigator.mediaDevices.getUserMedia(constraints !== 'undefined' ? constraints : { audio: true, video: true })
+			navigator.mediaDevices.getUserMedia(typeof constraints !== 'undefined' ? constraints : { audio: true, video: true })
 			.then((stream) => resolve(stream))
 			.catch((error) => {
 				const errName = error.name;
@@ -203,15 +203,15 @@ class UserMedia {
 	}
 
 	static requestAudioPermissions(audioConstraints) {
-		return this.requestMediaPermissions({ audio: (audioConstraints !== 'undefined' ? audioConstraints : true), video: false });
+		return this.requestMediaPermissions({ audio: (typeof audioConstraints !== 'undefined' ? audioConstraints : true), video: false });
 	}
-	
+
 	static requestVideoPermissions(audioConstraints, videoConstraints) {
-		return this.requestMediaPermissions({ audio: (audioConstraints !== 'undefined' ? audioConstraints : true), video: (videoConstraints !== 'undefined' ? videoConstraints : true )});
+		return this.requestMediaPermissions({ audio: (typeof audioConstraints !== 'undefined' ? audioConstraints : true), video: (typeof videoConstraints !== 'undefined' ? videoConstraints : true )});
 	}
 
 	static requestMutedVideoPermissions(videoConstraints) {
-		return this.requestMediaPermissions({ audio: false, video: (videoConstraints !== 'undefined' ? videoConstraints : true )});
+		return this.requestMediaPermissions({ audio: false, video: (typeof videoConstraints !== 'undefined' ? videoConstraints : true )});
 	}
 }
 
