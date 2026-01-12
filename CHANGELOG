@@ -80,3 +80,4 @@ PostalAddress.setAutocomplete(input, onChange(formatted_address)) -> PostalAddre
 1.4.0
 new OpenStreetMap(id) -> new OpenStreetMap(element)
 OpenStreetMap.centerOnFrance -> OpenStreetMap.centerMapOnCountry('FR')
+const flagsPath = 'xxx'; -> Country.setFlagsPath('xxx');

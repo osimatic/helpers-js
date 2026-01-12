@@ -12,3 +12,4 @@ ehthumbs.db
 
 ### node_js ###
 node_modules
+coverage/

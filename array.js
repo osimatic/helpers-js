@@ -31,7 +31,7 @@ Array.prototype.unique = function() {
 };
 
 Array.prototype.removeEmptyValues = function() {
-	return this.filter(val => val != '');
+	return this.filter(val => val !== '');
 };
 
 Array.prototype.hasOwnIndex = function(prop) {
@@ -64,7 +64,7 @@ Array.generate = ({from = 0, to, step = 1, length = Math.ceil((to - from) / step
 
 Array.getValuesByKeyInArrayOfArrays = function(array, key) {
 	let listeValues = [];
-	for (let i in array) {
+	for (let i = 0; i < array.length; i++) {
 		let subArray = array[i];
 		if (typeof(subArray[key]) != 'undefined') {
 			listeValues.push(subArray[key]);

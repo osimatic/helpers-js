@@ -1,7 +1,11 @@
 
 class Country {
+	static setFlagsPath(flagsPath) {
+		Country.flagsPath = flagsPath;
+	}
+
 	static getFlagPath(countryCode) {
-		return flagsPath+countryCode.toLowerCase()+'.png';
+		return (typeof Country.flagsPath != 'undefined' ? Country.flagsPath : '/')+countryCode.toLowerCase()+'.png';
 	}
 	static getFlagImg(countryCode) {
 		return '<span><img src="'+Country.getFlagPath(countryCode)+'" alt="" title="'+Country.getCountryName(countryCode)+'" class="flag" /></span>'
@@ -613,7 +617,7 @@ class GeographicCoordinates {
 			return null;
 		}
 
-		return asString ? str.join(',') : [lat, long];
+		return asString ? lat+','+long : [lat, long];
 	}
 
 	static toFixed(latOrLong, fractionDigit=6) {
