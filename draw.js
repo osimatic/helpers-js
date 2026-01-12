@@ -1,6 +1,7 @@
 class HexColor {
 	static check(hexColor) {
-		return hexColor.match(/^[0-9a-fA-F]{6}$/).length;
+		const match = hexColor.match(/^[0-9a-fA-F]{6}$/);
+		return match ? match.length > 0 : false;
 	}
 
 	static convertToRgb(hexColor) {
@@ -9,7 +10,7 @@ class HexColor {
 		}
 
 		if (hexColor.length === 3) {
-			hexColor = hexColor+hexColor;
+			hexColor = hexColor[0]+hexColor[0]+hexColor[1]+hexColor[1]+hexColor[2]+hexColor[2];
 		}
 
 		if (!HexColor.check(hexColor)) {

@@ -1,3 +1,5 @@
+const { JwtSession } = require('./jwt');
+const { UrlAndQueryString } = require('./network');
 
 class HTTPClient {
 	static setAuthorizationToken(authorizationToken) {

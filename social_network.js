@@ -1,3 +1,5 @@
+require('./string');
+
 class SocialNetwork {
 
 	// ---------- Facebook ----------
@@ -40,6 +42,9 @@ class SocialNetwork {
 		/*
 		<a target="_blank" title="Twitter" href="https://twitter.com/share?url=<?php the_permalink(); ?>&text=<?php the_title(); ?>&via=korben" rel="nofollow" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=700');return false;"><img src="http://korben.info/wp-content/themes/korben2013/hab/twitter_icon.png" alt="Twitter" /></a>
 		*/
+		if (typeof text === 'string' && typeof text.escapeHtml === 'function') {
+			text = text.escapeHtml();
+		}
 		return ''
 			+'<a href="https://twitter.com/share" class="twitter-share-button" data-url="'+url+'" data-text="'+text+'" data-lang="'+lang+'" data-hashtags="'+hashtags+'">Tweeter</a>'
 			+'<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>'

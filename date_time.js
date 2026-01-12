@@ -206,9 +206,7 @@ class DateTime {
 	}
 
 	static getLastDayOfYear(date) {
-		date.setUTCDate(31);
-		date.setUTCMonth(11);
-		return new Date(date);
+		return new Date(Date.UTC(date.getUTCFullYear(), 11, 31));
 	}
 
 	static getFirstDayOfWeekAndYear(year, week) {
@@ -308,7 +306,7 @@ class DatePeriod {
 		return partOfDay === DatePeriod.PART_OF_DAY_MORNING || partOfDay === DatePeriod.PART_OF_DAY_AFTERNOON;
 	}
 
-	static getNbDayBetweenTwo(jsDate1, jsDate2, asPeriod=false, timeZone="Europe/Paris") {
+	static getNbDayBetweenTwo(jsDate1, jsDate2, considerTime=false, timeZone="Europe/Paris", returnDecimal=false) {
 		//jsDate1.set
 		if (jsDate1 == null || jsDate2 == null) {
 			return 0;
@@ -317,7 +315,7 @@ class DatePeriod {
 		let timestamp1 = jsDate1.getTime() / 1000;
 		let timestamp2 = jsDate2.getTime() / 1000;
 
-		if (!asPeriod) {
+		if (!considerTime) {
 			let jsMidnightDate1 = new Date(jsDate1.toLocaleDateString('en-US', {timeZone: timeZone})+' 00:00:00');
 			let jsMidnightDate2 = new Date(jsDate2.toLocaleDateString('en-US', {timeZone: timeZone})+' 00:00:00');
 			timestamp1 = jsMidnightDate1.getTime() / 1000;
@@ -327,7 +325,9 @@ class DatePeriod {
 			//jsDate1.setUTCHours(0, 0, 0);
 			//jsDate2.setUTCHours(0, 0, 0);
 		}
-		return parseInt(Math.round((timestamp2-timestamp1)/86400));
+
+		const daysDiff = (timestamp2-timestamp1)/86400;
+		return returnDecimal ? daysDiff : parseInt(Math.round(daysDiff));
 	}
 
 	static getPeriodLabels(data, period, locale = 'fr-FR', timeZone = 'Europe/Paris') {
@@ -392,23 +392,32 @@ class TimestampUnix {
 	}
 
 	static getYear(timestamp, timeZone="Europe/Paris") {
-		return this.parse(timestamp).toLocaleDateString('fr-FR', {year: 'numeric', timeZone: timeZone});
+		//const sqlDate = this.getSqlDate(timestamp, timeZone);
+		//return parseInt(sqlDate.substring(0, 4));
+		return parseInt(this.parse(timestamp).toLocaleDateString('fr-FR', {year: 'numeric', timeZone: timeZone}));
 	}
 	static getMonth(timestamp, timeZone="Europe/Paris") {
-		return this.parse(timestamp).toLocaleDateString('fr-FR', {month: 'numeric', timeZone: timeZone});
+		//const sqlDate = this.getSqlDate(timestamp, timeZone);
+		//return parseInt(sqlDate.substring(5, 7));
+		return parseInt(this.parse(timestamp).toLocaleDateString('fr-FR', {month: 'numeric', timeZone: timeZone}));
 	}
 	static getDayOfMonth(timestamp, timeZone="Europe/Paris") {
-		return this.parse(timestamp).toLocaleDateString('fr-FR', {day: 'numeric', timeZone: timeZone});
+		//const sqlDate = this.getSqlDate(timestamp, timeZone);
+		//return parseInt(sqlDate.substring(8, 10));
+		return parseInt(this.parse(timestamp).toLocaleDateString('fr-FR', {day: 'numeric', timeZone: timeZone}));
 	}
 
 	static getHour(timestamp, timeZone="Europe/Paris") {
-		return this.parse(timestamp).toLocaleTimeString('en-GB', {hour: 'numeric', timeZone: timeZone});
+		const sqlTime = this.getSqlTime(timestamp, timeZone);
+		return parseInt(sqlTime.substring(0, 2));
 	}
 	static getMinute(timestamp, timeZone="Europe/Paris") {
-		return this.parse(timestamp).toLocaleTimeString('en-GB', {minute: 'numeric', timeZone: timeZone});
+		const sqlTime = this.getSqlTime(timestamp, timeZone);
+		return parseInt(sqlTime.substring(3, 5));
 	}
 	static getSecond(timestamp, timeZone="Europe/Paris") {
-		return this.parse(timestamp).toLocaleTimeString('en-GB', {second: 'numeric', timeZone: timeZone});
+		const sqlTime = this.getSqlTime(timestamp, timeZone);
+		return parseInt(sqlTime.substring(6, 8));
 	}
 
 	static getSqlDateTime(timestamp, timeZone="Europe/Paris") {
@@ -556,18 +565,18 @@ class SqlDateTime {
 		return DateTime.getSqlDateTime(new Date());
 	}
 
-	static getSqlDate(sqlDateTime) {
+	static getSqlDate(sqlDateTime, timeZone="UTC") {
 		if (sqlDateTime == null) {
 			return null;
 		}
-		return DateTime.getSqlDate(this.parse(sqlDateTime));
+		return DateTime.getSqlDate(this.parse(sqlDateTime), timeZone);
 	}
 
-	static getSqlTime(sqlDateTime) {
+	static getSqlTime(sqlDateTime, timeZone="UTC") {
 		if (sqlDateTime == null) {
 			return null;
 		}
-		return DateTime.getSqlTime(this.parse(sqlDateTime));
+		return DateTime.getSqlTime(this.parse(sqlDateTime), timeZone);
 	}
 
 	static parse(sqlDateTime) {

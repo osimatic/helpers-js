@@ -52,7 +52,7 @@ class File {
 			fileSizeInBytes = fileSizeInBytes / 1024;
 			i++;
 		}
-		while (fileSizeInBytes > 1024);
+		while (fileSizeInBytes >= 1024);
 		//var size = Math.max(fileSizeInBytes, 0.1).toFixed(fractionDigits);
 		let size = Math.max(fileSizeInBytes, 0.1);
 		return (new Intl.NumberFormat(locale, {

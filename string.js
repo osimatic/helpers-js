@@ -31,7 +31,7 @@ String.prototype.reverseString = String.prototype.reverseString || function() {
 
 String.prototype.truncateOnWord = String.prototype.truncateOnWord || function(limit, fromLeft) {
 	if (fromLeft) {
-		return this.reverseString(this.truncateOnWord(this.reverseString(), limit));
+		return this.reverseString().truncateOnWord(limit, false).reverseString();
 	}
 	let TRIM_CHARS = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u2028\u2029\u3000\uFEFF';
 	let words = this.split(RegExp('(?=['+TRIM_CHARS+'])'));
@@ -62,15 +62,24 @@ String.prototype.truncateString = String.prototype.truncateString || function(le
 	switch(from) {
 		case 'left':
 			str2 = split ? this.truncateOnWord(length, true) : this.slice(this.length - length);
+			if (split) {
+				str2 = str2.trimStart();
+				return ellipsis + ' ' + str2;
+			}
 			return ellipsis + str2;
 		case 'middle':
 			len1 = Math.ceil(length / 2);
 			len2 = Math.floor(length / 2);
 			str1 = split ? this.truncateOnWord(len1) : this.slice(0, len1);
 			str2 = split ? this.truncateOnWord(len2, true) : this.slice(this.length - len2);
-			return str1 + ellipsis + str2;
+			// Enlever les espaces de fin de str1 et de début de str2 pour éviter les doubles espaces
+			return str1.trimEnd() + ' ' + ellipsis + ' ' + str2.trimStart();
 		default:
 			str1 = split ? this.truncateOnWord(length) : this.slice(0, length);
+			if (split) {
+				str1 = str1.trimEnd();
+				return str1 + ' ' + ellipsis;
+			}
 			return str1 + ellipsis;
 	}
 };

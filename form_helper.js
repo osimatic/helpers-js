@@ -294,7 +294,7 @@ class FormHelper {
 			if (typeof errors[property] == 'function') {
 				continue;
 			}
-			if (typeof errors[property]['error_description'] !== 'undefined') {
+			if (errors[property] != null && typeof errors[property]['error_description'] !== 'undefined') {
 				errorLabels.push(errors[property]['error_description']);
 				continue;
 			}

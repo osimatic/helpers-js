@@ -72,30 +72,24 @@ class Duration {
 		if (withMinutes) {
 			let nbMinutes = this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
 			strMinute += ' ';
-			//strMinute += sprintf('%02d', nbMinutes);
-			strMinute += nbMinutes.toString().padStart(2, '0');
-			if (withMinuteLabel) {
-				if (fullLabel) {
-					strMinute += ' minute'+(nbMinutes>1?'s':'');
-				}
-				else {
-					strMinute += 'min';
-				}
+			if (fullLabel) {
+				strMinute += nbMinutes.toString()+(withMinuteLabel ? ' minute'+(nbMinutes>1?'s':'') : '');
+			}
+			else {
+				strMinute += nbMinutes.toString().padStart(2, '0')+(withMinuteLabel ? 'min' : '');
 			}
 		}
-		
+
 		// Secondes
 		let strSeconde = '';
 		if (withSeconds) {
 			let nbSecondes = this.getNbSecondsRemainingOfDurationInSeconds(durationInSeconds);
 			strSeconde += ' ';
-			//strSeconde += sprintf('%02d', nbSecondes);
-			strSeconde += nbSecondes.toString().padStart(2, '0');
 			if (fullLabel) {
-				strSeconde += ' seconde'+(nbSecondes>1?'s':'');
+				strSeconde += nbSecondes.toString()+' seconde'+(nbSecondes>1?'s':'');
 			}
 			else {
-				strSeconde += 's';
+				strSeconde += nbSecondes.toString().padStart(2, '0')+'s';
 			}
 		}
 		
@@ -191,7 +185,10 @@ class Duration {
 	}
 
 	static getNbMinutesOfHundredthOfAnHour(durationAsHundredthOfAnHour) {
-		return Math.floor(Math.getDecimals(Number.roundDecimal(durationAsHundredthOfAnHour, 2)) / 100 * 60);
+		// Extraire la partie décimale et convertir en minutes
+		// Ex: 1.5h -> 0.5 * 60 = 30 minutes
+		const decimalPart = durationAsHundredthOfAnHour - Math.floor(durationAsHundredthOfAnHour);
+		return Math.floor(decimalPart * 60);
 	}
 
 

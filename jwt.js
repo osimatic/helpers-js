@@ -2,9 +2,15 @@ class JwtToken {
 	static parseJwt (token) {
 		let base64Url = token.split('.')[1];
 		let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-		let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-		}).join(''));
+		let jsonPayload;
+		try {
+			jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+				return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+			}).join(''));
+		} catch (e) {
+			// Fallback for characters that can't be decoded
+			jsonPayload = atob(base64);
+		}
 
 		return JSON.parse(jsonPayload);
 	}
@@ -75,7 +81,9 @@ class JwtSession {
 	static login(data, redirectUrl, onComplete) {
 		console.log('JwtSession.login()');
 		JwtSession.setToken(data['access_token'] || data['token']);
-		JwtSession.setRefreshToken(data['refresh_token']);
+		if (data['refresh_token'] != null) {
+			JwtSession.setRefreshToken(data['refresh_token']);
+		}
 
 		JwtSession.removeItemInStorage('real_users');
 
@@ -191,7 +199,9 @@ class JwtSession {
 
 		// on enregistre la session de l'utilisateur simulé
 		JwtSession.setToken(loginData['access_token'] || loginData['token']);
-		JwtSession.setRefreshToken(loginData['refresh_token']);
+		if (loginData['refresh_token'] != null) {
+			JwtSession.setRefreshToken(loginData['refresh_token']);
+		}
 
 		if (typeof onComplete == 'function') {
 			onComplete();
@@ -216,7 +226,9 @@ class JwtSession {
 		JwtSession.setItemInStorage('real_users', JSON.stringify(realUsers));
 
 		JwtSession.setToken(loginData['access_token'] || loginData['token']);
-		JwtSession.setRefreshToken(loginData['refresh_token']);
+		if (loginData['refresh_token'] != null) {
+			JwtSession.setRefreshToken(loginData['refresh_token']);
+		}
 
 		if (typeof onComplete == 'function') {
 			onComplete();

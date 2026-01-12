@@ -78,11 +78,10 @@ Number.padLeft2 = Number.padLeft2 || function(n) {
 	return n > 9 ? "" + n : "0" + n;
 }
 
-Number.prototype.roundDecimal = Number.prototype.roundDecimal || function(precision) {
+Number.prototype.roundDecimal = Number.prototype.roundDecimal || function(precision=2) {
 	return Number.roundDecimal(this, precision);
 }
-Number.roundDecimal = Number.roundDecimal || function(number, precision) {
-	precision = precision || 2;
+Number.roundDecimal = Number.roundDecimal || function(number, precision=2) {
 	let tmp = Math.pow(10, precision);
 	return Math.round(number*tmp) / tmp;
 }

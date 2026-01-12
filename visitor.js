@@ -16,7 +16,7 @@ class Browser {
 		return /*@cc_on!@*/false || !!document.documentMode;
 	}
 	static isEdge() {
-		return !isIE && !!window.StyleMedia;
+		return !Browser.isIE() && !!window.StyleMedia;
 	}
 }
 
@@ -103,7 +103,7 @@ class UserAgent {
 	}
 
 	static getOsDisplay(osName) {
-		return (UserAgent.getOsIcon()+' '+osName).trim();
+		return (UserAgent.getOsIcon(osName)+' '+osName).trim();
 	}
 	
 	static getBrowserIcon(browserName) {
