@@ -313,6 +313,203 @@ describe('Img', () => {
 		});
 	});
 
+	describe('setBlobToImg', () => {
+		let mockImg;
+		let mockURL;
+		let consoleErrorSpy;
+		let RealBlob;
+
+		beforeEach(() => {
+			// Save real Blob before any mocking
+			RealBlob = global.Blob;
+
+			// Mock jQuery image element with length property (essential for jQuery objects)
+			mockImg = {
+				attr: jest.fn().mockReturnThis(),
+				length: 1  // Valid jQuery object has length > 0
+			};
+
+			// Mock URL.createObjectURL
+			mockURL = {
+				createObjectURL: jest.fn(() => 'blob:mock-url-12345')
+			};
+
+			global.window = {
+				URL: mockURL
+			};
+
+			// Spy on console.error
+			consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+		});
+
+		afterEach(() => {
+			delete global.window;
+			consoleErrorSpy.mockRestore();
+			// Restore real Blob if it was changed
+			if (RealBlob) {
+				global.Blob = RealBlob;
+			}
+		});
+
+		test('should create object URL from blob', () => {
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(mockImg, mockBlob);
+
+			expect(mockURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+		});
+
+		test('should set img src attribute with created URL', () => {
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(mockImg, mockBlob);
+
+			expect(mockImg.attr).toHaveBeenCalledWith('src', 'blob:mock-url-12345');
+		});
+
+		test('should handle different blob types', () => {
+			const mockBlob = new Blob(['data'], { type: 'image/jpeg' });
+
+			Img.setBlobToImg(mockImg, mockBlob);
+
+			expect(mockURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+			expect(mockImg.attr).toHaveBeenCalledWith('src', 'blob:mock-url-12345');
+		});
+
+		test('should use webkitURL as fallback when URL is not available', () => {
+			const mockWebkitURL = {
+				createObjectURL: jest.fn(() => 'blob:webkit-url-67890')
+			};
+
+			global.window = {
+				URL: undefined,
+				webkitURL: mockWebkitURL
+			};
+
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(mockImg, mockBlob);
+
+			expect(mockWebkitURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+			expect(mockImg.attr).toHaveBeenCalledWith('src', 'blob:webkit-url-67890');
+		});
+
+		test('should return early and log error when img is null', () => {
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(null, mockBlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid img element provided to setBlobToImg');
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+			expect(mockImg.attr).not.toHaveBeenCalled();
+		});
+
+		test('should return early and log error when img is undefined', () => {
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(undefined, mockBlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid img element provided to setBlobToImg');
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+		});
+
+		test('should return early and log error when img.length is 0 (empty jQuery)', () => {
+			const emptyJQuery = {
+				attr: jest.fn().mockReturnThis(),
+				length: 0  // Empty jQuery selector result
+			};
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(emptyJQuery, mockBlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid img element provided to setBlobToImg');
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+			expect(emptyJQuery.attr).not.toHaveBeenCalled();
+		});
+
+		test('should return early and log error when blob is null', () => {
+			Img.setBlobToImg(mockImg, null);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid blob provided to setBlobToImg', null);
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+			expect(mockImg.attr).not.toHaveBeenCalled();
+		});
+
+		test('should return early and log error when blob is undefined', () => {
+			Img.setBlobToImg(mockImg, undefined);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid blob provided to setBlobToImg', undefined);
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+		});
+
+		test('should return early and log error when blob is not a Blob instance', () => {
+			const notABlob = { data: 'test' };
+
+			Img.setBlobToImg(mockImg, notABlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid blob provided to setBlobToImg', notABlob);
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+		});
+
+		test('should return early and log error when blob.size is 0', () => {
+			const emptyBlob = new Blob([], { type: 'image/png' });
+
+			Img.setBlobToImg(mockImg, emptyBlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid blob provided to setBlobToImg', emptyBlob);
+			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
+			expect(mockImg.attr).not.toHaveBeenCalled();
+		});
+
+		test('should work with valid jQuery-wrapped img element with length property', () => {
+			const validJQuery = {
+				attr: jest.fn().mockReturnThis(),
+				length: 1  // Valid jQuery object
+			};
+			const mockBlob = new Blob(['test'], { type: 'image/gif' });
+
+			Img.setBlobToImg(validJQuery, mockBlob);
+
+			expect(mockURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+			expect(validJQuery.attr).toHaveBeenCalledWith('src', 'blob:mock-url-12345');
+		});
+
+		test('should catch and log error when createObjectURL throws', () => {
+			mockURL.createObjectURL = jest.fn(() => {
+				throw new Error('Quota exceeded');
+			});
+
+			global.window = {
+				URL: mockURL
+			};
+
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(mockImg, mockBlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				'Error creating object URL from blob:',
+				expect.objectContaining({ message: 'Quota exceeded' })
+			);
+			expect(mockImg.attr).not.toHaveBeenCalled();
+		});
+
+		test('should catch and log error when img.attr throws', () => {
+			mockImg.attr = jest.fn(() => {
+				throw new Error('Invalid element');
+			});
+
+			const mockBlob = new Blob(['test'], { type: 'image/png' });
+
+			Img.setBlobToImg(mockImg, mockBlob);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				'Error creating object URL from blob:',
+				expect.objectContaining({ message: 'Invalid element' })
+			);
+		});
+	});
+
 	describe('getBase64FromUrl', () => {
 		beforeEach(() => {
 			// Mock fetch

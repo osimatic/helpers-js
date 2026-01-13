@@ -124,10 +124,25 @@ class Img {
 	}
 
 	static setBlobToImg(img, blob) {
-		// img.attr('src', btoa(unescape(encodeURIComponent(data))));
-		// img.attr('src', 'data:image/png;base64, '+btoa(unescape(encodeURIComponent(data))));
-		let urlCreator = window.URL || window.webkitURL;
-		img.attr('src', urlCreator.createObjectURL(blob));
+		// Validation de l'élément img
+		if (!img || !img.length) {
+			console.error('Invalid img element provided to setBlobToImg');
+			return;
+		}
+
+		// Validation du blob
+		if (!blob || !(blob instanceof Blob) || blob.size === 0) {
+			console.error('Invalid blob provided to setBlobToImg', blob);
+			return;
+		}
+
+		try {
+			let urlCreator = window.URL || window.webkitURL;
+			let objectURL = urlCreator.createObjectURL(blob);
+			img.attr('src', objectURL);
+		} catch (error) {
+			console.error('Error creating object URL from blob:', error);
+		}
 	}
 
 	static async getBase64FromUrl(url) {
