@@ -318,10 +318,23 @@ describe('Img', () => {
 		let mockURL;
 		let consoleErrorSpy;
 		let RealBlob;
+		let MockBlob;
 
 		beforeEach(() => {
 			// Save real Blob before any mocking
 			RealBlob = global.Blob;
+
+			// Create a MockBlob class that passes instanceof checks
+			MockBlob = class MockBlob {
+				constructor(content, options) {
+					this.content = content;
+					this.type = options?.type || '';
+					this.size = content && content.length ? content.reduce((sum, part) => sum + part.length, 0) : 0;
+				}
+			};
+
+			// Set global.Blob to our MockBlob so instanceof checks pass
+			global.Blob = MockBlob;
 
 			// Mock jQuery image element with length property (essential for jQuery objects)
 			mockImg = {

@@ -1,3 +1,5 @@
+const { Str } = require('./string');
+
 class MultiFilesInput {
 	static init(fileInput, setFilesList, nbMaxFiles, maxFileSize) {
 		let filesList = [];
@@ -72,7 +74,7 @@ class MultiFilesInput {
 			const wrap = $(`
 				<div class="border rounded p-2 d-inline-flex align-items-center" data-file-id="${id}" style="background:white;">
 					<div class="me-2 preview-thumb" style="width:64px; height:48px; display:flex; align-items:center; justify-content:center; overflow:hidden;"></div>
-					<div class="small text-truncate" style="max-width:160px;">${file.name}</div>
+					<div class="small text-truncate" style="max-width:160px;">${(file.name || '').escapeHtml()}</div>
 					<button type="button" class="btn-close btn-close-small ms-2" aria-label="Supprimer" style="margin-left:8px;"></button>
 				</div>
 			`);
