@@ -77,6 +77,7 @@ class GoogleCharts {
 		}
 
 		let data = null;
+		let nbCells = 0;
 		if (typeGraph === 'pie_chart') {
 			//data = google.visualization.arrayToDataTable(tabDataAbsParam);
 
@@ -101,7 +102,7 @@ class GoogleCharts {
 			});
 
 			// Remplissage des données
-			let nbCells = 0;
+			nbCells = 0;
 			let numRow = 0;
 			$.each(tabDataAbsParam, function(idx, dataAbs) {
 				// dataOrd = tabDataOrd[idx];

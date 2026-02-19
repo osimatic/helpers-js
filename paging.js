@@ -32,7 +32,7 @@ class Pagination {
 
 			maxItems = parseInt(select.val());
 
-			select.change(update);
+			select.change(() => Pagination.paginate(div, items, nbItemsPerPage, select, doublePagination));
 		}
 
 		const ulPagination = $('ul.pagination');
@@ -151,7 +151,7 @@ class Navigation {
 			window.history.replaceState('', document.title, url);
 		}
 		else {
-			window.history.pushState("", "", newUrl);
+			window.history.pushState("", "", url);
 		}
 	}
 }

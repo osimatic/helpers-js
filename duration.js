@@ -1,196 +1,245 @@
 
 class Duration {
 
-	// ---------- Nb jours ----------
+	// -------------------------------------------------------------------------
+	// Days formatting
+	// -------------------------------------------------------------------------
 
-	static formatNbDays(nbDays, locale='fr-FR') {
+	static formatDays(days, locale = 'fr-FR') {
 		return new Intl.NumberFormat(locale, {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2
-		}).format(nbDays);
-	}
-	static formatNbDaysIfPositive(nbDays) {
-		return nbDays < 0 ? '-' : this.formatNbDays(nbDays);
-	}
-	static formatNbDaysWithColor(nbDays) {
-		return '<span class="text-'+(nbDays<0?'danger':'success')+'">'+this.formatNbDays(nbDays)+'</span>';
+		}).format(days);
 	}
 
-	// ---------- Durée en seconde ----------
+	static formatDaysIfPositive(days) {
+		return days < 0 ? '-' : this.formatDays(days);
+	}
 
-	static convertInputTimeValueToDuration(inputTimeValue) {
-		if (null === inputTimeValue || -1 === inputTimeValue.indexOf(':')) {
+	static formatDaysWithColor(days) {
+		return '<span class="text-' + (days < 0 ? 'danger' : 'success') + '">' + this.formatDays(days) + '</span>';
+	}
+
+	// -------------------------------------------------------------------------
+	// Seconds — conversion
+	// -------------------------------------------------------------------------
+
+	static parseTimeInputToSeconds(timeInput) {
+		if (null === timeInput || -1 === timeInput.indexOf(':')) {
 			return 0;
 		}
-		let arrayTime = inputTimeValue.split(':');
-		const nbHours = typeof arrayTime[0] != 'undefined' ? parseInt(arrayTime[0]) || 0 : 0;
+		let arrayTime = timeInput.split(':');
+		const nbHours   = typeof arrayTime[0] != 'undefined' ? parseInt(arrayTime[0]) || 0 : 0;
 		const nbMinutes = typeof arrayTime[1] != 'undefined' ? parseInt(arrayTime[1]) || 0 : 0;
 		const nbSeconds = typeof arrayTime[2] != 'undefined' ? parseInt(arrayTime[2]) || 0 : 0;
 		return nbHours * 3600 + nbMinutes * 60 + nbSeconds;
 	}
 
-	static convertToDurationAsInputTimeValue(durationInSeconds) {
-		return Duration.convertToDurationInHourChronoDisplay(Math.abs(durationInSeconds), 'input_time');
+	// -------------------------------------------------------------------------
+	// Seconds — formatting
+	// -------------------------------------------------------------------------
+
+	static formatSecondsAsTimeInput(seconds) {
+		return Duration.formatSecondsAsChrono(Math.abs(seconds), 'input_time');
 	}
 
-	static convertToDurationInHourChronoDisplay(durationInSeconds, displayMode='chrono') {
-		durationInSeconds = Math.round(durationInSeconds);
+	static formatSecondsAsChrono(seconds, displayMode = 'chrono', withSeconds = true) {
+		seconds = Math.round(seconds);
+		const absoluteSeconds = Math.abs(seconds);
 
-		let durationInSecondsOriginal = durationInSeconds;
-		durationInSeconds = Math.abs(durationInSeconds);
-		let seconds = ( durationInSeconds % 60 );
-		let remander = ( durationInSeconds % 3600 ) - seconds;
-		let minutes = ( remander / 60 );
-		remander = ( durationInSeconds ) - ( durationInSeconds % 3600 );
-		let hours = ( remander / 3600 );
-		if(hours.toString().length < 2) hours = '0'+hours;
-		if(hours.toString().charAt(0) === "-") hours[0] = '0';
-		if(minutes.toString().length < 2) minutes = '0'+minutes;
-		if(minutes.toString().charAt(0) === "-") minutes[0] = '0';
-		if(seconds.toString().length < 2) seconds = '0'+seconds;
-		return (durationInSecondsOriginal < 0 ? '- ' : '')+hours+':'+minutes+(displayMode==='input_time'?':':'.')+seconds;
-	}
+		let secs = absoluteSeconds % 60;
+		let remainder = (absoluteSeconds % 3600) - secs;
+		let minutes = remainder / 60;
+		remainder = absoluteSeconds - (absoluteSeconds % 3600);
+		let hours = remainder / 3600;
 
-	static convertToDurationInHourStringDisplay(durationInSeconds, withSeconds=true, withMinutes=true, withMinuteLabel=true, fullLabel=false, hideHourIfZeroHour=false) {
-		durationInSeconds = Math.round(durationInSeconds);
+		hours = hours.toString().length < 2 ? '0' + hours : hours;
+		minutes = minutes.toString().length < 2 ? '0' + minutes : minutes;
 
-		// Heures
-		let strHeure = '';
-		let nbHeures = this.getNbHoursOfDurationInSeconds(durationInSeconds);
-		if (!hideHourIfZeroHour || nbHeures > 0) {
-			strHeure += nbHeures;
-			if (fullLabel) {
-				strHeure += ' heure'+(nbHeures>1?'s':'');
-			}
-			else {
-				strHeure += 'h';
-			}
-		}
-		
-		// Minutes
-		let strMinute = '';
-		if (withMinutes) {
-			let nbMinutes = this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
-			strMinute += ' ';
-			if (fullLabel) {
-				strMinute += nbMinutes.toString()+(withMinuteLabel ? ' minute'+(nbMinutes>1?'s':'') : '');
-			}
-			else {
-				strMinute += nbMinutes.toString().padStart(2, '0')+(withMinuteLabel ? 'min' : '');
-			}
-		}
-
-		// Secondes
-		let strSeconde = '';
+		let result = (seconds < 0 ? '- ' : '') + hours + ':' + minutes;
 		if (withSeconds) {
-			let nbSecondes = this.getNbSecondsRemainingOfDurationInSeconds(durationInSeconds);
-			strSeconde += ' ';
-			if (fullLabel) {
-				strSeconde += nbSecondes.toString()+' seconde'+(nbSecondes>1?'s':'');
-			}
-			else {
-				strSeconde += nbSecondes.toString().padStart(2, '0')+'s';
-			}
+			secs = secs.toString().length < 2 ? '0' + secs : secs;
+			result += (displayMode === 'input_time' ? ':' : '.') + secs;
 		}
-		
-		return (strHeure+strMinute+strSeconde).trim();
+		return result;
 	}
 
-	static roundNbSeconds(durationInSeconds, roundPrecision, roundMode='close') {
-		let hours = Math.floor(durationInSeconds / 3600);
-		let minutes = Math.floor((durationInSeconds % 3600) / 60);
-		let seconds = durationInSeconds % 60;
+	static formatSecondsAsString(seconds, withSeconds = true, withMinutes = true, withMinuteLabel = true, fullLabel = false, hideHourIfZero = false) {
+		seconds = Math.round(seconds);
 
-		let hoursRounded = hours;
-		let minutesRounded = minutes;
-		let secondsRounded = seconds;
-
-		if (roundPrecision > 0) {
-			let minutesRemaining = minutes % roundPrecision;
-			let minutesRemainingAndSecondsAsCentieme = minutesRemaining + seconds/60;
-			if (minutesRemainingAndSecondsAsCentieme === 0) {
-				// pas d'arrondissement
+		// Hours
+		let strHours = '';
+		let nbHours = this.totalHours(seconds);
+		if (!hideHourIfZero || nbHours > 0) {
+			strHours += nbHours;
+			if (fullLabel) {
+				strHours += ' heure' + (nbHours > 1 ? 's' : '');
+			} else {
+				strHours += 'h';
 			}
-			else {
-				let halfRoundPrecision = roundPrecision / 2;
-				hoursRounded = hours;
+		}
+
+		// Minutes
+		let strMinutes = '';
+		if (withMinutes) {
+			let nbMinutes = this.remainingMinutes(seconds);
+			strMinutes += ' ';
+			if (fullLabel) {
+				strMinutes += nbMinutes.toString() + (withMinuteLabel ? ' minute' + (nbMinutes > 1 ? 's' : '') : '');
+			} else {
+				strMinutes += nbMinutes.toString().padStart(2, '0') + (withMinuteLabel ? 'min' : '');
+			}
+		}
+
+		// Seconds
+		let strSeconds = '';
+		if (withSeconds) {
+			let nbSeconds = this.remainingSeconds(seconds);
+			strSeconds += ' ';
+			if (fullLabel) {
+				strSeconds += nbSeconds.toString() + ' seconde' + (nbSeconds > 1 ? 's' : '');
+			} else {
+				strSeconds += nbSeconds.toString().padStart(2, '0') + 's';
+			}
+		}
+
+		return (strHours + strMinutes + strSeconds).trim();
+	}
+
+	// -------------------------------------------------------------------------
+	// Seconds — rounding
+	// -------------------------------------------------------------------------
+
+	static roundSeconds(seconds, precision, roundMode = 'close') {
+		let hours   = Math.floor(seconds / 3600);
+		let minutes = Math.floor((seconds % 3600) / 60);
+		let secs    = seconds % 60;
+
+		let hoursRounded   = hours;
+		let minutesRounded = minutes;
+		let secondsRounded = secs;
+
+		if (precision > 0) {
+			let minutesRemaining = minutes % precision;
+			let minutesRemainingAndSecondsAsFraction = minutesRemaining + secs / 60;
+			if (minutesRemainingAndSecondsAsFraction === 0) {
+				// already aligned, no rounding needed
+			} else {
+				let halfPrecision = precision / 2;
+				hoursRounded   = hours;
 				secondsRounded = 0;
-				if (roundMode === 'up' || (roundMode === 'close' && minutesRemainingAndSecondsAsCentieme > halfRoundPrecision)) {
-					// Arrondissement au dessus
-					if (minutes > (60-roundPrecision)) {
+				if (roundMode === 'up' || (roundMode === 'close' && minutesRemainingAndSecondsAsFraction > halfPrecision)) {
+					// Round up
+					if (minutes > (60 - precision)) {
 						minutesRounded = 0;
 						hoursRounded++;
+					} else {
+						minutesRounded = (minutes - minutesRemaining) + precision;
 					}
-					else {
-						minutesRounded = (minutes-minutesRemaining)+roundPrecision;
-					}
-				}
-				else {
-					// Arrondissement au dessous
-					minutesRounded = (minutes-minutesRemaining);
+				} else {
+					// Round down
+					minutesRounded = minutes - minutesRemaining;
 				}
 			}
 		}
-		// console.log(element.data('duration_default'), durationInSeconds, hours, minutes, seconds, '->', secondsTotalRounded, hoursRounded, minutesRounded, secondsRounded);
+
 		return hoursRounded * 3600 + minutesRounded * 60 + secondsRounded;
 	}
 
-	static getNbDaysOfDurationInSeconds(durationInSeconds) {
-		return Math.floor(durationInSeconds / 86400);
-	}
-	static getNbHoursOfDurationInSeconds(durationInSeconds) {
-		return Math.floor(durationInSeconds / 3600);
-	}
-	static getNbMinutesOfDurationInSeconds(durationInSeconds) {
-		return Math.floor(durationInSeconds / 60);
+	// -------------------------------------------------------------------------
+	// Seconds — total extraction
+	// -------------------------------------------------------------------------
+
+	static totalDays(seconds) {
+		return Math.floor(seconds / 86400);
 	}
 
-	/*static getNbMinutesRemaining(durationInSeconds) {
-		var remander = ( durationInSeconds % 3600 ) - ( durationInSeconds % 60 );
-		return ( remander / 60 );
-	}
-	static getNbHoursOfDurationInSeconds(durationInSeconds) {
-		// return (this.getNbDaysOfDurationInSeconds(durationInSeconds)*24)+this.getNbHoursRemainingOfDurationInSeconds(durationInSeconds);
-		return (durationInSeconds - (durationInSeconds % 3600)) / 3600;
-	}
-	static getNbMinutesOfDurationInSeconds(durationInSeconds) {
-		// return (this.getNbDaysOfDurationInSeconds(durationInSeconds)*24*60)+(this.getNbHoursRemainingOfDurationInSeconds(durationInSeconds)*60)+this.getNbMinutesRemainingOfDurationInSeconds(durationInSeconds);
-		return (durationInSeconds - (durationInSeconds % 60)) / 60;
-	}*/
-
-	static getNbHoursRemainingOfDurationInSeconds(durationInSeconds) {
-		return this.getNbHoursOfDurationInSeconds(durationInSeconds % 86400);
-	}
-	static getNbMinutesRemainingOfDurationInSeconds(durationInSeconds) {
-		return this.getNbMinutesOfDurationInSeconds(durationInSeconds % 3600);
-	}
-	static getNbSecondsRemainingOfDurationInSeconds(durationInSeconds) {
-		return durationInSeconds % 60;
+	static totalHours(seconds) {
+		return Math.floor(seconds / 3600);
 	}
 
-	// ---------- Durée en centième d'heure ----------
-
-	static convertToDurationAsHundredthOfAnHour(durationInSeconds) {
-		let hour = Math.floor(durationInSeconds / 3600);
-		let minutes = durationInSeconds % 3600;
-		minutes = Math.floor(minutes / 60);
-		// minutes = minutes - (minutes % 60);
-		let minCentieme = Math.round( (minutes / 60 ) * 100 );
-		return hour+(minCentieme/100);
-		//return parseFloat(hour+'.'+minCentieme);
+	static totalMinutes(seconds) {
+		return Math.floor(seconds / 60);
 	}
 
-	static getNbHoursOfHundredthOfAnHour(durationAsHundredthOfAnHour) {
-		return Math.trunc(durationAsHundredthOfAnHour);
+	// -------------------------------------------------------------------------
+	// Seconds — remaining extraction
+	// -------------------------------------------------------------------------
+
+	static remainingHours(seconds) {
+		return this.totalHours(seconds % 86400);
 	}
 
-	static getNbMinutesOfHundredthOfAnHour(durationAsHundredthOfAnHour) {
-		// Extraire la partie décimale et convertir en minutes
-		// Ex: 1.5h -> 0.5 * 60 = 30 minutes
-		const decimalPart = durationAsHundredthOfAnHour - Math.floor(durationAsHundredthOfAnHour);
-		return Math.floor(decimalPart * 60);
+	static remainingMinutes(seconds) {
+		return this.totalMinutes(seconds % 3600);
 	}
 
+	static remainingSeconds(seconds) {
+		return seconds % 60;
+	}
+
+	// -------------------------------------------------------------------------
+	// Decimal hours (hundredth of an hour)
+	// -------------------------------------------------------------------------
+
+	static toDecimalHours(seconds) {
+		let hour    = Math.floor(seconds / 3600);
+		let minutes = Math.floor((seconds % 3600) / 60);
+		let centieme = Math.round((minutes / 60) * 100);
+		return hour + (centieme / 100);
+	}
+
+	static getHoursFromDecimal(decimalHours) {
+		return Math.trunc(decimalHours);
+	}
+
+	static getMinutesFromDecimal(decimalHours) {
+		const decimal = decimalHours - Math.floor(decimalHours);
+		return Math.floor(decimal * 60);
+	}
+
+	// -------------------------------------------------------------------------
+	// Deprecated aliases — kept for backwards compatibility
+	// -------------------------------------------------------------------------
+
+	/** @deprecated Use {@link formatDays} instead */
+	static formatNbDays(nbDays, locale = 'fr-FR') { return this.formatDays(nbDays, locale); }
+	/** @deprecated Use {@link formatDaysIfPositive} instead */
+	static formatNbDaysIfPositive(nbDays) { return this.formatDaysIfPositive(nbDays); }
+	/** @deprecated Use {@link formatDaysWithColor} instead */
+	static formatNbDaysWithColor(nbDays) { return this.formatDaysWithColor(nbDays); }
+
+	/** @deprecated Use {@link parseTimeInputToSeconds} instead */
+	static convertInputTimeValueToDuration(inputTimeValue) { return this.parseTimeInputToSeconds(inputTimeValue); }
+	/** @deprecated Use {@link formatSecondsAsTimeInput} instead */
+	static convertToDurationAsInputTimeValue(durationInSeconds) { return this.formatSecondsAsTimeInput(durationInSeconds); }
+	/** @deprecated Use {@link formatSecondsAsChrono} instead */
+	static convertToDurationInHourChronoDisplay(durationInSeconds, displayMode = 'chrono') { return this.formatSecondsAsChrono(durationInSeconds, displayMode); }
+	/** @deprecated Use {@link formatSecondsAsString} instead */
+	static convertToDurationInHourStringDisplay(durationInSeconds, withSeconds = true, withMinutes = true, withMinuteLabel = true, fullLabel = false, hideHourIfZeroHour = false) { return this.formatSecondsAsString(durationInSeconds, withSeconds, withMinutes, withMinuteLabel, fullLabel, hideHourIfZeroHour); }
+	/** @deprecated Use {@link roundSeconds} instead */
+	static roundNbSeconds(durationInSeconds, roundPrecision, roundMode = 'close') { return this.roundSeconds(durationInSeconds, roundPrecision, roundMode); }
+
+	/** @deprecated Use {@link totalDays} instead */
+	static getNbDaysOfDurationInSeconds(durationInSeconds) { return this.totalDays(durationInSeconds); }
+	/** @deprecated Use {@link totalHours} instead */
+	static getNbHoursOfDurationInSeconds(durationInSeconds) { return this.totalHours(durationInSeconds); }
+	/** @deprecated Use {@link totalMinutes} instead */
+	static getNbMinutesOfDurationInSeconds(durationInSeconds) { return this.totalMinutes(durationInSeconds); }
+
+	/** @deprecated Use {@link remainingHours} instead */
+	static getNbHoursRemainingOfDurationInSeconds(durationInSeconds) { return this.remainingHours(durationInSeconds); }
+	/** @deprecated Use {@link remainingMinutes} instead */
+	static getNbMinutesRemainingOfDurationInSeconds(durationInSeconds) { return this.remainingMinutes(durationInSeconds); }
+	/** @deprecated Use {@link remainingSeconds} instead */
+	static getNbSecondsRemainingOfDurationInSeconds(durationInSeconds) { return this.remainingSeconds(durationInSeconds); }
+
+	/** @deprecated Use {@link toDecimalHours} instead */
+	static convertToDurationAsHundredthOfAnHour(durationInSeconds) { return this.toDecimalHours(durationInSeconds); }
+	/** @deprecated Use {@link getHoursFromDecimal} instead */
+	static getNbHoursOfHundredthOfAnHour(durationAsHundredthOfAnHour) { return this.getHoursFromDecimal(durationAsHundredthOfAnHour); }
+	/** @deprecated Use {@link getMinutesFromDecimal} instead */
+	static getNbMinutesOfHundredthOfAnHour(durationAsHundredthOfAnHour) { return this.getMinutesFromDecimal(durationAsHundredthOfAnHour); }
 
 }
 
