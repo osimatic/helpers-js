@@ -1,7 +1,30 @@
 
 class MultipleActionInTable {
-	// init checkbox
-	static init(table, cellCssClass='select') {
+
+	// Ajoute les colonnes select (thead th + tbody td) dans le DOM.
+	// Idempotent : sans effet si les colonnes existent déjà.
+	// Doit être appelé AVANT l'initialisation DataTable.
+	static initCols(table, cellCssClass = 'select') {
+		if (!table.hasClass('table-action_multiple')) {
+			return;
+		}
+		if (MultipleActionInTable.getDivBtn(table) == null) {
+			return;
+		}
+
+		if (table.find('thead tr th[data-key="select"]').length === 0) {
+			table.find('thead tr').prepend($('<th class="' + cellCssClass + '" data-key="select"></th>'));
+		}
+		table.find('tbody tr:not(.no_items)').each(function(idx, tr) {
+			if ($(tr).find('td.select').length === 0) {
+				$(tr).prepend($('<td class="select"><input type="checkbox" class="action_multiple_checkbox" name="' + $(tr).data('action_multiple_input_name') + '" value="' + $(tr).data('action_multiple_item_id') + '"></td>'));
+			}
+		});
+	}
+
+	// Initialise les colonnes (via initCols) puis branche les event handlers.
+	// Peut être appelé après l'initialisation DataTable.
+	static init(table, cellCssClass = 'select') {
 		if (!table.hasClass('table-action_multiple')) {
 			return;
 		}
@@ -11,20 +34,13 @@ class MultipleActionInTable {
 			return;
 		}
 
+		MultipleActionInTable.initCols(table, cellCssClass);
+
 		if (!divBtn.hasClass('action_multiple_buttons_initialized')) {
 			divBtn.prepend($('<img src="'+ROOT_PATH+DOSSIER_IMAGES+'arrow_ltr.png" alt="" /> &nbsp;'));
 			divBtn.append($('<br/><br/>'));
 			divBtn.addClass('action_multiple_buttons_initialized');
 		}
-
-		if (table.find('thead tr th[data-key="select"]').length === 0) {
-			table.find('thead tr').prepend($('<th class="'+cellCssClass+'" data-key="select"></th>'));
-		}
-		table.find('tbody tr:not(.no_items)').each(function(idx, tr) {
-			if ($(tr).find('td.select').length === 0) {
-				$(tr).prepend($('<td class="select"><input type="checkbox" class="action_multiple_checkbox" name="'+$(tr).data('action_multiple_input_name')+'" value="'+$(tr).data('action_multiple_item_id')+'"></td>'));
-			}
-		});
 
 		let firstTh = table.find('thead tr th').first();
 		if (firstTh.find('input').length === 0) {
