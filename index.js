@@ -21,7 +21,7 @@ const { HexColor, RgbColor } = require('./draw');
 const { SocialNetwork } = require('./social_network');
 const { sleep, refresh } = require('./util');
 const { chr, ord, trim, empty } = require('./php.min');
-const { NumberFormatter } = require('./number');
+const { NumberFormatter, Rating } = require('./number');
 const { Password } = require('./user');
 
 // exports plugins "maison"
@@ -52,7 +52,7 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, NumberFormatter, Password,
+	HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, NumberFormatter, Rating, Password,
 	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	Chartjs, GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
