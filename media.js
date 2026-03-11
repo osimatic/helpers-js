@@ -1,3 +1,6 @@
+const { FormHelper } = require('./form_helper');
+const { HTTPClient } = require('./http_client');
+
 class AudioMedia {
 
 	static getPlayer(playUrl) {
@@ -6,37 +9,42 @@ class AudioMedia {
 
 	static initPlayLinks(div) {
 		// Affiche un lecteur audio
-		div.find('.play_link').off('click').click(function () {
-			let audio = $(AudioMedia.getPlayer($(this).data('play_url')));
-			audio[0].play();
-			$(this).after(audio);
-			$(this).remove();
-			return false;
-		});
-
-		div.find('.play_asynchronously_link').off('click').click(function () {
-			//if (FormHelper.buttonLoader($(this), 'loading') != null) {
-			let button = FormHelper.buttonLoader($(this), 'loading');
-			AudioMedia.playAudioUrl($(this).data('url'), () => FormHelper.buttonLoader(button, 'reset'));
-			//} else {
-			//	let button = $(this).attr('disabled', true).button('loading');
-			//	AudioMedia.playAudioUrl($(this).data('url'), () => button.attr('disabled', false).button('reset'));
-			//}
-			return false;
-		});
-
-		div.find('.modal_play_link').off('click').click(function () {
-			$('#modal_voice_message_play').on('show.bs.modal', function (event) {
-				let button = $(event.relatedTarget);
-				let modal = $(this);
-
-				let player = modal.find('audio');
-				player.prop('src', button.data('play_url'));
-				player.play();
+		div.querySelectorAll('.play_link').forEach(link => {
+			link.addEventListener('click', function(e) {
+				e.preventDefault();
+				const template = document.createElement('template');
+				template.innerHTML = AudioMedia.getPlayer(this.dataset.play_url);
+				const audio = template.content.firstChild;
+				audio.play();
+				this.insertAdjacentElement('afterend', audio);
+				this.remove();
 			});
+		});
 
-			$('#modal_voice_message_play').modal('show', $(this));
-			return false;
+		div.querySelectorAll('.play_asynchronously_link').forEach(link => {
+			link.addEventListener('click', function(e) {
+				e.preventDefault();
+				let button = FormHelper.buttonLoader(this, 'loading');
+				AudioMedia.playAudioUrl(this.dataset.url, () => FormHelper.buttonLoader(button, 'reset'));
+			});
+		});
+
+		div.querySelectorAll('.modal_play_link').forEach(link => {
+			link.addEventListener('click', function(e) {
+				e.preventDefault();
+				const modalEl = document.getElementById('modal_voice_message_play');
+				if (!modalEl) return;
+				const currentLink = this;
+				modalEl.addEventListener('show.bs.modal', function handler(event) {
+					modalEl.removeEventListener('show.bs.modal', handler);
+					const player = modalEl.querySelector('audio');
+					if (player) {
+						player.src = (event.relatedTarget || currentLink).dataset.play_url;
+						player.play();
+					}
+				});
+				bootstrap.Modal.getOrCreateInstance(modalEl).show(this);
+			});
 		});
 	}
 
@@ -117,12 +125,12 @@ class AudioMedia {
 
 class VideoMedia {
 	static initPlayPauseClick(videoElement) {
-		$(videoElement).click(function(e) {
+		videoElement.addEventListener('click', function(e) {
 			// handle click if not Firefox (Firefox supports this feature natively)
 			if (typeof InstallTrigger === 'undefined') {
 				// get click position
-				let clickY = (e.pageY - $(this).offset().top);
-				let height = parseFloat( $(this).height() );
+				let clickY = e.pageY - (this.getBoundingClientRect().top + window.scrollY);
+				let height = this.offsetHeight;
 
 				// avoids interference with controls
 				if (clickY > 0.82*height) return;

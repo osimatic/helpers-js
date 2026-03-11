@@ -1,4 +1,5 @@
 require('./string');
+const { toEl } = require('./util');
 
 class ImportFromCsv {
 
@@ -16,6 +17,7 @@ class ImportFromCsv {
 	}
 
 	static initForm(div, options = {}) {
+		div = toEl(div);
 		const {
 			importColumns,
 			requestImportData,
@@ -169,6 +171,7 @@ class ImportFromCsv {
 	}
 
 	static displayData(divResult, data, header, formMatching) {
+		divResult = toEl(divResult);
 		let table = divResult.querySelector('table');
 		if (!table) {
 			divResult.insertAdjacentHTML('beforeend', '<table class="table table-sm table-bordered"></table>');

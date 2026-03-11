@@ -1,8 +1,10 @@
 const { HTTPClient } = require('./http_client');
+const { toEl } = require('./util');
 
 class DetailsSubArray {
 
 	static initDetailsLink(table, options = {}) {
+		table = toEl(table);
 		const {
 			onSuccess,
 			onError,

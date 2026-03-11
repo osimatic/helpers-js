@@ -2,17 +2,21 @@
 //Bootstrap class pagination https://getbootstrap.com/docs/3.3/components/#pagination
 
 const { UrlAndQueryString } = require('./network');
+const { toEl } = require('./util');
 
 class Pagination {
 	static paginateCards(div, nbItemsPerPage) {
+		div = toEl(div);
 		Pagination.paginate(div, div.querySelectorAll('.pagination_item'), nbItemsPerPage, null);
 	}
 
 	static paginateTable(table, select=null) {
+		table = toEl(table); select = toEl(select);
 		Pagination.paginate(table, table.querySelectorAll('tbody tr:not(.hide)'), parseInt(table.dataset.max_rows), select);
 	}
 
 	static paginate(div, items, nbItemsPerPage, select=null, labelDisplayAll=null) {
+		div = toEl(div); select = toEl(select);
 		let maxItems = nbItemsPerPage;
 
 		if (!div) {

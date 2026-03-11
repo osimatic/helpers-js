@@ -1,3 +1,4 @@
+const { HTTPClient } = require('./http_client');
 
 class File {
 	static download(data, contentType, contentDisposition) {
@@ -102,30 +103,33 @@ class Img {
 	}
 
 	static initImg(div) {
-		div.find('.asynchronously_img').each(function(idx, img) {
-			Img.loadImgUrl($(img).data('url'), $(img));
+		div.querySelectorAll('.asynchronously_img').forEach(img => {
+			Img.loadImgUrl(img.dataset.url, img);
 		});
 	}
 
 	static loadImgUrl(url, img) {
-		$.ajax({
-			type: 'GET',
-			url: url,
-			headers: HTTPClient.getHeaders(true),
-			cache: false,
-			xhrFields: {responseType: 'blob'},
-			success: (data) => {
-				// var urlCreator = window.URL || window.webkitURL;
-				// $(img).attr('src', urlCreator.createObjectURL(data));
-				Img.setBlobToImg($(img), data);
-			},
-			error: (jqxhr, status, errorThrown) => HTTPClient.logJqueryRequestFailure(jqxhr, status, errorThrown),
-		});
+		fetch(url, {
+			method: 'GET',
+			headers: HTTPClient.getHeaders(false),
+			cache: 'no-cache',
+		})
+		.then(response => {
+			if (!response.ok) {
+				HTTPClient.logRequestFailure(response, null);
+				return null;
+			}
+			return response.blob();
+		})
+		.then(blob => {
+			if (blob) Img.setBlobToImg(img, blob);
+		})
+		.catch(error => console.error('Error loading image:', error));
 	}
 
 	static setBlobToImg(img, blob) {
 		// Validation de l'élément img
-		if (!img || !img.length) {
+		if (!img) {
 			console.error('Invalid img element provided to setBlobToImg');
 			return;
 		}
@@ -138,8 +142,7 @@ class Img {
 
 		try {
 			let urlCreator = window.URL || window.webkitURL;
-			let objectURL = urlCreator.createObjectURL(blob);
-			img.attr('src', objectURL);
+			img.src = urlCreator.createObjectURL(blob);
 		} catch (error) {
 			console.error('Error creating object URL from blob:', error);
 		}

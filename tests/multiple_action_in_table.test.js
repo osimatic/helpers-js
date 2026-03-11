@@ -139,6 +139,25 @@ describe('MultipleActionInTable', () => {
 			expect(table.querySelectorAll('tbody tr td.select').length).toBe(2);
 		});
 
+		test('should not throw when table has no <thead>', () => {
+			document.body.innerHTML = `
+				<div>
+					<div>
+						<table class="table-action_multiple">
+							<tbody>
+								<tr data-action_multiple_input_name="ids[]" data-action_multiple_item_id="1">
+									<td>Item 1</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="action_multiple_buttons hide"></div>
+				</div>`;
+			const table = document.querySelector('table');
+			expect(() => MultipleActionInTable.initCols(table)).not.toThrow();
+			expect(table.querySelector('th[data-key="select"]')).toBeNull();
+		});
+
 		test('should skip rows with no_items class', () => {
 			document.body.innerHTML = `
 				<div>

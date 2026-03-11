@@ -1,3 +1,6 @@
+const { toEl } = require('./util');
+const deepmerge = require('deepmerge');
+
 class Chartjs {
 	static init() {
 		if (typeof Chartjs.initialized == 'undefined' || Chartjs.initialized) {
@@ -37,8 +40,9 @@ class Chartjs {
 	}
 
 	static createStackedChart(chartDiv, chartData, title=null, options={}) {
-		chartDiv.empty();
-		new Chart(chartDiv.get(0).getContext("2d"), $.extend(true, {}, {
+		chartDiv = toEl(chartDiv);
+		chartDiv.innerHTML = '';
+		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "bar",
 			data: {
 				labels: chartData.labels,
@@ -86,8 +90,9 @@ class Chartjs {
 	}
 
 	static createBarChart(chartDiv, chartData, title=null, options={}) {
-		chartDiv.empty();
-		new Chart(chartDiv.get(0).getContext("2d"), $.extend(true, {}, {
+		chartDiv = toEl(chartDiv);
+		chartDiv.innerHTML = '';
+		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "bar",
 			data: {
 				labels: chartData.labels,
@@ -102,15 +107,11 @@ class Chartjs {
 						grid: {
 							display: false
 						},
-						/*ticks: {
-							font: { size: 12 }
-						}*/
 					},
 					y: {
 						beginAtZero: true,
 						ticks: {
 							precision: 0
-							//stepSize: 10, font: { size: 12 }
 						},
 						grid: {
 							color: "#eee"
@@ -132,7 +133,6 @@ class Chartjs {
 					tooltip: {
 						callbacks: {
 							label: context => context.dataset.label + ' : ' + context.parsed.y
-							//label: (context) => `${context.formattedValue} pointages`
 						}
 					}
 				},
@@ -147,8 +147,9 @@ class Chartjs {
 	static createLineChart(chartDiv, chartData, title=null, options={}) {
 		Chartjs.init();
 
-		chartDiv.empty();
-		new Chart(chartDiv.get(0).getContext("2d"), $.extend(true, {}, {
+		chartDiv = toEl(chartDiv);
+		chartDiv.innerHTML = '';
+		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "line",
 			data: {
 				labels: chartData.labels,
@@ -199,8 +200,9 @@ class Chartjs {
 	static createDoughnutChart(chartDiv, chartData, title=null, options={}) {
 		Chartjs.init();
 
-		chartDiv.empty();
-		new Chart(chartDiv.get(0).getContext("2d"), $.extend(true, {}, {
+		chartDiv = toEl(chartDiv);
+		chartDiv.innerHTML = '';
+		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "doughnut",
 			data: {
 				labels: chartData.labels,
@@ -256,10 +258,7 @@ class Chartjs {
 	static groupByPeriod(data, period, metrics) {
 		const grouped = {};
 
-		//data = Object.entries(dataObj).map(([date, values]) => ({ date, ...values }));
-
 		Object.entries(data).forEach(([date, values]) => {
-			//data.forEach(entry => {
 			const d = new Date(date);
 			let key;
 

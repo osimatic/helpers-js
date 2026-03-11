@@ -14,4 +14,8 @@ function refresh() {
 	window.location.reload(true);
 }
 
-module.exports = { sleep, refresh };
+function toEl(el) {
+	return el && el.jquery ? el[0] : el;
+}
+
+module.exports = { sleep, refresh, toEl };

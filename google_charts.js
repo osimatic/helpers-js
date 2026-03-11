@@ -1,3 +1,5 @@
+const { toEl } = require('./util');
+
 class GoogleCharts {
 	static init(onLoadCallback) {
 		// google.load("visualization", "1", {packages:["corechart"]});
@@ -42,6 +44,7 @@ class GoogleCharts {
 	}
 
 	static draw(div, options) {
+		div = toEl(div);
 		const {
 			chart_type: chartType,
 			title: title,

@@ -1,4 +1,34 @@
+/**
+ * @jest-environment jsdom
+ */
 const { Chartjs } = require('../chartjs');
+
+// ─── chart creation helpers ──────────────────────────────────────────────────
+
+let mockChartInstance;
+
+beforeEach(() => {
+	mockChartInstance = { data: null, config: null };
+	global.Chart = jest.fn((ctx, config) => {
+		mockChartInstance.config = config;
+		return mockChartInstance;
+	});
+	HTMLCanvasElement.prototype.getContext = jest.fn(() => ({}));
+});
+
+afterEach(() => {
+	delete global.Chart;
+	document.body.innerHTML = '';
+	jest.restoreAllMocks();
+});
+
+function makeCanvas() {
+	const canvas = document.createElement('canvas');
+	document.body.appendChild(canvas);
+	return canvas;
+}
+
+// ─── groupByPeriod ───────────────────────────────────────────────────────────
 
 describe('Chartjs', () => {
 	describe('groupByPeriod', () => {
@@ -30,8 +60,8 @@ describe('Chartjs', () => {
 
 			expect(result).toHaveLength(2);
 			expect(result[0].label).toBe('2024-01');
-			expect(result[0].views).toBe(15); // Average of 10 and 20
-			expect(result[0].clicks).toBe(6.5); // Average of 5 and 8
+			expect(result[0].views).toBe(15);
+			expect(result[0].clicks).toBe(6.5);
 			expect(result[1].label).toBe('2024-02');
 			expect(result[1].views).toBe(15);
 			expect(result[1].clicks).toBe(6);
@@ -48,9 +78,7 @@ describe('Chartjs', () => {
 
 			const result = Chartjs.groupByPeriod(data, 'week', metrics);
 
-			// Results should be grouped by weeks
 			expect(result.length).toBeGreaterThan(0);
-			// Check that labels contain week format (YYYY-SX)
 			result.forEach(item => {
 				expect(item.label).toMatch(/^\d{4}-S\d+$/);
 			});
@@ -79,20 +107,11 @@ describe('Chartjs', () => {
 			const result = Chartjs.groupByPeriod(data, 'day', metrics);
 
 			expect(result).toHaveLength(1);
-			expect(result[0]).toEqual({
-				label: '2024-01-15',
-				views: 10,
-				clicks: 5,
-				conversions: 2
-			});
+			expect(result[0]).toEqual({ label: '2024-01-15', views: 10, clicks: 5, conversions: 2 });
 		});
 
 		test('should handle empty data', () => {
-			const data = {};
-			const metrics = ['views'];
-
-			const result = Chartjs.groupByPeriod(data, 'day', metrics);
-
+			const result = Chartjs.groupByPeriod({}, 'day', ['views']);
 			expect(result).toEqual([]);
 		});
 
@@ -102,13 +121,11 @@ describe('Chartjs', () => {
 				'2024-01-15': { score: 200 },
 				'2024-01-20': { score: 300 }
 			};
-			const metrics = ['score'];
-
-			const result = Chartjs.groupByPeriod(data, 'month', metrics);
+			const result = Chartjs.groupByPeriod(data, 'month', ['score']);
 
 			expect(result).toHaveLength(1);
 			expect(result[0].label).toBe('2024-01');
-			expect(result[0].score).toBe(200); // Average of 100, 200, 300
+			expect(result[0].score).toBe(200);
 		});
 
 		test('should handle missing metric values', () => {
@@ -116,9 +133,7 @@ describe('Chartjs', () => {
 				'2024-01-15': { views: 10 },
 				'2024-01-16': { views: 20, clicks: 5 }
 			};
-			const metrics = ['views', 'clicks'];
-
-			const result = Chartjs.groupByPeriod(data, 'day', metrics);
+			const result = Chartjs.groupByPeriod(data, 'day', ['views', 'clicks']);
 
 			expect(result).toHaveLength(2);
 			expect(result[0]).toEqual({ label: '2024-01-15', views: 10, clicks: NaN });
@@ -130,9 +145,7 @@ describe('Chartjs', () => {
 				'2023-12-30': { count: 5 },
 				'2024-01-02': { count: 10 }
 			};
-			const metrics = ['count'];
-
-			const result = Chartjs.groupByPeriod(data, 'month', metrics);
+			const result = Chartjs.groupByPeriod(data, 'month', ['count']);
 
 			expect(result).toHaveLength(2);
 			expect(result[0].label).toBe('2023-12');
@@ -142,123 +155,126 @@ describe('Chartjs', () => {
 
 	describe('getAutoGranularity', () => {
 		test('should return day_of_month for data spanning 30 days or less', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-01-15': {},
-				'2024-01-30': {}
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('day_of_month');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-01-15': {}, '2024-01-30': {} })).toBe('day_of_month');
 		});
 
 		test('should return week for data spanning 31-90 days', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-03-15': {} // 74 days
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('week');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-03-15': {} })).toBe('week');
 		});
 
 		test('should return month for data spanning more than 90 days', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-05-01': {} // 121 days
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('month');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-05-01': {} })).toBe('month');
 		});
 
 		test('should return day_of_month for single day', () => {
-			const data = {
-				'2024-01-01': {}
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('day_of_month');
-		});
-
-		test('should return day_of_month for 2 days', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-01-02': {}
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('day_of_month');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {} })).toBe('day_of_month');
 		});
 
 		test('should return week for exactly 31 days', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-02-01': {} // 31 days
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('week');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-02-01': {} })).toBe('week');
 		});
 
 		test('should return week for exactly 90 days', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-03-31': {} // 90 days
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('week');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-03-31': {} })).toBe('week');
 		});
 
 		test('should return month for exactly 91 days', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-04-01': {} // 91 days
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('month');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-04-01': {} })).toBe('month');
 		});
 
 		test('should handle dates in random order', () => {
-			const data = {
-				'2024-03-01': {},
-				'2024-01-01': {},
-				'2024-02-01': {}
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			// Should calculate from first to last date (Jan 1 to Mar 1 = ~59 days)
-			expect(result).toBe('week');
+			expect(Chartjs.getAutoGranularity({ '2024-03-01': {}, '2024-01-01': {}, '2024-02-01': {} })).toBe('week');
 		});
 
 		test('should return month for data spanning a full year', () => {
-			const data = {
-				'2024-01-01': {},
-				'2024-12-31': {} // 365 days
-			};
-
-			const result = Chartjs.getAutoGranularity(data);
-
-			expect(result).toBe('month');
+			expect(Chartjs.getAutoGranularity({ '2024-01-01': {}, '2024-12-31': {} })).toBe('month');
 		});
 	});
 
-	describe('Chartjs class structure', () => {
-		test('should be a class', () => {
-			expect(typeof Chartjs).toBe('function');
+	describe('chart creation', () => {
+		const chartData = { labels: ['A', 'B'], datasets: [{ label: 'X', data: [1, 2] }] };
+
+		test('createStackedChart clears div and calls Chart constructor', () => {
+			const canvas = makeCanvas();
+			canvas.innerHTML = '<span>old</span>';
+
+			Chartjs.createStackedChart(canvas, chartData);
+
+			expect(canvas.innerHTML).toBe('');
+			expect(global.Chart).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ type: 'bar' }));
 		});
 
+		test('createStackedChart merges user options', () => {
+			Chartjs.createStackedChart(makeCanvas(), chartData, null, { options: { responsive: false } });
+
+			expect(mockChartInstance.config.options.responsive).toBe(false);
+		});
+
+		test('createBarChart clears div and calls Chart constructor', () => {
+			const canvas = makeCanvas();
+			canvas.innerHTML = '<span>old</span>';
+
+			Chartjs.createBarChart(canvas, chartData);
+
+			expect(canvas.innerHTML).toBe('');
+			expect(global.Chart).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ type: 'bar' }));
+		});
+
+		test('createBarChart sets title when provided', () => {
+			Chartjs.createBarChart(makeCanvas(), chartData, 'My Title');
+
+			expect(mockChartInstance.config.options.plugins.title.display).toBe(true);
+			expect(mockChartInstance.config.options.plugins.title.text).toBe('My Title');
+		});
+
+		test('createLineChart clears div and calls Chart constructor', () => {
+			const canvas = makeCanvas();
+			Chartjs.createLineChart(canvas, chartData);
+
+			expect(canvas.innerHTML).toBe('');
+			expect(global.Chart).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ type: 'line' }));
+		});
+
+		test('createDoughnutChart clears div and calls Chart constructor', () => {
+			const canvas = makeCanvas();
+			Chartjs.createDoughnutChart(canvas, { labels: ['A'], values: [1], colors: ['#f00'] });
+
+			expect(canvas.innerHTML).toBe('');
+			expect(global.Chart).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ type: 'doughnut' }));
+		});
+
+		test('createDoughnutChart uses chartData.values as dataset data', () => {
+			Chartjs.createDoughnutChart(makeCanvas(), { labels: ['A', 'B'], values: [30, 70], colors: ['#f00', '#00f'] });
+
+			expect(mockChartInstance.config.data.datasets[0].data).toEqual([30, 70]);
+		});
+
+		test('title not displayed when null', () => {
+			Chartjs.createBarChart(makeCanvas(), chartData, null);
+
+			expect(mockChartInstance.config.options.plugins.title.display).toBe(false);
+		});
+
+		describe('jQuery compatibility (toEl)', () => {
+			test('createStackedChart accepts jQuery-like object', () => {
+				const canvas = makeCanvas();
+				const jq = { jquery: '3.6.0', 0: canvas, length: 1 };
+
+				expect(() => Chartjs.createStackedChart(jq, chartData)).not.toThrow();
+				expect(global.Chart).toHaveBeenCalled();
+			});
+
+			test('createBarChart accepts jQuery-like object', () => {
+				const canvas = makeCanvas();
+				const jq = { jquery: '3.6.0', 0: canvas, length: 1 };
+
+				expect(() => Chartjs.createBarChart(jq, chartData)).not.toThrow();
+				expect(global.Chart).toHaveBeenCalled();
+			});
+		});
+	});
+
+	describe('class structure', () => {
 		test('should have all expected static methods', () => {
 			expect(typeof Chartjs.init).toBe('function');
 			expect(typeof Chartjs.createStackedChart).toBe('function');

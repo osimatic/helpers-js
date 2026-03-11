@@ -336,11 +336,7 @@ describe('Img', () => {
 			// Set global.Blob to our MockBlob so instanceof checks pass
 			global.Blob = MockBlob;
 
-			// Mock jQuery image element with length property (essential for jQuery objects)
-			mockImg = {
-				attr: jest.fn().mockReturnThis(),
-				length: 1  // Valid jQuery object has length > 0
-			};
+			mockImg = { src: '' };
 
 			// Mock URL.createObjectURL
 			mockURL = {
@@ -377,7 +373,7 @@ describe('Img', () => {
 
 			Img.setBlobToImg(mockImg, mockBlob);
 
-			expect(mockImg.attr).toHaveBeenCalledWith('src', 'blob:mock-url-12345');
+			expect(mockImg.src).toBe('blob:mock-url-12345');
 		});
 
 		test('should handle different blob types', () => {
@@ -386,7 +382,7 @@ describe('Img', () => {
 			Img.setBlobToImg(mockImg, mockBlob);
 
 			expect(mockURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-			expect(mockImg.attr).toHaveBeenCalledWith('src', 'blob:mock-url-12345');
+			expect(mockImg.src).toBe('blob:mock-url-12345');
 		});
 
 		test('should use webkitURL as fallback when URL is not available', () => {
@@ -404,7 +400,7 @@ describe('Img', () => {
 			Img.setBlobToImg(mockImg, mockBlob);
 
 			expect(mockWebkitURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-			expect(mockImg.attr).toHaveBeenCalledWith('src', 'blob:webkit-url-67890');
+			expect(mockImg.src).toBe('blob:webkit-url-67890');
 		});
 
 		test('should return early and log error when img is null', () => {
@@ -414,7 +410,6 @@ describe('Img', () => {
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid img element provided to setBlobToImg');
 			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
-			expect(mockImg.attr).not.toHaveBeenCalled();
 		});
 
 		test('should return early and log error when img is undefined', () => {
@@ -426,26 +421,12 @@ describe('Img', () => {
 			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
 		});
 
-		test('should return early and log error when img.length is 0 (empty jQuery)', () => {
-			const emptyJQuery = {
-				attr: jest.fn().mockReturnThis(),
-				length: 0  // Empty jQuery selector result
-			};
-			const mockBlob = new Blob(['test'], { type: 'image/png' });
-
-			Img.setBlobToImg(emptyJQuery, mockBlob);
-
-			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid img element provided to setBlobToImg');
-			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
-			expect(emptyJQuery.attr).not.toHaveBeenCalled();
-		});
 
 		test('should return early and log error when blob is null', () => {
 			Img.setBlobToImg(mockImg, null);
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid blob provided to setBlobToImg', null);
 			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
-			expect(mockImg.attr).not.toHaveBeenCalled();
 		});
 
 		test('should return early and log error when blob is undefined', () => {
@@ -471,21 +452,8 @@ describe('Img', () => {
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid blob provided to setBlobToImg', emptyBlob);
 			expect(mockURL.createObjectURL).not.toHaveBeenCalled();
-			expect(mockImg.attr).not.toHaveBeenCalled();
 		});
 
-		test('should work with valid jQuery-wrapped img element with length property', () => {
-			const validJQuery = {
-				attr: jest.fn().mockReturnThis(),
-				length: 1  // Valid jQuery object
-			};
-			const mockBlob = new Blob(['test'], { type: 'image/gif' });
-
-			Img.setBlobToImg(validJQuery, mockBlob);
-
-			expect(mockURL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-			expect(validJQuery.attr).toHaveBeenCalledWith('src', 'blob:mock-url-12345');
-		});
 
 		test('should catch and log error when createObjectURL throws', () => {
 			mockURL.createObjectURL = jest.fn(() => {
@@ -504,17 +472,19 @@ describe('Img', () => {
 				'Error creating object URL from blob:',
 				expect.objectContaining({ message: 'Quota exceeded' })
 			);
-			expect(mockImg.attr).not.toHaveBeenCalled();
+			expect(mockImg.src).toBe('');
 		});
 
-		test('should catch and log error when img.attr throws', () => {
-			mockImg.attr = jest.fn(() => {
-				throw new Error('Invalid element');
+		test('should catch and log error when setting img.src throws', () => {
+			const throwingImg = {};
+			Object.defineProperty(throwingImg, 'src', {
+				set: () => { throw new Error('Invalid element'); },
+				get: () => '',
 			});
 
 			const mockBlob = new Blob(['test'], { type: 'image/png' });
 
-			Img.setBlobToImg(mockImg, mockBlob);
+			Img.setBlobToImg(throwingImg, mockBlob);
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
 				'Error creating object URL from blob:',

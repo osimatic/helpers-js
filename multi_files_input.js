@@ -1,8 +1,10 @@
 require('./string');
 const { FlashMessage } = require('./flash_message');
+const { toEl } = require('./util');
 
 class MultiFilesInput {
 	static init(fileInput, setFilesList, nbMaxFiles, maxFileSize) {
+		fileInput = toEl(fileInput);
 		let filesList = [];
 		const formGroup = fileInput.closest('.form-group');
 

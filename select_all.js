@@ -1,8 +1,11 @@
+const { toEl } = require('./util');
+
 class SelectAll {
 
 	// Dans un form-group
 
 	static initLinkInFormGroup(link) {
+		link = toEl(link);
 		const linkClone = link.cloneNode(true);
 		link.parentElement.replaceChild(linkClone, link);
 		linkClone.addEventListener('click', function(e) {
@@ -43,6 +46,7 @@ class SelectAll {
 	// Dans tableau
 
 	static initInTable(table) {
+		table = toEl(table);
 		const inputCheckAll = table.querySelector('tr input.check_all');
 		if (!inputCheckAll) {
 			return;
@@ -78,6 +82,7 @@ class SelectAll {
 	// Dans un div
 
 	static initDiv(contentDiv) {
+		contentDiv = toEl(contentDiv);
 		contentDiv.querySelectorAll('input.check_all').forEach(inputCheckAll => {
 			const div = inputCheckAll.closest('div.checkbox_with_check_all');
 

@@ -1,6 +1,7 @@
 
 const Address = require('ilib/lib/Address');
 const AddressFmt = require('ilib/lib/AddressFmt');
+const { toEl } = require('./util');
 
 class Country {
 	static setFlagsPath(flagsPath) {
@@ -15,17 +16,15 @@ class Country {
 	}
 
 	static fillCountrySelect(select, defaultValue=null, countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
-		if (select.children().length === 0) {
+		select = toEl(select);
+		if (select.children.length === 0) {
 			if (addNoneValue) {
-				select.append('<option value="">'+noneLabel+'</option>');
+				select.insertAdjacentHTML('beforeend', '<option value="">'+noneLabel+'</option>');
 			}
-			Object.entries(null != countriesList ? countriesList : Country.getCountries()).forEach(([countryCode, countryName]) => select.append('<option value="' + countryCode + '">' + countryName + '</option>'));
+			Object.entries(null != countriesList ? countriesList : Country.getCountries()).forEach(([countryCode, countryName]) => select.insertAdjacentHTML('beforeend', '<option value="' + countryCode + '">' + countryName + '</option>'));
 		}
 		if (null != defaultValue) {
-			select.val(defaultValue);
-		}
-		if (typeof select.selectpicker != 'undefined') {
-			select.selectpicker('refresh');
+			select.value = defaultValue;
 		}
 	}
 	static getCountryName(countryCode) {
@@ -303,8 +302,9 @@ class Country {
 
 class PostalAddress {
 	static setAutocomplete(input, onPlaceChanged) {
+		input = toEl(input);
 		const autocomplete = new google.maps.places.Autocomplete(
-			input[0],
+			input,
 			{types: ['geocode']}
 		);
 
@@ -316,7 +316,7 @@ class PostalAddress {
 
 		autocomplete.addListener('place_changed', function() {
 			let place = autocomplete.getPlace();
-			input.val('');
+			input.value = '';
 			onPlaceChanged(place);
 		});
 
@@ -415,13 +415,10 @@ class PostalAddress {
 				addressData.countryCode = resultAddressComponent.short_name;
 			}
 		});
-		var htmlAddress = $(googleApiResult.adr_address);
-		// console.log(googleApiResult.adr_address);
-		// console.log(htmlAddress);
-		// console.log(htmlAddress.find('span.street-address'));
-		//console.log($(htmlAddress[0]).text());
-		if (htmlAddress.length && $(htmlAddress[0]).length) {
-			addressData.streetAddress = $(htmlAddress[0]).text();
+		const tmp = document.createElement('div');
+		tmp.innerHTML = googleApiResult.adr_address || '';
+		if (tmp.children.length > 0) {
+			addressData.streetAddress = tmp.children[0].textContent;
 		}
 		else {
 			addressData.streetAddress = streetNumber+' '+route;

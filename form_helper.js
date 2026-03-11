@@ -1,5 +1,8 @@
+const { toEl } = require('./util');
+
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton=null) {
+		form = toEl(form); submitButton = toEl(submitButton);
 		FormHelper.reset(form, submitButton);
 		submitButton = null != submitButton ? submitButton : form.querySelector('button[name="validate"]');
 		submitButton.onclick = function(e) {
@@ -14,6 +17,7 @@ class FormHelper {
 	}
 
 	static reset(form, submitButton=null) {
+		form = toEl(form); submitButton = toEl(submitButton);
 		submitButton = null != submitButton ? submitButton : form.querySelector('button[name="validate"]');
 		form.querySelectorAll('input[name]:not([type="checkbox"]):not([type="radio"]), select:not(.selectpicker), textarea').forEach(el => {
 			el.value = '';
@@ -26,6 +30,7 @@ class FormHelper {
 	}
 
 	static populateForm(form, data) {
+		form = toEl(form);
 		const employeesDisplayType = form.querySelector('[name="employees_display_type"][value="NONE"]');
 		if (employeesDisplayType) employeesDisplayType.checked = true; //todo à retirer
 
@@ -64,6 +69,7 @@ class FormHelper {
 
 
 	static getFormData(form) {
+		form = toEl(form);
 		return new FormData(form);
 	}
 
@@ -77,6 +83,7 @@ class FormHelper {
 	}
 
 	static getFormDataQueryString(form) {
+		form = toEl(form);
 		return new URLSearchParams(new FormData(form)).toString();
 	}
 
@@ -87,6 +94,7 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static getInputValue(input) {
+		input = toEl(input);
 		if (typeof input == 'undefined' || input == null) {
 			return null;
 		}
@@ -98,10 +106,12 @@ class FormHelper {
 	}
 
 	static getLinesOfTextarea(textarea) {
+		textarea = toEl(textarea);
 		return textarea.value.replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
 	}
 
 	static setOnInputChange(input, callback, doneTypingInterval=700) {
+		input = toEl(input);
 		// setup before functions
 		let typingTimer;  // timer identifier
 
@@ -128,26 +138,32 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static resetSelectOption(form, selectName) {
+		form = toEl(form);
 		form.querySelectorAll('select[name="'+selectName+'"] option').forEach(o => {
 			o.disabled = false;
 			o.selected = false;
 		});
 	}
 	static setSelectedSelectOption(form, selectName, optionValue) {
+		form = toEl(form);
 		const opt = form.querySelector('select[name="'+selectName+'"] option[value="'+optionValue+'"]');
 		if (opt) opt.selected = true;
 	}
 	static setSelectedSelectOptions(form, selectName, optionValues) {
+		form = toEl(form);
 		optionValues.forEach(id => FormHelper.setSelectedSelectOption(form, selectName, id));
 	}
 	static disableSelectOption(form, selectName, optionValue) {
+		form = toEl(form);
 		const opt = form.querySelector('select[name="'+selectName+'"] option[value="'+optionValue+'"]');
 		if (opt) opt.disabled = true;
 	}
 	static disableSelectOptions(form, selectName, optionValues) {
+		form = toEl(form);
 		optionValues.forEach(id => FormHelper.disableSelectOption(form, selectName, id));
 	}
 	static countSelectOptions(form, selectName) {
+		form = toEl(form);
 		return form.querySelectorAll('select[name="'+selectName+'"] option:not([disabled])').length;
 	}
 
@@ -180,6 +196,7 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static initTypeFields(form) {
+		form = toEl(form);
 		if (typeof Modernizr != 'undefined') {
 			if (!Modernizr.inputtypes.date) {
 				form.querySelectorAll('input[type="date"]').forEach(el => el.style.maxWidth = '120px');
@@ -215,6 +232,7 @@ class FormHelper {
 	}
 
 	static hideField(inputOrSelect) {
+		inputOrSelect = toEl(inputOrSelect);
 		inputOrSelect.closest('.form-group')?.classList.add('hide');
 	}
 
@@ -271,6 +289,7 @@ class FormHelper {
 	}
 
 	static hideFormErrors(form) {
+		form = toEl(form);
 		form.querySelectorAll('div.form_errors').forEach(el => el.remove());
 		return form;
 	}
@@ -296,6 +315,7 @@ class FormHelper {
 	}
 
 	static displayFormErrors(form, btnSubmit, errors, errorWrapperDiv=null) {
+		form = toEl(form); btnSubmit = toEl(btnSubmit); errorWrapperDiv = toEl(errorWrapperDiv);
 		this.displayFormErrorsFromText(form, this.getFormErrorText(errors), errorWrapperDiv);
 		if (btnSubmit != null) {
 			FormHelper.buttonLoader(btnSubmit, 'reset');
@@ -303,6 +323,7 @@ class FormHelper {
 	}
 
 	static displayFormErrorsFromText(form, errorLabels, errorWrapperDiv=null) {
+		form = toEl(form); errorWrapperDiv = toEl(errorWrapperDiv);
 		let errorDiv = '<div class="alert alert-danger form_errors">'+errorLabels+'</div>';
 
 		if (null != errorWrapperDiv) {
@@ -342,6 +363,7 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static buttonLoader(button, action) {
+		button = toEl(button);
 		if (action === 'start' || action === 'loading') {
 			if (button.disabled) {
 				return button;
@@ -387,6 +409,7 @@ class ArrayField {
 		get_errors_callback: null,
 
 	}) {
+		formGroupDiv = toEl(formGroupDiv);
 		function isOptionDefined(optionName) {
 			return typeof options[optionName] != 'undefined' && null !== options[optionName];
 		}
@@ -694,6 +717,7 @@ class ArrayField {
 
 class EditValue {
 	static init(valueDiv, onSubmitCallback, getInputCallback) {
+		valueDiv = toEl(valueDiv);
 		const link = document.createElement('a');
 		link.href = '#';
 		link.className = 'text-warning';

@@ -1,29 +1,33 @@
+const { toEl } = require('./util');
+
 class CountDown {
 
 	static init(div, options = {}) {
+		div = toEl(div);
 		const {
 			onRefreshData,
 			labelNextUpdate = 'Prochaine mise à jour',
 			labelDoUpdate = 'Mettre à jour',
 		} = options;
 
-		if (!div.length) {
+		if (!div) {
 			return;
 		}
 
-		div
-			.append('<div class="count_down_title">'+labelNextUpdate+'</div>')
-			.append('<div class="count_down_progress"><div class="count_down_current"></div></div>')
-			.append('<div class="count_down_text"></div>')
-			//.append('<div class="cl"></div>')
-			.append('<div class="count_down_link"><a href="#" data-loading-text="<i class=\'fa fa-circle-notch fa-spin\'></i>">'+labelDoUpdate+'</a></div>')
-		;
+		div.insertAdjacentHTML('beforeend', '<div class="count_down_title">'+labelNextUpdate+'</div>');
+		div.insertAdjacentHTML('beforeend', '<div class="count_down_progress"><div class="count_down_current"></div></div>');
+		div.insertAdjacentHTML('beforeend', '<div class="count_down_text"></div>');
+		div.insertAdjacentHTML('beforeend', '<div class="count_down_link"><a href="#">'+labelDoUpdate+'</a></div>');
 
 		let alreadyMakingRequest = false;
 		let secondsBefRefresh = 10;
 		let refreshIntervalMillis = 60;
 		let currentMillis = 0;
 		let currentSecond = 0;
+
+		function getLinkA() {
+			return div.querySelector('.count_down_link a');
+		}
 
 		function refreshData() {
 			currentMillis = 0;
@@ -36,27 +40,31 @@ class CountDown {
 
 			if (typeof onRefreshData == 'function') {
 				alreadyMakingRequest = true;
-				div.find('.count_down_link a').attr('disabled', true).button('loading');
+				const linkA = getLinkA();
+				if (linkA) linkA.disabled = true;
 
 				onRefreshData(
 					// completeCallback
 					() => {
 						alreadyMakingRequest = false;
-						div.find('.count_down_link a').attr('disabled', false).button('reset');
+						const linkA = getLinkA();
+						if (linkA) linkA.disabled = false;
 					}
 				);
 			}
 		}
 
-		if (div.find('.count_down_link a').length) {
-			div.find('.count_down_link a').click(() => {
+		const linkA = getLinkA();
+		if (linkA) {
+			linkA.addEventListener('click', (e) => {
+				e.preventDefault();
 				refreshData();
-				return false;
 			});
 		}
 
 		setInterval(() => {
-			if (!div.find('.count_down_link a').length || !div.find('.count_down_link a').prop('disabled')) {
+			const linkA = getLinkA();
+			if (!linkA || !linkA.disabled) {
 				currentMillis += refreshIntervalMillis;
 			}
 			else {
@@ -65,9 +73,8 @@ class CountDown {
 
 			currentSecond = parseInt(currentMillis / 1000);
 
-			//countDownRefresh();
-			var divCountDownText;
-			var divCountDownCurrentSizePx;
+			let divCountDownText;
+			let divCountDownCurrentSizePx;
 
 			if (currentSecond >= secondsBefRefresh) {
 				divCountDownCurrentSizePx = 120;
@@ -78,11 +85,13 @@ class CountDown {
 				divCountDownText = (secondsBefRefresh-currentSecond) + 's';
 			}
 
-			if (div.find('.count_down_current').length) {
-				div.find('.count_down_current').width(divCountDownCurrentSizePx);
+			const countDownCurrent = div.querySelector('.count_down_current');
+			if (countDownCurrent) {
+				countDownCurrent.style.width = divCountDownCurrentSizePx + 'px';
 			}
-			if (div.find('.count_down_text').length) {
-				div.find('.count_down_text').html(divCountDownText);
+			const countDownText = div.querySelector('.count_down_text');
+			if (countDownText) {
+				countDownText.innerHTML = divCountDownText;
 			}
 
 			if (currentSecond >= secondsBefRefresh) {

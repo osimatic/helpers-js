@@ -1,4 +1,5 @@
 const L = require('leaflet');
+const { toEl } = require('./util');
 
 /**
  * https://leafletjs.com/
@@ -8,6 +9,7 @@ const L = require('leaflet');
 class OpenStreetMap {
 
 	constructor(mapContainer, options={}) {
+		mapContainer = toEl(mapContainer);
 		/*let [lat, lng] = button.data('coordinates').split(',');
 		let map = L.map('modal_map_canvas2').setView([lat, lng], 17);
 
@@ -27,6 +29,7 @@ class OpenStreetMap {
 	}
 
 	static createMap(mapContainer, options={}) {
+		mapContainer = toEl(mapContainer);
 		if (!mapContainer.length) {
 			return null;
 		}

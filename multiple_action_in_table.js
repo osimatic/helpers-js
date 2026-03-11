@@ -1,3 +1,4 @@
+const { toEl } = require('./util');
 
 class MultipleActionInTable {
 
@@ -5,6 +6,7 @@ class MultipleActionInTable {
 	// Idempotent : sans effet si les colonnes existent déjà.
 	// Doit être appelé AVANT l'initialisation DataTable.
 	static initCols(table, cellSelector = 'select') {
+		table = toEl(table);
 		if (!table.classList.contains('table-action_multiple')) {
 			return;
 		}
@@ -12,8 +14,9 @@ class MultipleActionInTable {
 			return;
 		}
 
-		if (!table.querySelector('thead tr th[data-key="select"]')) {
-			table.querySelector('thead tr').insertAdjacentHTML('afterbegin', '<th class="' + cellSelector + '" data-key="select"></th>');
+		const theadTr = table.querySelector('thead tr');
+		if (theadTr && !theadTr.querySelector('th[data-key="select"]')) {
+			theadTr.insertAdjacentHTML('afterbegin', '<th class="' + cellSelector + '" data-key="select"></th>');
 		}
 		table.querySelectorAll('tbody tr:not(.no_items)').forEach(tr => {
 			if (!tr.querySelector('td.select')) {
@@ -25,6 +28,7 @@ class MultipleActionInTable {
 	// Initialise les colonnes (via initCols) puis branche les event handlers.
 	// Peut être appelé après l'initialisation DataTable.
 	static init(table, options = {}) {
+		table = toEl(table);
 		const { cellSelector = 'select', imgArrow = '' } = options;
 
 		if (!table.classList.contains('table-action_multiple')) {
@@ -140,6 +144,7 @@ class MultipleActionInTable {
 class MultipleActionInDivList {
 // init checkbox
 	static init(contentDiv, options = {}) {
+		contentDiv = toEl(contentDiv);
 		const { imgArrow = '' } = options;
 
 		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
@@ -254,114 +259,3 @@ class MultipleActionInDivList {
 }
 
 module.exports = { MultipleActionInTable, MultipleActionInDivList };
-
-/*
-// init checkbox
-function initTableActionMultiple(table) {
-	if (!table.hasClass('table-action_multiple')) {
-		return;
-	}
-
-	var divBtn = tableActionMultipleGetDivBtn(table);
-	if (divBtn == null) {
-		return;
-	}
-
-	if (table.find('thead tr th[data-key="select"]').length === 0) {
-		table.find('thead tr').prepend($('<th class="select no-sort" data-key="select"></th>'));
-	}
-	table.find('tbody tr:not(.no_items)').each(function(idx, tr) {
-		if ($(tr).find('td.select').length === 0) {
-			$(tr).prepend($('<td class="select"><input type="checkbox" class="action_multiple_checkbox" name="'+$(tr).data('action_multiple_input_name')+'" value="'+$(tr).data('action_multiple_item_id')+'"></td>'));
-		}
-	});
-
-	table.find('input.action_multiple_checkbox').each(function(idx, el) {
-		var th = $(el).closest('table').find('thead tr th').first();
-		if (th.find('input').length === 0) {
-			// console.log(th);
-			th.html('<input type="checkbox" class="action_multiple_check_all" />');
-			// th.html('Coucou');
-		}
-	});
-
-	table.find('input.action_multiple_checkbox').change(function() {
-		majCheckbox(table);
-	});
-
-	table.find('input.action_multiple_check_all').off('click').click(function() {
-		var table = $(this).closest('table');
-		var checkbox = table.find('input.action_multiple_checkbox');
-		var checkboxChecked = table.find('input.action_multiple_checkbox:checked');
-		if (checkbox.length === checkboxChecked.length) {
-			checkbox.prop('checked', false);
-		}
-		else {
-			checkbox.prop('checked', true);
-		}
-		majCheckbox(table);
-	});
-}
-
-function majCheckbox(table) {
-	showButtonsAction(table);
-
-	var allCheckbox = table.find('input.action_multiple_checkbox');
-	var allCheckboxChecked = table.find('input.action_multiple_checkbox:checked');
-	var checkboxSelectAll = table.find('thead tr th input.action_multiple_check_all');
-	if (allCheckbox.length === allCheckboxChecked.length) {
-		checkboxSelectAll.prop('checked', true);
-	}
-	else {
-		checkboxSelectAll.prop('checked', false);
-	}
-}
-
-function tableActionMultipleGetDivBtn(table) {
-	var divTableResponsive = table.parent();
-	var divBtn = divTableResponsive.next();
-	if (divBtn.hasClass('action_multiple_buttons')) {
-		return divBtn;
-	}
-	divBtn = divTableResponsive.parent().parent().parent().next();
-	if (divBtn.hasClass('action_multiple_buttons')) {
-		return divBtn;
-	}
-	return null;
-}
-
-function showButtonsAction(table) {
-	var divBtn = tableActionMultipleGetDivBtn(table);
-	if (divBtn == null) {
-		return;
-	}
-
-	// console.log(divBtn);
-	//var nbItems = $('input[name="' + checkbox.attr('name') + '"]:checked').length;
-	var nbItems = table.find('input.action_multiple_checkbox:checked').length;
-
-	if (nbItems > 0 && divBtn.is(':hidden')) {
-		divBtn.removeClass('hide');
-	}
-	else if (nbItems === 0 && divBtn.is(':visible')) {
-		divBtn.addClass('hide');
-	}
-
-	// affichage aucune action possible si aucun bouton n'est visible
-	if (divBtn.is(':visible')) {
-		divBtn.find('span.no_button').remove();
-		if (divBtn.find('button:visible, a:visible').length === 0) {
-			divBtn.find('img').after('<span class="no_button"><em>aucune action possible</em></span>');
-		}
-	}
-}
-
-$(function() {
-	$('.action_multiple_buttons').prepend($('<img src="'+ROOT_PATH+DOSSIER_IMAGES+'arrow_ltr.png" alt="" /> &nbsp;'));
-	$('.action_multiple_buttons').append($('<br/><br/>'));
-
-	$('table.table-action_multiple').each(function(idx, table) {
-		initTableActionMultiple($(table));
-	});
-});
-*/
