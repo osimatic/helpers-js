@@ -5,547 +5,473 @@
 const { Pagination, Navigation } = require('../paging');
 const { UrlAndQueryString } = require('../network');
 
+function makeItems(n) {
+	return Array.from({ length: n }, (_, i) => {
+		const el = document.createElement('div');
+		el.textContent = 'Item ' + i;
+		document.body.appendChild(el);
+		return el;
+	});
+}
+
+function setupDiv(nbItems = 5, hasPaginationLinks = false) {
+	const div = document.createElement('div');
+	if (hasPaginationLinks) {
+		const pl = document.createElement('div');
+		pl.className = 'pagination_links';
+		div.appendChild(pl);
+	}
+	for (let i = 0; i < nbItems; i++) {
+		const item = document.createElement('div');
+		item.className = 'pagination_item';
+		div.appendChild(item);
+	}
+	document.body.appendChild(div);
+	return div;
+}
+
+function setupTable(nbRows = 5, maxRows = 10) {
+	const table = document.createElement('table');
+	table.dataset.max_rows = String(maxRows);
+	const tbody = document.createElement('tbody');
+	for (let i = 0; i < nbRows; i++) {
+		const tr = document.createElement('tr');
+		tr.innerHTML = '<td>Row ' + i + '</td>';
+		tbody.appendChild(tr);
+	}
+	table.appendChild(tbody);
+	document.body.appendChild(table);
+	return table;
+}
+
+function setupSelect(opts = {}) {
+	const select = document.createElement('select');
+	if (opts.nb_rows_list != null) select.dataset.nb_rows_list = opts.nb_rows_list;
+	if (opts.default_nb_rows != null) select.dataset.default_nb_rows = String(opts.default_nb_rows);
+	document.body.appendChild(select);
+	return select;
+}
+
+function setupNav() {
+	document.body.innerHTML = `
+		<div>
+			<ul class="nav">
+				<a class="nav-link active" href="#tab1">Tab 1</a>
+				<a class="nav-link" href="#tab2">Tab 2</a>
+			</ul>
+			<div class="tab-content">
+				<div id="tab1" class="active show">Content 1</div>
+				<div id="tab2">Content 2</div>
+			</div>
+		</div>`;
+	return {
+		link1: document.querySelector('a[href="#tab1"]'),
+		link2: document.querySelector('a[href="#tab2"]'),
+		pane1: document.getElementById('tab1'),
+		pane2: document.getElementById('tab2'),
+	};
+}
+
+afterEach(() => {
+	document.body.innerHTML = '';
+	jest.clearAllMocks();
+	delete global.bootstrap;
+});
+
 describe('Pagination', () => {
-	let mockDiv, mockTable, mockSelect, mockItems, mockUl, mockLi;
-
-	beforeEach(() => {
-		// Mock items
-		mockItems = [];
-		for (let i = 0; i < 5; i++) {
-			const item = {
-				show: jest.fn().mockReturnThis(),
-				hide: jest.fn().mockReturnThis()
-			};
-			mockItems.push(item);
-		}
-
-		const itemsWithEach = Object.assign(mockItems, {
-			length: 5,
-			each: jest.fn(function(callback) {
-				this.forEach((item, idx) => callback.call(item, idx, item));
-			})
-		});
-
-		// Mock li elements
-		mockLi = {
-			addClass: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis(),
-			data: jest.fn((key) => key === 'page' ? 1 : undefined),
-			click: jest.fn().mockReturnThis()
-		};
-
-		// Mock ul element
-		const mockLiList = {
-			remove: jest.fn().mockReturnThis(),
-			click: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis(),
-			addClass: jest.fn().mockReturnThis()
-		};
-
-		mockUl = {
-			find: jest.fn((selector) => {
-				if (selector === 'li') {
-					return mockLiList;
-				}
-				if (selector === 'li:first-child') {
-					return mockLi;
-				}
-				return mockLi;
-			}),
-			append: jest.fn().mockReturnThis(),
-			show: jest.fn().mockReturnThis(),
-			addClass: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis(),
-			remove: jest.fn().mockReturnThis(),
-			each: jest.fn(function(callback) {
-				callback.call(this, 0, this);
-			}),
-			length: 1
-		};
-
-		// Mock select element
-		mockSelect = {
-			children: jest.fn(() => ({ length: 0 })),
-			append: jest.fn().mockReturnThis(),
-			data: jest.fn((key) => {
-				if (key === 'nb_rows_list') return '5,10,25,50';
-				if (key === 'default_nb_rows') return '10';
-				return undefined;
-			}),
-			val: jest.fn((value) => {
-				if (value === undefined) return '10';
-				return mockSelect;
-			}),
-			change: jest.fn().mockReturnThis(),
-			length: 1
-		};
-
-		// Mock div element
-		mockDiv = {
-			find: jest.fn((selector) => {
-				if (selector === '.pagination_item') return itemsWithEach;
-				if (selector === '.pagination_links') return { length: 1, prepend: jest.fn(), append: jest.fn() };
-				return { length: 0 };
-			}),
-			before: jest.fn().mockReturnThis(),
-			after: jest.fn().mockReturnThis(),
-			data: jest.fn((key) => key === 'max_rows' ? '10' : undefined),
-			length: 1
-		};
-
-		// Mock table element
-		mockTable = {
-			find: jest.fn((selector) => {
-				if (selector === 'tbody tr:not(.hide)') return itemsWithEach;
-				return { length: 0 };
-			}),
-			data: jest.fn((key) => key === 'max_rows' ? '10' : undefined),
-			before: jest.fn().mockReturnThis(),
-			after: jest.fn().mockReturnThis(),
-			length: 1
-		};
-
-		// Mock jQuery global
-		global.$ = jest.fn((selector) => {
-			if (selector === 'ul.pagination') return mockUl;
-			if (typeof selector === 'string' && selector.startsWith('<ul')) return mockUl;
-			if (typeof selector === 'string' && selector.startsWith('li[data-page')) {
-				return {
-					each: jest.fn(function(callback) {
-						callback.call(mockLi, 0, mockLi);
-					})
-				};
-			}
-			// Handle $(ul) calls where ul is mockUl - return mockUl itself
-			if (selector === mockUl) {
-				return mockUl;
-			}
-			// Handle $(this) calls inside .each() - return an object with all jQuery methods
-			if (typeof selector === 'object' && selector !== null) {
-				return {
-					show: jest.fn().mockReturnThis(),
-					hide: jest.fn().mockReturnThis(),
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis(),
-					data: jest.fn((key) => key === 'page' ? 1 : undefined),
-					find: jest.fn(() => ({
-						remove: jest.fn().mockReturnThis(),
-						addClass: jest.fn().mockReturnThis(),
-						removeClass: jest.fn().mockReturnThis()
-					})),
-					remove: jest.fn().mockReturnThis(),
-					append: jest.fn().mockReturnThis()
-				};
-			}
-			return mockDiv;
-		});
-
-		global.$.each = jest.fn((obj, callback) => {
-			if (Array.isArray(obj)) {
-				obj.forEach((item, idx) => callback(idx, item));
-			} else {
-				Object.keys(obj).forEach(key => callback(key, obj[key]));
-			}
-		});
-
-	});
-
-	afterEach(() => {
-		jest.clearAllMocks();
-		delete global.$;
-	});
 
 	describe('paginateCards', () => {
 		test('should call paginate with correct parameters', () => {
-			const spyPaginate = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
+			const div = setupDiv(5);
+			const spy = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
 
-			Pagination.paginateCards(mockDiv, 10);
+			Pagination.paginateCards(div, 10);
 
-			expect(spyPaginate).toHaveBeenCalledWith(
-				mockDiv,
-				expect.anything(),
-				10,
-				null
-			);
+			expect(spy).toHaveBeenCalledWith(div, expect.anything(), 10, null);
+			spy.mockRestore();
+		});
 
-			spyPaginate.mockRestore();
+		test('should pass pagination_item elements as items', () => {
+			const div = setupDiv(3);
+			const spy = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
+
+			Pagination.paginateCards(div, 5);
+
+			const items = spy.mock.calls[0][1];
+			expect(items.length).toBe(3);
+			spy.mockRestore();
 		});
 	});
 
 	describe('paginateTable', () => {
 		test('should call paginate with table rows', () => {
-			const spyPaginate = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
+			const table = setupTable(5, 10);
+			const spy = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
 
-			Pagination.paginateTable(mockTable, mockSelect);
+			Pagination.paginateTable(table);
 
-			expect(mockTable.find).toHaveBeenCalledWith('tbody tr:not(.hide)');
-			expect(mockTable.data).toHaveBeenCalledWith('max_rows');
-			expect(spyPaginate).toHaveBeenCalled();
+			expect(spy).toHaveBeenCalledWith(table, expect.anything(), 10, null);
+			spy.mockRestore();
+		});
 
-			spyPaginate.mockRestore();
+		test('should pass visible tbody rows as items', () => {
+			const table = setupTable(4, 10);
+			const spy = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
+
+			Pagination.paginateTable(table);
+
+			const items = spy.mock.calls[0][1];
+			expect(items.length).toBe(4);
+			spy.mockRestore();
+		});
+
+		test('should pass select when provided', () => {
+			const table = setupTable(5, 10);
+			const select = setupSelect();
+			const spy = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
+
+			Pagination.paginateTable(table, select);
+
+			expect(spy).toHaveBeenCalledWith(table, expect.anything(), 10, select);
+			spy.mockRestore();
 		});
 	});
 
 	describe('paginate', () => {
 		test('should return early if div is undefined', () => {
-			Pagination.paginate(undefined, mockItems, 10);
-			// Should not throw
+			expect(() => Pagination.paginate(undefined, [], 10)).not.toThrow();
 		});
 
-		test('should return early if div has no length', () => {
-			const emptyDiv = { length: 0 };
-			Pagination.paginate(emptyDiv, mockItems, 10);
-			// Should not throw
+		test('should return early if div is null', () => {
+			expect(() => Pagination.paginate(null, [], 10)).not.toThrow();
 		});
 
 		test('should initialize select with options when empty', () => {
-			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
-			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
+			const div = setupDiv(0);
+			const select = setupSelect({ nb_rows_list: '5,10,25,50' });
 
-			Pagination.paginate(mockDiv, mockItems, 10, mockSelect);
+			Pagination.paginate(div, [], 10, select);
 
-			expect(mockSelect.children).toHaveBeenCalled();
-			expect(mockSelect.append).toHaveBeenCalled();
-			expect(mockSelect.data).toHaveBeenCalledWith('nb_rows_list');
+			expect(select.options.length).toBe(5); // 'Afficher tout' + 4 options
+			expect(select.options[0].textContent).toBe('Afficher tout');
+			expect(select.options[0].value).toBe('0');
+		});
 
-			spyInitPaginationDiv.mockRestore();
-			spyInitPaginationItems.mockRestore();
+		test('should use custom labelDisplayAll', () => {
+			const div = setupDiv(0);
+			const select = setupSelect();
+
+			Pagination.paginate(div, [], 10, select, 'Show all');
+
+			expect(select.options[0].textContent).toBe('Show all');
 		});
 
 		test('should set default value when data-default_nb_rows is present', () => {
-			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
-			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
+			const div = setupDiv(0);
+			const select = setupSelect({ nb_rows_list: '5,10,25,50', default_nb_rows: 10 });
 
-			Pagination.paginate(mockDiv, mockItems, 10, mockSelect);
+			Pagination.paginate(div, [], 10, select);
 
-			expect(mockSelect.val).toHaveBeenCalled();
+			expect(select.value).toBe('10');
+		});
 
-			spyInitPaginationDiv.mockRestore();
-			spyInitPaginationItems.mockRestore();
+		test('should not re-initialize select if already has options', () => {
+			const div = setupDiv(0);
+			const select = setupSelect({ nb_rows_list: '5,10,25,50' });
+
+			Pagination.paginate(div, [], 10, select);
+			const optCount = select.options.length;
+			Pagination.paginate(div, [], 10, select);
+
+			expect(select.options.length).toBe(optCount);
 		});
 
 		test('should always initialize both top and bottom pagination', () => {
-			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
-			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
+			const div = setupDiv(0);
+			const spy = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
 
-			Pagination.paginate(mockDiv, mockItems, 10);
+			Pagination.paginate(div, [], 10);
 
-			expect(spyInitPaginationDiv).toHaveBeenCalledTimes(2);
-			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, true);  // top
-			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, false); // bottom
+			expect(spy).toHaveBeenCalledTimes(2);
+			expect(spy).toHaveBeenCalledWith(div, true);
+			expect(spy).toHaveBeenCalledWith(div, false);
+			spy.mockRestore();
+		});
 
-			spyInitPaginationDiv.mockRestore();
-			spyInitPaginationItems.mockRestore();
+		test('should remove existing pagination ULs before re-rendering', () => {
+			const div = setupDiv(0);
+			const staleUl = document.createElement('ul');
+			staleUl.className = 'pagination';
+			document.body.appendChild(staleUl);
+
+			const spy = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
+			Pagination.paginate(div, [], 10);
+
+			expect(document.querySelectorAll('ul.pagination').length).toBe(0);
+			spy.mockRestore();
 		});
 	});
 
 	describe('initPaginationDiv', () => {
-		test('should create a new pagination ul', () => {
-			Pagination.initPaginationDiv(mockDiv, false);
-
-			expect(global.$).toHaveBeenCalledWith('<ul class="pagination"></ul>');
+		test('should create a pagination ul element', () => {
+			const div = setupDiv(0);
+			Pagination.initPaginationDiv(div, false);
+			expect(document.querySelector('ul.pagination')).not.toBeNull();
 		});
 
-		test('should append pagination when onTop is false and pagination_links exists', () => {
-			const paginationLinks = {
-				length: 1,
-				prepend: jest.fn(),
-				append: jest.fn()
-			};
-
-			mockDiv.find = jest.fn((selector) => {
-				if (selector === '.pagination_links') return paginationLinks;
-				return { length: 0 };
-			});
-
-			Pagination.initPaginationDiv(mockDiv, false);
-
-			expect(paginationLinks.append).toHaveBeenCalled();
+		test('should insert ul after div when onTop is false and no pagination_links', () => {
+			const div = setupDiv(0);
+			Pagination.initPaginationDiv(div, false);
+			expect(div.nextElementSibling.tagName).toBe('UL');
+			expect(div.nextElementSibling.classList.contains('pagination')).toBe(true);
 		});
 
-		test('should prepend pagination when onTop is true and pagination_links exists', () => {
-			const paginationLinks = {
-				length: 1,
-				prepend: jest.fn(),
-				append: jest.fn()
-			};
-
-			mockDiv.find = jest.fn((selector) => {
-				if (selector === '.pagination_links') return paginationLinks;
-				return { length: 0 };
-			});
-
-			Pagination.initPaginationDiv(mockDiv, true);
-
-			expect(paginationLinks.prepend).toHaveBeenCalled();
+		test('should insert ul before div when onTop is true and no pagination_links', () => {
+			const div = setupDiv(0);
+			Pagination.initPaginationDiv(div, true);
+			expect(div.previousElementSibling.tagName).toBe('UL');
+			expect(div.previousElementSibling.classList.contains('pagination')).toBe(true);
 		});
 
-		test('should place pagination after div when pagination_links not present and onTop is false', () => {
-			mockDiv.find = jest.fn(() => ({ length: 0 }));
+		test('should append ul to pagination_links when onTop is false', () => {
+			const div = setupDiv(0, true);
+			const paginationLinks = div.querySelector('.pagination_links');
 
-			Pagination.initPaginationDiv(mockDiv, false);
+			Pagination.initPaginationDiv(div, false);
 
-			expect(mockDiv.after).toHaveBeenCalled();
+			expect(paginationLinks.lastElementChild.tagName).toBe('UL');
 		});
 
-		test('should place pagination before div when pagination_links not present and onTop is true', () => {
-			mockDiv.find = jest.fn(() => ({ length: 0 }));
+		test('should prepend ul to pagination_links when onTop is true', () => {
+			const div = setupDiv(0, true);
+			const paginationLinks = div.querySelector('.pagination_links');
 
-			Pagination.initPaginationDiv(mockDiv, true);
+			Pagination.initPaginationDiv(div, true);
 
-			expect(mockDiv.before).toHaveBeenCalled();
+			expect(paginationLinks.firstElementChild.tagName).toBe('UL');
 		});
 	});
 
 	describe('initPaginationItems', () => {
+		function setupPaginationUls(n = 2) {
+			const uls = [];
+			for (let i = 0; i < n; i++) {
+				const ul = document.createElement('ul');
+				ul.className = 'pagination';
+				document.body.appendChild(ul);
+				uls.push(ul);
+			}
+			return uls;
+		}
+
 		test('should show items up to maxItems', () => {
-			const $Spy = jest.spyOn(global, '$');
+			setupPaginationUls();
+			const items = makeItems(5);
 
-			Pagination.initPaginationItems(mockItems, 3);
+			Pagination.initPaginationItems(items, 3);
 
-			// Verify that $ was called with items (items.each iterates over them)
-			expect(mockItems.each).toHaveBeenCalled();
-			// Verify that $ was called (for $(this).show() and $(this).hide() calls)
-			expect($Spy).toHaveBeenCalled();
-
-			$Spy.mockRestore();
+			expect(items[0].style.display).toBe('');
+			expect(items[1].style.display).toBe('');
+			expect(items[2].style.display).toBe('');
+			expect(items[3].style.display).toBe('none');
+			expect(items[4].style.display).toBe('none');
 		});
 
 		test('should show all items when maxItems is 0', () => {
-			Pagination.initPaginationItems(mockItems, 0);
+			setupPaginationUls();
+			const items = makeItems(5);
 
-			// With maxItems = 0, all items should be shown
-			expect(mockItems.each).toHaveBeenCalled();
+			Pagination.initPaginationItems(items, 0);
+
+			items.forEach(item => expect(item.style.display).toBe(''));
 		});
 
 		test('should hide pagination when maxItems is 0', () => {
-			Pagination.initPaginationItems(mockItems, 0);
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(5);
 
-			// When maxItems is 0 or totalItems < maxItems, pagination is hidden
-			expect(mockUl.each).toHaveBeenCalled();
+			Pagination.initPaginationItems(items, 0);
+
+			expect(ul.classList.contains('hide')).toBe(true);
 		});
 
 		test('should hide pagination when totalItems < maxItems', () => {
-			Pagination.initPaginationItems(mockItems, 10);
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(5);
 
-			// 5 items < 10 maxItems, so pagination should be hidden
-			expect(mockUl.each).toHaveBeenCalled();
+			Pagination.initPaginationItems(items, 10);
+
+			expect(ul.classList.contains('hide')).toBe(true);
 		});
 
-		test('should create pagination pages', () => {
-			const manyItems = [];
-			for (let i = 0; i < 25; i++) {
-				manyItems.push({
-					show: jest.fn().mockReturnThis(),
-					hide: jest.fn().mockReturnThis()
-				});
-			}
-			manyItems.each = jest.fn(function(callback) {
-				this.forEach((item, idx) => callback.call(item, idx, item));
-			});
-			manyItems.length = 25;
+		test('should create page items when totalItems >= maxItems', () => {
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(25);
 
-			Pagination.initPaginationItems(manyItems, 10, false);
+			Pagination.initPaginationItems(items, 10);
 
-			// Should create 3 pages (25 items / 10 per page = 3 pages)
-			// Verify that ul.append was called to create page items
-			expect(mockUl.append).toHaveBeenCalled();
-			// Verify pagination is not hidden
-			expect(mockUl.removeClass).toHaveBeenCalledWith('hide');
+			const pages = ul.querySelectorAll('li.page-item');
+			expect(pages.length).toBe(3); // ceil(25/10) = 3
+		});
+
+		test('should show pagination when pages are created', () => {
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(25);
+
+			Pagination.initPaginationItems(items, 10);
+
+			expect(ul.classList.contains('hide')).toBe(false);
 		});
 
 		test('should set first page as active', () => {
-			const manyItems = [];
-			for (let i = 0; i < 25; i++) {
-				manyItems.push({
-					show: jest.fn().mockReturnThis(),
-					hide: jest.fn().mockReturnThis()
-				});
-			}
-			manyItems.each = jest.fn(function(callback) {
-				this.forEach((item, idx) => callback.call(item, idx, item));
-			});
-			manyItems.length = 25;
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(25);
 
-			Pagination.initPaginationItems(manyItems, 10, false);
+			Pagination.initPaginationItems(items, 10);
 
-			// Verify that find('li:first-child') was called to set first page active
-			expect(mockUl.find).toHaveBeenCalledWith('li:first-child');
-			expect(mockLi.addClass).toHaveBeenCalledWith('active');
+			expect(ul.querySelector('li:first-child').classList.contains('active')).toBe(true);
 		});
 
-		test('should handle page clicks', () => {
-			const manyItems = [];
-			for (let i = 0; i < 25; i++) {
-				manyItems.push({
-					show: jest.fn().mockReturnThis(),
-					hide: jest.fn().mockReturnThis()
-				});
-			}
-			manyItems.each = jest.fn(function(callback) {
-				this.forEach((item, idx) => callback.call(item, idx, item));
-			});
-			manyItems.length = 25;
+		test('should set data-page attribute on page items', () => {
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(25);
 
-			Pagination.initPaginationItems(manyItems, 10, false);
+			Pagination.initPaginationItems(items, 10);
 
-			// Verify that click handler was attached to pagination items
-			expect(mockUl.find).toHaveBeenCalledWith('li');
+			expect(ul.querySelector('li[data-page="1"]')).not.toBeNull();
+			expect(ul.querySelector('li[data-page="2"]')).not.toBeNull();
+			expect(ul.querySelector('li[data-page="3"]')).not.toBeNull();
+		});
+
+		test('should sync pages across multiple pagination uls', () => {
+			const uls = setupPaginationUls(2);
+			const items = makeItems(20);
+
+			Pagination.initPaginationItems(items, 10);
+
+			uls.forEach(ul => expect(ul.querySelectorAll('li').length).toBe(2));
+		});
+
+		test('should clear existing li items before adding new ones', () => {
+			const [ul] = setupPaginationUls(1);
+			ul.innerHTML = '<li>stale</li>';
+			const items = makeItems(25);
+
+			Pagination.initPaginationItems(items, 10);
+
+			const liTexts = [...ul.querySelectorAll('li')].map(l => l.textContent.trim());
+			expect(liTexts).not.toContain('stale');
+		});
+
+		test('should show correct items on page click', () => {
+			setupPaginationUls(1);
+			const items = makeItems(25);
+
+			Pagination.initPaginationItems(items, 10);
+
+			// Click page 2
+			const page2 = document.querySelector('li[data-page="2"]');
+			page2.click();
+
+			// Items 11-20 (index 10-19) should be visible, others hidden
+			expect(items[9].style.display).toBe('none');  // item 10 (page 1)
+			expect(items[10].style.display).toBe('');      // item 11 (page 2)
+			expect(items[19].style.display).toBe('');      // item 20 (page 2)
+			expect(items[20].style.display).toBe('none'); // item 21 (page 3)
+		});
+
+		test('should mark clicked page as active and deactivate others', () => {
+			const [ul] = setupPaginationUls(1);
+			const items = makeItems(25);
+
+			Pagination.initPaginationItems(items, 10);
+
+			document.querySelector('li[data-page="2"]').click();
+
+			expect(ul.querySelector('li[data-page="1"]').classList.contains('active')).toBe(false);
+			expect(ul.querySelector('li[data-page="2"]').classList.contains('active')).toBe(true);
 		});
 	});
 });
 
 describe('Navigation', () => {
-	let mockA, mockUlNav, mockTabContent, mockNavLink, mockTabPane;
-
-	beforeEach(() => {
-		// Mock tab pane
-		mockTabPane = {
-			addClass: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis()
-		};
-
-		// Mock tab content
-		mockTabContent = {
-			find: jest.fn((selector) => mockTabPane)
-		};
-
-		// Mock nav link
-		mockNavLink = {
-			removeClass: jest.fn().mockReturnThis(),
-			attr: jest.fn((key) => key === 'href' ? '#tab1' : undefined)
-		};
-
-		// Mock ul nav
-		mockUlNav = {
-			find: jest.fn((selector) => {
-				if (selector === 'a.nav-link') {
-					return {
-						each: jest.fn(function(callback) {
-							callback.call(mockNavLink, 0, mockNavLink);
-						})
-					};
-				}
-				return mockNavLink;
-			}),
-			parent: jest.fn(() => ({
-				find: jest.fn((selector) => mockTabContent)
-			}))
-		};
-
-		// Mock a element
-		mockA = {
-			closest: jest.fn((selector) => mockUlNav),
-			addClass: jest.fn().mockReturnThis(),
-			attr: jest.fn((key) => key === 'href' ? '#tab2' : undefined),
-			length: 1
-		};
-
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			if (selector === mockNavLink || (typeof selector === 'object' && selector === mockNavLink)) {
-				return mockNavLink;
-			}
-			if (typeof selector === 'object' && selector !== null) {
-				// Handle $(element) calls
-				return {
-					removeClass: jest.fn().mockReturnThis(),
-					addClass: jest.fn().mockReturnThis(),
-					attr: jest.fn((key) => key === 'href' ? '#tab1' : undefined),
-					...selector
-				};
-			}
-			return mockA;
-		});
-
-		// Simple mock of window and document for these tests
-		// Note: window.location.href will be jsdom default
-		if (!global.window.history) {
-			global.window.history = {};
-		}
-		global.window.history.replaceState = jest.fn();
-		global.window.history.pushState = jest.fn();
-
-		if (!global.document) {
-			global.document = {};
-		}
-		global.document.title = 'Test Page';
-	});
-
-	afterEach(() => {
-		jest.clearAllMocks();
-		delete global.$;
-		delete global.bootstrap;
-	});
 
 	describe('activateTab', () => {
-		test('should remove active class from all nav links', () => {
-			Navigation.activateTab(mockA);
-
-			expect(mockUlNav.find).toHaveBeenCalledWith('a.nav-link');
-			expect(mockNavLink.removeClass).toHaveBeenCalledWith('active');
-		});
-
-		test('should remove active and show classes from tab panes', () => {
-			Navigation.activateTab(mockA);
-
-			expect(mockTabPane.removeClass).toHaveBeenCalledWith('active');
-			expect(mockTabPane.removeClass).toHaveBeenCalledWith('show');
-		});
-
 		test('should add active class to clicked link', () => {
-			Navigation.activateTab(mockA);
+			const { link2 } = setupNav();
 
-			expect(mockA.addClass).toHaveBeenCalledWith('active');
+			Navigation.activateTab(link2);
+
+			expect(link2.classList.contains('active')).toBe(true);
 		});
 
-		test('should show corresponding tab pane', () => {
-			Navigation.activateTab(mockA);
+		test('should remove active class from other nav links', () => {
+			const { link1, link2 } = setupNav();
 
-			expect(mockTabPane.addClass).toHaveBeenCalledWith('active');
-			expect(mockTabPane.addClass).toHaveBeenCalledWith('show');
+			Navigation.activateTab(link2);
+
+			expect(link1.classList.contains('active')).toBe(false);
+		});
+
+		test('should show the corresponding tab pane', () => {
+			const { link2, pane2 } = setupNav();
+
+			Navigation.activateTab(link2);
+
+			expect(pane2.classList.contains('active')).toBe(true);
+			expect(pane2.classList.contains('show')).toBe(true);
+		});
+
+		test('should hide other tab panes', () => {
+			const { link2, pane1 } = setupNav();
+
+			Navigation.activateTab(link2);
+
+			expect(pane1.classList.contains('active')).toBe(false);
+			expect(pane1.classList.contains('show')).toBe(false);
 		});
 
 		test('should only process links with # href', () => {
-			mockNavLink.attr = jest.fn((key) => key === 'href' ? 'http://example.com' : undefined);
+			// Add a link with external href to ensure it is skipped
+			const { link2 } = setupNav();
+			const externalLink = document.createElement('a');
+			externalLink.className = 'nav-link';
+			externalLink.href = 'http://example.com';
+			document.querySelector('.nav').appendChild(externalLink);
 
-			Navigation.activateTab(mockA);
-
-			// Should not find tab content for non-# hrefs
-			expect(mockNavLink.removeClass).toHaveBeenCalledWith('active');
+			expect(() => Navigation.activateTab(link2)).not.toThrow();
 		});
 	});
 
 	describe('showTab', () => {
 		test('should return early if bootstrap is undefined', () => {
+			const { link1 } = setupNav();
 			delete global.bootstrap;
 
-			Navigation.showTab(mockA);
-
-			// Should not throw
+			expect(() => Navigation.showTab(link1)).not.toThrow();
 		});
 
 		test('should create and show bootstrap tab when available', () => {
-			const mockTab = {
-				show: jest.fn()
-			};
+			const { link1 } = setupNav();
+			const mockTab = { show: jest.fn() };
+			global.bootstrap = { Tab: jest.fn(() => mockTab) };
 
-			global.bootstrap = {
-				Tab: jest.fn(() => mockTab)
-			};
+			Navigation.showTab(link1);
 
-			Navigation.showTab(mockA);
-
-			expect(global.bootstrap.Tab).toHaveBeenCalledWith(mockA[0]);
+			expect(global.bootstrap.Tab).toHaveBeenCalledWith(link1);
 			expect(mockTab.show).toHaveBeenCalled();
 		});
 	});
 
 	describe('addTabInHistory', () => {
 		let setParamOfUrlSpy;
+
 		beforeEach(() => {
 			setParamOfUrlSpy = jest.spyOn(UrlAndQueryString, 'setParamOfUrl').mockImplementation((key, value, url) => `${url}&${key}=${value}`);
+			jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+			jest.spyOn(window.history, 'pushState').mockImplementation(() => {});
 		});
+
 		afterEach(() => {
 			setParamOfUrlSpy.mockRestore();
 		});
@@ -553,61 +479,37 @@ describe('Navigation', () => {
 		test('should call UrlAndQueryString.setParamOfUrl with correct parameters', () => {
 			Navigation.addTabInHistory('tab1', 'tab', true);
 
-			expect(setParamOfUrlSpy).toHaveBeenCalledWith(
-				'tab',
-				'tab1',
-				expect.any(String)
-			);
+			expect(setParamOfUrlSpy).toHaveBeenCalledWith('tab', 'tab1', expect.any(String));
 		});
 
 		test('should use default queryStringKey if not provided', () => {
 			Navigation.addTabInHistory('tab1');
 
-			expect(setParamOfUrlSpy).toHaveBeenCalledWith(
-				'tab',
-				'tab1',
-				expect.any(String)
-			);
+			expect(setParamOfUrlSpy).toHaveBeenCalledWith('tab', 'tab1', expect.any(String));
 		});
 
-		test('should use replaceState by default', () => {
-			const replaceStateSpy = jest.spyOn(global.window.history, 'replaceState');
-			const pushStateSpy = jest.spyOn(global.window.history, 'pushState');
-
+		test('should use replaceState when replace is true', () => {
 			Navigation.addTabInHistory('tab1', 'tab', true);
 
-			expect(replaceStateSpy).toHaveBeenCalled();
-			expect(pushStateSpy).not.toHaveBeenCalled();
-
-			replaceStateSpy.mockRestore();
-			pushStateSpy.mockRestore();
+			expect(window.history.replaceState).toHaveBeenCalled();
+			expect(window.history.pushState).not.toHaveBeenCalled();
 		});
 
 		test('should use pushState when replace is false', () => {
-			const replaceStateSpy = jest.spyOn(global.window.history, 'replaceState');
-			const pushStateSpy = jest.spyOn(global.window.history, 'pushState');
-
 			Navigation.addTabInHistory('tab1', 'tab', false);
 
-			expect(pushStateSpy).toHaveBeenCalled();
-			expect(replaceStateSpy).not.toHaveBeenCalled();
-
-			replaceStateSpy.mockRestore();
-			pushStateSpy.mockRestore();
+			expect(window.history.pushState).toHaveBeenCalled();
+			expect(window.history.replaceState).not.toHaveBeenCalled();
 		});
 
 		test('should update URL with tab parameter', () => {
-			const replaceStateSpy = jest.spyOn(global.window.history, 'replaceState');
-
 			Navigation.addTabInHistory('tab2', 'activeTab', true);
 
-			expect(replaceStateSpy).toHaveBeenCalledWith(
+			expect(window.history.replaceState).toHaveBeenCalledWith(
 				'',
-				'Test Page',
+				expect.any(String),
 				expect.stringContaining('activeTab=tab2')
 			);
-
-			replaceStateSpy.mockRestore();
 		});
 	});
 });

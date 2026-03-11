@@ -4,7 +4,6 @@
 const { GoogleCharts } = require('../google_charts');
 
 describe('GoogleCharts', () => {
-	let mockDiv;
 	let mockChart;
 	let mockDataTable;
 	let consoleErrorSpy;
@@ -45,41 +44,24 @@ describe('GoogleCharts', () => {
 			}
 		};
 
-		// Mock jQuery
-		mockDiv = {
-			0: document.createElement('div'),
-			length: 1,
-			removeClass: jest.fn().mockReturnThis(),
-			addClass: jest.fn().mockReturnThis(),
-			hasClass: jest.fn(() => false),
-			closest: jest.fn().mockReturnThis()
-		};
-
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string' && selector.startsWith('#')) {
-				return mockDiv;
-			}
-			return mockDiv;
-		});
-
-		global.$.each = jest.fn((obj, callback) => {
-			if (Array.isArray(obj)) {
-				obj.forEach((item, idx) => callback(idx, item));
-			} else if (typeof obj === 'object') {
-				Object.keys(obj).forEach(key => callback(key, obj[key]));
-			}
-		});
-
 		// Spy on console.error
 		consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 	});
 
 	afterEach(() => {
 		delete global.google;
-		delete global.$;
 		consoleErrorSpy.mockRestore();
 		jest.clearAllMocks();
+		document.body.innerHTML = '';
 	});
+
+	function makeDiv(id, ...classes) {
+		const div = document.createElement('div');
+		div.id = id;
+		if (classes.length) div.classList.add(...classes);
+		document.body.appendChild(div);
+		return div;
+	}
 
 	describe('init', () => {
 		test('should load Google Charts with correct packages', () => {
@@ -115,14 +97,17 @@ describe('GoogleCharts', () => {
 
 	describe('drawCharts', () => {
 		test('should filter out charts with missing div_id', () => {
+			makeDiv('chart1');
+			makeDiv('chart2');
+
 			const chartsList = [
 				{ div_id: 'chart1', chart_type: 'column_chart', title: 'Test' },
 				{ chart_type: 'bar_chart', title: 'No ID' },
 				{ div_id: 'chart2', chart_type: 'line_chart', title: 'Test 2' }
 			];
 
-			const drawSpy = jest.spyOn(GoogleCharts, 'draw').mockImplementation((div, type, title, abscissa, absData, ordLabel, ordData, colors, format, height, width, callback) => {
-				if (callback) callback();
+			const drawSpy = jest.spyOn(GoogleCharts, 'draw').mockImplementation((div, options) => {
+				if (options.onComplete) options.onComplete();
 			});
 
 			GoogleCharts.drawCharts(chartsList);
@@ -134,20 +119,16 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should filter out charts with non-existent div elements', () => {
-			global.$ = jest.fn((selector) => {
-				if (selector === '#existing') {
-					return { length: 1 };
-				}
-				return { length: 0 };
-			});
+			makeDiv('existing');
+			// 'missing' is NOT added to the DOM
 
 			const chartsList = [
 				{ div_id: 'existing', chart_type: 'column_chart', title: 'Test' },
 				{ div_id: 'missing', chart_type: 'bar_chart', title: 'Missing' }
 			];
 
-			const drawSpy = jest.spyOn(GoogleCharts, 'draw').mockImplementation((div, type, title, abscissa, absData, ordLabel, ordData, colors, format, height, width, callback) => {
-				if (callback) callback();
+			const drawSpy = jest.spyOn(GoogleCharts, 'draw').mockImplementation((div, options) => {
+				if (options.onComplete) options.onComplete();
 			});
 
 			GoogleCharts.drawCharts(chartsList);
@@ -158,6 +139,9 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should call onComplete after all charts are drawn', (done) => {
+			makeDiv('chart1');
+			makeDiv('chart2');
+
 			const chartsList = [
 				{
 					div_id: 'chart1',
@@ -182,10 +166,10 @@ describe('GoogleCharts', () => {
 			];
 
 			const onComplete = jest.fn();
-			const drawSpy = jest.spyOn(GoogleCharts, 'draw').mockImplementation((div, type, title, abscissa, absData, ordLabel, ordData, colors, format, height, width, callback) => {
+			const drawSpy = jest.spyOn(GoogleCharts, 'draw').mockImplementation((div, options) => {
 				// Simulate async completion
 				setTimeout(() => {
-					if (callback) callback();
+					if (options.onComplete) options.onComplete();
 				}, 10);
 			});
 
@@ -200,6 +184,8 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should pass all chart data to draw method', () => {
+			const div = makeDiv('chart1');
+
 			const chartData = {
 				div_id: 'chart1',
 				chart_type: 'pie_chart',
@@ -219,18 +205,20 @@ describe('GoogleCharts', () => {
 			GoogleCharts.drawCharts([chartData]);
 
 			expect(drawSpy).toHaveBeenCalledWith(
-				mockDiv,
-				'pie_chart',
-				'Test Chart',
-				'Category',
-				{ A: 10, B: 20 },
-				['Value'],
-				[[10, 20]],
-				['#FF0000', '#00FF00'],
-				'#,##0',
-				400,
-				600,
-				expect.any(Function)
+				div,
+				expect.objectContaining({
+					chart_type: 'pie_chart',
+					title: 'Test Chart',
+					abscissa_label: 'Category',
+					abscissa_data: { A: 10, B: 20 },
+					ordinate_label: ['Value'],
+					ordinate_data: [[10, 20]],
+					colors: ['#FF0000', '#00FF00'],
+					ordinate_format: '#,##0',
+					height: 400,
+					width: 600,
+					onComplete: expect.any(Function),
+				})
 			);
 
 			drawSpy.mockRestore();
@@ -239,115 +227,117 @@ describe('GoogleCharts', () => {
 
 	describe('draw', () => {
 		test('should return early if div is undefined', () => {
-			GoogleCharts.draw(undefined, 'column_chart', 'Title', 'X', [], ['Y'], [[]], []);
+			GoogleCharts.draw(undefined, { chart_type: 'column_chart', title: 'Title', abscissa_label: 'X', abscissa_data: [], ordinate_label: ['Y'], ordinate_data: [[]] });
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith('div not found');
 			expect(mockDataTable.addColumn).not.toHaveBeenCalled();
 		});
 
-		test('should return early if div has no length', () => {
-			const emptyDiv = { length: 0 };
-
-			GoogleCharts.draw(emptyDiv, 'column_chart', 'Title', 'X', [], ['Y'], [[]], []);
+		test('should return early if div is null', () => {
+			GoogleCharts.draw(null, { chart_type: 'column_chart', title: 'Title', abscissa_label: 'X', abscissa_data: [], ordinate_label: ['Y'], ordinate_data: [[]] });
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith('div not found');
 		});
 
 		test('should create column chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales'],
-				[[100, 200]],
-				['#FF0000'],
-				null,
-				400,
-				600
-			);
+			const div = makeDiv('test', 'loading');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100, 200]],
+				colors: ['#FF0000'],
+				height: 400,
+				width: 600,
+			});
 
 			setTimeout(() => {
-				expect(global.google.charts.Bar).toHaveBeenCalledWith(mockDiv[0]);
+				expect(global.google.charts.Bar).toHaveBeenCalledWith(div);
 				expect(mockChart.draw).toHaveBeenCalled();
-				expect(mockDiv.removeClass).toHaveBeenCalledWith('loading');
-				expect(mockDiv.addClass).toHaveBeenCalledWith('chart');
+				expect(div.classList.contains('loading')).toBe(false);
+				expect(div.classList.contains('chart')).toBe(true);
 				done();
 			}, 10);
 		});
 
 		test('should create bar chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'bar_chart',
-				'Test Chart',
-				'Category',
-				['A', 'B'],
-				['Value'],
-				[[10, 20]],
-				['#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'bar_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: ['A', 'B'],
+				ordinate_label: ['Value'],
+				ordinate_data: [[10, 20]],
+				colors: ['#00FF00'],
+			});
 
 			setTimeout(() => {
-				expect(global.google.charts.Bar).toHaveBeenCalledWith(mockDiv[0]);
+				expect(global.google.charts.Bar).toHaveBeenCalledWith(div);
 				expect(mockChart.draw).toHaveBeenCalled();
 				done();
 			}, 10);
 		});
 
 		test('should create line chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'line_chart',
-				'Test Chart',
-				'Time',
-				['1', '2'],
-				['Value'],
-				[[10, 20]],
-				['#0000FF']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'line_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Time',
+				abscissa_data: ['1', '2'],
+				ordinate_label: ['Value'],
+				ordinate_data: [[10, 20]],
+				colors: ['#0000FF'],
+			});
 
 			setTimeout(() => {
-				expect(global.google.charts.Line).toHaveBeenCalledWith(mockDiv[0]);
+				expect(global.google.charts.Line).toHaveBeenCalledWith(div);
 				expect(mockChart.draw).toHaveBeenCalled();
 				done();
 			}, 10);
 		});
 
 		test('should create combo chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'combo_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales', 'Profit'],
-				[[100, 200], [10, 20]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'combo_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales', 'Profit'],
+				ordinate_data: [[100, 200], [10, 20]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
-				expect(global.google.visualization.ComboChart).toHaveBeenCalledWith(mockDiv[0]);
+				expect(global.google.visualization.ComboChart).toHaveBeenCalledWith(div);
 				expect(mockChart.draw).toHaveBeenCalled();
 				done();
 			}, 10);
 		});
 
 		test('should create pie chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'pie_chart',
-				'Test Chart',
-				'Category',
-				{ A: 30, B: 50, C: 20 },
-				[],
-				[],
-				['#FF0000', '#00FF00', '#0000FF']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'pie_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: { A: 30, B: 50, C: 20 },
+				ordinate_label: [],
+				ordinate_data: [],
+				colors: ['#FF0000', '#00FF00', '#0000FF'],
+			});
 
 			setTimeout(() => {
-				expect(global.google.visualization.PieChart).toHaveBeenCalledWith(mockDiv[0]);
+				expect(global.google.visualization.PieChart).toHaveBeenCalledWith(div);
 				expect(mockDataTable.addColumn).toHaveBeenCalledWith('string', 'Category');
 				expect(mockDataTable.addColumn).toHaveBeenCalledWith('number', '');
 				expect(mockDataTable.addRows).toHaveBeenCalledTimes(3);
@@ -357,16 +347,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle stacked_bar_chart type', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'stacked_bar_chart',
-				'Test Chart',
-				'Category',
-				['A', 'B'],
-				['Val1', 'Val2'],
-				[[10, 20], [30, 40]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'stacked_bar_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: ['A', 'B'],
+				ordinate_label: ['Val1', 'Val2'],
+				ordinate_data: [[10, 20], [30, 40]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				expect(global.google.charts.Bar).toHaveBeenCalled();
@@ -377,16 +368,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle stacked_column_chart type', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'stacked_column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales', 'Costs'],
-				[[100, 200], [50, 80]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'stacked_column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales', 'Costs'],
+				ordinate_data: [[100, 200], [50, 80]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				expect(global.google.charts.Bar).toHaveBeenCalled();
@@ -397,16 +389,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle stacked_combo_chart type', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'stacked_combo_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales', 'Costs'],
-				[[100, 200], [50, 80]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'stacked_combo_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales', 'Costs'],
+				ordinate_data: [[100, 200], [50, 80]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				expect(global.google.visualization.ComboChart).toHaveBeenCalled();
@@ -417,16 +410,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle dual_column_chart type', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'dual_column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales', 'Profit'],
-				[[100, 200], [10, 20]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'dual_column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales', 'Profit'],
+				ordinate_data: [[100, 200], [10, 20]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				expect(global.google.charts.Bar).toHaveBeenCalled();
@@ -438,16 +432,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle dual_bar_chart type', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'dual_bar_chart',
-				'Test Chart',
-				'Category',
-				['A', 'B'],
-				['Val1', 'Val2'],
-				[[10, 20], [30, 40]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'dual_bar_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: ['A', 'B'],
+				ordinate_label: ['Val1', 'Val2'],
+				ordinate_data: [[10, 20], [30, 40]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				expect(global.google.charts.Bar).toHaveBeenCalled();
@@ -459,17 +454,18 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should apply format to vAxis when provided', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales'],
-				[[100, 200]],
-				['#FF0000'],
-				'#,##0.00'
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100, 200]],
+				colors: ['#FF0000'],
+				ordinate_format: '#,##0.00',
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -479,18 +475,18 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should set custom height when provided', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales'],
-				[[100, 200]],
-				['#FF0000'],
-				null,
-				500
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100, 200]],
+				colors: ['#FF0000'],
+				height: 500,
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -500,39 +496,37 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle null chart creation', () => {
-			GoogleCharts.draw(
-				mockDiv,
-				'unknown_type',
-				'Test Chart',
-				'X',
-				['A'],
-				['Y'],
-				[[1]],
-				['#FF0000']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'unknown_type',
+				title: 'Test Chart',
+				abscissa_label: 'X',
+				abscissa_data: ['A'],
+				ordinate_label: ['Y'],
+				ordinate_data: [[1]],
+				colors: ['#FF0000'],
+			});
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith('error during creating chart');
-			expect(mockDiv.addClass).toHaveBeenCalledWith('graphique_error');
-			expect(mockDiv[0].innerHTML).toContain('erreur');
+			expect(div.classList.contains('graphique_error')).toBe(true);
+			expect(div.innerHTML).toContain('erreur');
 		});
 
 		test('should call onComplete callback when chart is ready', (done) => {
+			const div = makeDiv('test');
 			const onComplete = jest.fn();
 
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales'],
-				[[100, 200]],
-				['#FF0000'],
-				null,
-				null,
-				null,
-				onComplete
-			);
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100, 200]],
+				colors: ['#FF0000'],
+				onComplete,
+			});
 
 			setTimeout(() => {
 				expect(onComplete).toHaveBeenCalledWith(mockChart);
@@ -541,91 +535,90 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle tab-pane not active scenario', (done) => {
-			const tabPaneDiv = {
-				hasClass: jest.fn((className) => className === 'active' ? false : true),
-				addClass: jest.fn().mockReturnThis(),
-				removeClass: jest.fn().mockReturnThis()
-			};
+			const tabPane = document.createElement('div');
+			tabPane.classList.add('tab-pane');
+			document.body.appendChild(tabPane);
 
-			mockDiv.hasClass = jest.fn(() => false);
-			mockDiv.closest = jest.fn(() => tabPaneDiv);
+			const div = document.createElement('div');
+			tabPane.appendChild(div);
 
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan'],
-				['Sales'],
-				[[100]],
-				['#FF0000']
-			);
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100]],
+				colors: ['#FF0000'],
+			});
+
+			// tabPane.active should have been added before draw
+			expect(tabPane.classList.contains('active')).toBe(true);
 
 			setTimeout(() => {
-				expect(tabPaneDiv.addClass).toHaveBeenCalledWith('active');
-				expect(tabPaneDiv.removeClass).toHaveBeenCalledWith('active');
+				// After ready event, active should be removed since it wasn't active before
+				expect(tabPane.classList.contains('active')).toBe(false);
 				done();
 			}, 10);
 		});
 
 		test('should not toggle active class if already active', (done) => {
-			const tabPaneDiv = {
-				hasClass: jest.fn(() => true),
-				addClass: jest.fn().mockReturnThis(),
-				removeClass: jest.fn().mockReturnThis()
-			};
+			const tabPane = document.createElement('div');
+			tabPane.classList.add('tab-pane', 'active');
+			document.body.appendChild(tabPane);
 
-			mockDiv.hasClass = jest.fn(() => false);
-			mockDiv.closest = jest.fn(() => tabPaneDiv);
+			const div = document.createElement('div');
+			tabPane.appendChild(div);
 
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan'],
-				['Sales'],
-				[[100]],
-				['#FF0000']
-			);
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100]],
+				colors: ['#FF0000'],
+			});
 
 			setTimeout(() => {
-				expect(tabPaneDiv.removeClass).not.toHaveBeenCalledWith('active');
+				// Still active after ready event
+				expect(tabPane.classList.contains('active')).toBe(true);
 				done();
 			}, 10);
 		});
 
 		test('should handle when div itself has tab-pane class', (done) => {
-			mockDiv.hasClass = jest.fn((className) => className === 'tab-pane');
+			const div = makeDiv('test', 'tab-pane');
 
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan'],
-				['Sales'],
-				[[100]],
-				['#FF0000']
-			);
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan'],
+				ordinate_label: ['Sales'],
+				ordinate_data: [[100]],
+				colors: ['#FF0000'],
+			});
 
 			setTimeout(() => {
-				expect(mockDiv.closest).not.toHaveBeenCalled();
+				// div itself is used as tabPaneDiv — no closest() traversal
+				expect(div.classList.contains('chart')).toBe(true);
 				done();
 			}, 10);
 		});
 
 		test('should set line chart specific options', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'line_chart',
-				'Test Chart',
-				'Time',
-				['1', '2'],
-				['Value'],
-				[[10, 20]],
-				['#0000FF']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'line_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Time',
+				abscissa_data: ['1', '2'],
+				ordinate_label: ['Value'],
+				ordinate_data: [[10, 20]],
+				colors: ['#0000FF'],
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -636,16 +629,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should set pie chart specific options', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'pie_chart',
-				'Test Chart',
-				'Category',
-				{ A: 30, B: 50 },
-				[],
-				[],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'pie_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: { A: 30, B: 50 },
+				ordinate_label: [],
+				ordinate_data: [],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -657,16 +651,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should set bar chart specific options', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'bar_chart',
-				'Test Chart',
-				'Category',
-				['A', 'B'],
-				['Value'],
-				[[10, 20]],
-				['#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'bar_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: ['A', 'B'],
+				ordinate_label: ['Value'],
+				ordinate_data: [[10, 20]],
+				colors: ['#00FF00'],
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -678,16 +673,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should populate DataTable correctly for non-pie charts', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb', 'Mar'],
-				['Sales', 'Profit'],
-				[[100, 200, 300], [10, 20, 30]],
-				['#FF0000', '#00FF00']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb', 'Mar'],
+				ordinate_label: ['Sales', 'Profit'],
+				ordinate_data: [[100, 200, 300], [10, 20, 30]],
+				colors: ['#FF0000', '#00FF00'],
+			});
 
 			setTimeout(() => {
 				expect(mockDataTable.addColumn).toHaveBeenCalledWith('string', 'Month');
@@ -700,16 +696,17 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should handle combo chart with multiple series', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'combo_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales', 'Profit', 'Trend'],
-				[[100, 200], [10, 20], [50, 60]],
-				['#FF0000', '#00FF00', '#0000FF']
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'combo_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales', 'Profit', 'Trend'],
+				ordinate_data: [[100, 200], [10, 20], [50, 60]],
+				colors: ['#FF0000', '#00FF00', '#0000FF'],
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -722,17 +719,18 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should apply dual axis formatting for dual_column_chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'dual_column_chart',
-				'Test Chart',
-				'Month',
-				['Jan', 'Feb'],
-				['Sales', 'Profit'],
-				[[100, 200], [10, 20]],
-				['#FF0000', '#00FF00'],
-				'$#,##0'
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'dual_column_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Month',
+				abscissa_data: ['Jan', 'Feb'],
+				ordinate_label: ['Sales', 'Profit'],
+				ordinate_data: [[100, 200], [10, 20]],
+				colors: ['#FF0000', '#00FF00'],
+				ordinate_format: '$#,##0',
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];
@@ -744,17 +742,18 @@ describe('GoogleCharts', () => {
 		});
 
 		test('should apply dual axis formatting for dual_bar_chart', (done) => {
-			GoogleCharts.draw(
-				mockDiv,
-				'dual_bar_chart',
-				'Test Chart',
-				'Category',
-				['A', 'B'],
-				['Val1', 'Val2'],
-				[[10, 20], [30, 40]],
-				['#FF0000', '#00FF00'],
-				'#,##0.00'
-			);
+			const div = makeDiv('test');
+
+			GoogleCharts.draw(div, {
+				chart_type: 'dual_bar_chart',
+				title: 'Test Chart',
+				abscissa_label: 'Category',
+				abscissa_data: ['A', 'B'],
+				ordinate_label: ['Val1', 'Val2'],
+				ordinate_data: [[10, 20], [30, 40]],
+				colors: ['#FF0000', '#00FF00'],
+				ordinate_format: '#,##0.00',
+			});
 
 			setTimeout(() => {
 				const callArgs = mockChart.draw.mock.calls[0];

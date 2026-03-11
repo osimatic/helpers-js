@@ -1,4 +1,22 @@
+/**
+ * @jest-environment jsdom
+ */
 const { Password } = require('../user');
+
+function setupFormGroup(initialValue = '') {
+	const formGroup = document.createElement('div');
+	formGroup.className = 'form-group';
+	const input = document.createElement('input');
+	input.type = 'password';
+	input.value = initialValue;
+	formGroup.appendChild(input);
+	document.body.appendChild(formGroup);
+	return { formGroup, input };
+}
+
+afterEach(() => {
+	document.body.innerHTML = '';
+});
 
 describe('Password', () => {
 	describe('getPasswordStrength', () => {
@@ -145,60 +163,151 @@ describe('Password', () => {
 	});
 
 	describe('displayPasswordStrength', () => {
-		let mockInput;
-		let mockFormGroup;
-		let mockDiv;
+		test('should inject .password_strength_content into form-group', () => {
+			const { input } = setupFormGroup('Test1234!');
 
-		beforeEach(() => {
-			// Mock jQuery
-			mockDiv = {
-				find: jest.fn().mockReturnThis(),
-				removeClass: jest.fn().mockReturnThis(),
-				addClass: jest.fn().mockReturnThis(),
-				width: jest.fn().mockReturnThis(),
-				text: jest.fn().mockReturnThis(),
-				each: jest.fn(),
-			};
+			Password.displayPasswordStrength(input);
 
-			mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === '.password_strength_content') {
-						return {
-							remove: jest.fn(),
-						};
-					}
-					return mockDiv;
-				}),
-				append: jest.fn(),
-			};
-
-			mockInput = {
-				val: jest.fn(() => 'TestPassword1!'),
-				closest: jest.fn(() => mockFormGroup),
-				change: jest.fn(),
-				off: jest.fn().mockReturnThis(),
-				on: jest.fn(),
-			};
-
-			global.$ = jest.fn(() => mockInput);
+			expect(document.querySelector('.password_strength_content')).not.toBeNull();
 		});
 
-		afterEach(() => {
-			delete global.$;
+		test('should inject strength bar and text elements', () => {
+			const { input } = setupFormGroup('Test1234!');
+
+			Password.displayPasswordStrength(input);
+
+			expect(document.querySelector('.password_strength_bar')).not.toBeNull();
+			expect(document.querySelector('.password_strength_text')).not.toBeNull();
 		});
 
-		test('should initialize jQuery if called', () => {
-			// This test just ensures the function can be called without throwing
-			// Actual DOM manipulation testing would require jsdom or similar
-			expect(() => {
-				// We can't fully test DOM manipulation without a proper jQuery setup
-				// Just verify the function exists and is callable
-				expect(typeof Password.displayPasswordStrength).toBe('function');
-			}).not.toThrow();
+		test('should inject condition list items with data-condition', () => {
+			const { input } = setupFormGroup('');
+
+			Password.displayPasswordStrength(input);
+
+			const conditions = ['length', 'uppercase', 'lowercase', 'number', 'special'];
+			conditions.forEach(cond => {
+				expect(document.querySelector(`li[data-condition="${cond}"]`)).not.toBeNull();
+			});
 		});
 
-		test('should be a static method', () => {
-			expect(typeof Password.displayPasswordStrength).toBe('function');
+		test('should show "Fort" and success color for strong password', () => {
+			const { input } = setupFormGroup('AbCdE12!');
+
+			Password.displayPasswordStrength(input);
+
+			const text = document.querySelector('.password_strength_text');
+			expect(text.textContent).toBe('Fort');
+			expect(text.classList.contains('text-bg-success')).toBe(true);
+		});
+
+		test('should show "Moyen" and warning color for medium password', () => {
+			const { input } = setupFormGroup('AbCd1234');
+
+			Password.displayPasswordStrength(input);
+
+			const text = document.querySelector('.password_strength_text');
+			expect(text.textContent).toBe('Moyen');
+			expect(text.classList.contains('text-bg-warning')).toBe(true);
+		});
+
+		test('should show "Faible" and danger color for weak password', () => {
+			const { input } = setupFormGroup('abcdefgh');
+
+			Password.displayPasswordStrength(input);
+
+			const text = document.querySelector('.password_strength_text');
+			expect(text.textContent).toBe('Faible');
+			expect(text.classList.contains('text-bg-danger')).toBe(true);
+		});
+
+		test('should hide strength text for empty password', () => {
+			const { input } = setupFormGroup('');
+
+			Password.displayPasswordStrength(input);
+
+			const text = document.querySelector('.password_strength_text');
+			expect(text.classList.contains('hide')).toBe(true);
+		});
+
+		test('should set strength bar width based on score', () => {
+			const { input } = setupFormGroup('AbCdE12!'); // score=5
+
+			Password.displayPasswordStrength(input);
+
+			const bar = document.querySelector('.password_strength_bar');
+			const expectedWidth = ((5 / 6) * 100) + '%';
+			expect(bar.style.width).toBe(expectedWidth);
+		});
+
+		test('should mark satisfied conditions as text-success', () => {
+			const { input } = setupFormGroup('abcdefgh'); // satisfies: length, lowercase
+
+			Password.displayPasswordStrength(input);
+
+			expect(document.querySelector('li[data-condition="length"]').classList.contains('text-success')).toBe(true);
+			expect(document.querySelector('li[data-condition="lowercase"]').classList.contains('text-success')).toBe(true);
+		});
+
+		test('should mark unsatisfied conditions as text-danger', () => {
+			const { input } = setupFormGroup('abcdefgh'); // missing: uppercase, number, special
+
+			Password.displayPasswordStrength(input);
+
+			expect(document.querySelector('li[data-condition="uppercase"]').classList.contains('text-danger')).toBe(true);
+			expect(document.querySelector('li[data-condition="number"]').classList.contains('text-danger')).toBe(true);
+			expect(document.querySelector('li[data-condition="special"]').classList.contains('text-danger')).toBe(true);
+		});
+
+		test('should update display on input event', () => {
+			const { input } = setupFormGroup('');
+
+			Password.displayPasswordStrength(input);
+
+			input.value = 'AbCdE12!';
+			input.dispatchEvent(new Event('input'));
+
+			const text = document.querySelector('.password_strength_text');
+			expect(text.textContent).toBe('Fort');
+		});
+
+		test('should update display on change event', () => {
+			const { input } = setupFormGroup('');
+
+			Password.displayPasswordStrength(input);
+
+			input.value = 'AbCdE12!';
+			input.dispatchEvent(new Event('change'));
+
+			const text = document.querySelector('.password_strength_text');
+			expect(text.textContent).toBe('Fort');
+		});
+
+		test('should replace existing .password_strength_content on re-init', () => {
+			const { input } = setupFormGroup('Test1234!');
+
+			Password.displayPasswordStrength(input);
+			Password.displayPasswordStrength(input);
+
+			expect(document.querySelectorAll('.password_strength_content').length).toBe(1);
+		});
+
+		test('should set bg-success on bar for strong password', () => {
+			const { input } = setupFormGroup('AbCdE12!');
+
+			Password.displayPasswordStrength(input);
+
+			const bar = document.querySelector('.password_strength_bar');
+			expect(bar.classList.contains('bg-success')).toBe(true);
+		});
+
+		test('should set bg-warning on bar for medium password', () => {
+			const { input } = setupFormGroup('AbCd1234');
+
+			Password.displayPasswordStrength(input);
+
+			const bar = document.querySelector('.password_strength_bar');
+			expect(bar.classList.contains('bg-warning')).toBe(true);
 		});
 	});
 });

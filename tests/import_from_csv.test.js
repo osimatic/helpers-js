@@ -3,81 +3,71 @@
  */
 const { ImportFromCsv } = require('../import_from_csv');
 
+const originalDefaults = { ...ImportFromCsv._defaults };
+
+function setupFormMatching() {
+	const form = document.createElement('div');
+	form.classList.add('form_matching');
+	form.innerHTML = `
+		<div class="import_matching_select_content"></div>
+		<div class="errors hide"></div>
+		<button type="submit">Import</button>`;
+	document.body.appendChild(form);
+	return form;
+}
+
+function setupDivResult(rows = []) {
+	const div = document.createElement('div');
+	div.classList.add('csv_result', 'hide');
+	const tbodyRows = rows.map((row, rowIndex) => {
+		const entries = Array.isArray(row) ? row.map((v, i) => [i, v]) : Object.entries(row);
+		const tds = entries.map(([key, val]) => `<td data-key="${key}">${val ?? ''}</td>`).join('');
+		return `<tr data-line="${rowIndex + 1}">
+			<td class="select_line_checkbox"><input type="checkbox" class="import_line_checkbox" checked="checked" /></td>
+			${tds}
+			<td class="edit_line_button"></td>
+		</tr>`;
+	}).join('');
+	div.innerHTML = `<table><tbody>${tbodyRows}</tbody></table>`;
+	document.body.appendChild(div);
+	return div;
+}
+
+function setupTableWithRow(cells = ['John', 'john@example.com'], formMatching = null) {
+	const fm = formMatching ?? setupFormMatching();
+	const table = document.createElement('table');
+	const tbody = document.createElement('tbody');
+	const tr = document.createElement('tr');
+
+	const checkboxTd = document.createElement('td');
+	checkboxTd.className = 'select_line_checkbox';
+	checkboxTd.innerHTML = '<input type="checkbox" class="import_line_checkbox" checked="checked" />';
+	tr.appendChild(checkboxTd);
+
+	cells.forEach((val, i) => {
+		const td = document.createElement('td');
+		td.dataset.key = String(i);
+		td.textContent = val ?? '';
+		tr.appendChild(td);
+	});
+
+	const editTd = document.createElement('td');
+	editTd.className = 'edit_line_button';
+	tr.appendChild(editTd);
+
+	tbody.appendChild(tr);
+	table.appendChild(tbody);
+	document.body.appendChild(table);
+
+	return { table, tr, editTd, fm };
+}
+
+afterEach(() => {
+	document.body.innerHTML = '';
+	ImportFromCsv._defaults = { ...originalDefaults };
+});
+
 describe('ImportFromCsv', () => {
-	let mockFormMatching;
-	let mockDivResult;
-
-	beforeEach(() => {
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string') {
-				if (selector.includes('<')) {
-					// Creating HTML element
-					return {
-						html: jest.fn().mockReturnThis(),
-						append: jest.fn().mockReturnThis(),
-						find: jest.fn().mockReturnThis(),
-						addClass: jest.fn().mockReturnThis(),
-						removeClass: jest.fn().mockReturnThis(),
-						prop: jest.fn().mockReturnThis(),
-						click: jest.fn().mockReturnThis()
-					};
-				}
-				return {
-					find: jest.fn().mockReturnThis(),
-					each: jest.fn(),
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis(),
-					empty: jest.fn().mockReturnThis(),
-					append: jest.fn().mockReturnThis()
-				};
-			}
-			// Wrap element
-			return {
-				val: jest.fn(),
-				prop: jest.fn(),
-				find: jest.fn().mockReturnThis(),
-				text: jest.fn(),
-				length: 0,
-				hasClass: jest.fn(() => false),
-				addClass: jest.fn().mockReturnThis(),
-				parent: jest.fn().mockReturnThis(),
-				closest: jest.fn().mockReturnThis()
-			};
-		});
-
-		global.$.each = jest.fn((collection, callback) => {
-			if (Array.isArray(collection)) {
-				collection.forEach((item, index) => callback(index, item));
-			} else if (typeof collection === 'object') {
-				Object.keys(collection).forEach((key) => callback(key, collection[key]));
-			}
-		});
-
-		global.$.isEmptyObject = jest.fn((obj) => {
-			return Object.keys(obj).length === 0;
-		});
-
-		mockFormMatching = {
-			find: jest.fn(() => ({
-				each: jest.fn(),
-				prop: jest.fn().mockReturnThis()
-			}))
-		};
-
-		mockDivResult = {
-			find: jest.fn(() => ({
-				each: jest.fn(),
-				addClass: jest.fn().mockReturnThis(),
-				length: 0
-			}))
-		};
-	});
-
-	afterEach(() => {
-		delete global.$;
-		ImportFromCsv._defaults = {};
-	});
 
 	describe('setDefault', () => {
 		test('should set default options', () => {
@@ -95,10 +85,7 @@ describe('ImportFromCsv', () => {
 		});
 
 		test('should use defaults in getErrorsHtmlOfImportData when no params passed', () => {
-			ImportFromCsv.setDefault({
-				errorMessageImportFailed: 'Default error',
-				lineLabel: 'Row {0}',
-			});
+			ImportFromCsv.setDefault({ errorMessageImportFailed: 'Default error', lineLabel: 'Row {0}' });
 
 			const html = ImportFromCsv.getErrorsHtmlOfImportData([{ line: 1, errors: ['Err'] }]);
 
@@ -108,23 +95,12 @@ describe('ImportFromCsv', () => {
 
 		test('should use defaults in displayFormMatching when no selectDefaultOptionLabel passed', () => {
 			ImportFromCsv.setDefault({ selectDefaultOptionLabel: 'Pick a column' });
+			const formMatching = setupFormMatching();
 
-			const mockSelectContent = {
-				addClass: jest.fn().mockReturnThis(),
-				empty: jest.fn().mockReturnThis(),
-				append: jest.fn().mockReturnThis()
-			};
-			mockFormMatching.find = jest.fn((selector) => {
-				if (selector === '.import_matching_select_content') return mockSelectContent;
-				return { addClass: jest.fn().mockReturnThis(), removeClass: jest.fn().mockReturnThis() };
-			});
-			mockFormMatching.removeClass = jest.fn().mockReturnThis();
+			ImportFromCsv.displayFormMatching(formMatching, { col: 'Col' }, ['Col'], true);
 
-			ImportFromCsv.displayFormMatching(mockFormMatching, { col: 'Col' }, ['Col'], true);
-
-			// $ est appelé avec la string HTML contenant le label
-			const calls = global.$.mock.calls.map(([arg]) => arg).filter(a => typeof a === 'string');
-			expect(calls.some(s => s.includes('Pick a column'))).toBe(true);
+			const select = formMatching.querySelector('select');
+			expect(select.options[0].textContent).toBe('Pick a column');
 		});
 	});
 
@@ -151,8 +127,7 @@ describe('ImportFromCsv', () => {
 		});
 
 		test('should return false for empty array', () => {
-			const json = [];
-			expect(ImportFromCsv.isImportErrors(json)).toBe(false);
+			expect(ImportFromCsv.isImportErrors([])).toBe(false);
 		});
 
 		test('should return true when at least one item has line and errors', () => {
@@ -166,46 +141,31 @@ describe('ImportFromCsv', () => {
 
 	describe('getTabLink', () => {
 		test('should extract selected values from selects', () => {
-			const mockSelects = [
-				{ val: jest.fn(() => '0'), prop: jest.fn((name) => name === 'name' ? 'name' : undefined) },
-				{ val: jest.fn(() => '1'), prop: jest.fn((name) => name === 'name' ? 'email' : undefined) },
-				{ val: jest.fn(() => '-1'), prop: jest.fn((name) => name === 'name' ? 'phone' : undefined) }
-			];
+			const formMatching = setupFormMatching();
+			formMatching.querySelector('.import_matching_select_content').innerHTML = `
+				<select name="name"><option value="0" selected>Col0</option></select>
+				<select name="email"><option value="1" selected>Col1</option></select>
+				<select name="phone"><option value="-1" selected>--</option></select>`;
 
-			global.$ = jest.fn((el) => ({
-				val: el.val,
-				prop: el.prop
-			}));
+			const result = ImportFromCsv.getTabLink(formMatching);
 
-			mockFormMatching.find = jest.fn((selector) => {
-				if (selector === 'select') {
-					return {
-						each: jest.fn((callback) => {
-							mockSelects.forEach((select, idx) => {
-								callback(idx, select);
-							});
-						})
-					};
-				}
-				return { each: jest.fn() };
-			});
-
-			const result = ImportFromCsv.getTabLink(mockFormMatching);
-
-			expect(result).toEqual({
-				name: '0',
-				email: '1'
-			});
+			expect(result).toEqual({ name: '0', email: '1' });
 		});
 
 		test('should return empty object when no selects with valid values', () => {
-			mockFormMatching.find = jest.fn(() => ({
-				each: jest.fn((callback) => {
-					// No selects or all have -1
-				})
-			}));
+			const formMatching = setupFormMatching();
+			formMatching.querySelector('.import_matching_select_content').innerHTML = `
+				<select name="name"><option value="-1" selected>--</option></select>`;
 
-			const result = ImportFromCsv.getTabLink(mockFormMatching);
+			const result = ImportFromCsv.getTabLink(formMatching);
+
+			expect(result).toEqual({});
+		});
+
+		test('should return empty object when no selects', () => {
+			const formMatching = setupFormMatching();
+
+			const result = ImportFromCsv.getTabLink(formMatching);
 
 			expect(result).toEqual({});
 		});
@@ -230,28 +190,20 @@ describe('ImportFromCsv', () => {
 		});
 
 		test('should mark error lines in divResult when provided', () => {
+			const divResult = setupDivResult([['a'], ['b']]);
+
 			const json = [{ line: 2, errors: ['Error'] }];
+			ImportFromCsv.getErrorsHtmlOfImportData(json, divResult, 'Import failed', 'Line {0}');
 
-			const mockTr = {
-				addClass: jest.fn().mockReturnThis()
-			};
+			const tr2 = divResult.querySelector('table tr[data-line="2"]');
+			expect(tr2.classList.contains('danger')).toBe(true);
 
-			mockDivResult.find = jest.fn((selector) => {
-				if (selector.includes('tr[data-line="2"]')) {
-					return mockTr;
-				}
-				return { addClass: jest.fn().mockReturnThis() };
-			});
-
-			ImportFromCsv.getErrorsHtmlOfImportData(json, mockDivResult, 'Import failed', 'Line {0}');
-
-			expect(mockTr.addClass).toHaveBeenCalledWith('danger');
+			const tr1 = divResult.querySelector('table tr[data-line="1"]');
+			expect(tr1.classList.contains('danger')).toBe(false);
 		});
 
 		test('should handle empty errors array', () => {
-			const json = [];
-
-			const html = ImportFromCsv.getErrorsHtmlOfImportData(json, null, 'Import failed', 'Line {0}');
+			const html = ImportFromCsv.getErrorsHtmlOfImportData([], null, 'Import failed', 'Line {0}');
 
 			expect(html).toContain('Import failed');
 			expect(html).toContain('<ul>');
@@ -261,579 +213,366 @@ describe('ImportFromCsv', () => {
 
 	describe('getDataToImport', () => {
 		test('should extract data from checked rows', () => {
-			const tabLink = {
-				name: '0',
-				email: '1'
-			};
+			const divResult = setupDivResult([
+				['John Doe', 'john@example.com'],
+				['Jane', 'jane@example.com']
+			]);
+			// Uncheck second row
+			divResult.querySelectorAll('input.import_line_checkbox')[1].checked = false;
 
-			const mockTr1 = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.import_line_checkbox:checked') {
-						return { length: 1 };
-					}
-					if (selector === 'td[data-key="0"]') {
-						return { length: 1, text: jest.fn(() => 'John Doe') };
-					}
-					if (selector === 'td[data-key="1"]') {
-						return { length: 1, text: jest.fn(() => 'john@example.com') };
-					}
-					return { length: 0 };
-				})
-			};
-
-			const mockTr2 = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.import_line_checkbox:checked') {
-						return { length: 0 }; // Not checked
-					}
-					return { length: 0 };
-				})
-			};
-
-			global.$ = jest.fn((el) => el);
-			global.$.each = jest.fn((collection, callback) => {
-				if (Array.isArray(collection)) {
-					collection.forEach((item, index) => callback(index, item));
-				} else {
-					Object.keys(collection).forEach((key) => callback(key, collection[key]));
-				}
-			});
-
-			mockDivResult.find = jest.fn((selector) => {
-				if (selector === 'table tbody tr') {
-					return [mockTr1, mockTr2];
-				}
-				return { length: 0 };
-			});
-
-			const result = ImportFromCsv.getDataToImport(mockDivResult, tabLink);
+			const result = ImportFromCsv.getDataToImport(divResult, { name: '0', email: '1' });
 
 			expect(result).toHaveLength(1);
-			expect(result[0]).toEqual({
-				line: 1,
-				name: 'John Doe',
-				email: 'john@example.com'
-			});
+			expect(result[0]).toEqual({ line: 1, name: 'John Doe', email: 'john@example.com' });
 		});
 
 		test('should skip rows without checked checkbox', () => {
-			const tabLink = { name: '0' };
+			const divResult = setupDivResult([['John']]);
+			divResult.querySelector('input.import_line_checkbox').checked = false;
 
-			const mockTr = {
-				find: jest.fn(() => ({ length: 0 })) // No checked checkbox
-			};
-
-			global.$ = jest.fn((el) => el);
-			global.$.each = jest.fn((collection, callback) => {
-				if (Array.isArray(collection)) {
-					collection.forEach((item, index) => callback(index, item));
-				}
-			});
-
-			mockDivResult.find = jest.fn(() => [mockTr]);
-
-			const result = ImportFromCsv.getDataToImport(mockDivResult, tabLink);
+			const result = ImportFromCsv.getDataToImport(divResult, { name: '0' });
 
 			expect(result).toEqual([]);
 		});
 
 		test('should handle missing columns gracefully', () => {
-			const tabLink = {
-				name: '0',
-				email: '1',
-				phone: '2' // This column doesn't exist
-			};
+			const divResult = setupDivResult([['John', 'john@test.com']]);
+			// tabLink references key "2" which has no td
 
-			const mockTr = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.import_line_checkbox:checked') {
-						return { length: 1 };
-					}
-					if (selector === 'td[data-key="0"]') {
-						return { length: 1, text: jest.fn(() => 'John') };
-					}
-					if (selector === 'td[data-key="1"]') {
-						return { length: 1, text: jest.fn(() => 'john@test.com') };
-					}
-					if (selector === 'td[data-key="2"]') {
-						return { length: 0 }; // Missing
-					}
-					return { length: 0 };
-				})
-			};
-
-			global.$ = jest.fn((el) => el);
-			global.$.each = jest.fn((collection, callback) => {
-				if (Array.isArray(collection)) {
-					collection.forEach((item, index) => callback(index, item));
-				} else {
-					Object.keys(collection).forEach((key) => callback(key, collection[key]));
-				}
-			});
-
-			mockDivResult.find = jest.fn(() => [mockTr]);
-
-			const result = ImportFromCsv.getDataToImport(mockDivResult, tabLink);
+			const result = ImportFromCsv.getDataToImport(divResult, { name: '0', email: '1', phone: '2' });
 
 			expect(result).toHaveLength(1);
-			expect(result[0]).toEqual({
-				line: 1,
-				name: 'John',
-				email: 'john@test.com'
-				// phone is not included because td was not found
-			});
+			expect(result[0]).toEqual({ line: 1, name: 'John', email: 'john@test.com' });
+			expect(result[0].phone).toBeUndefined();
+		});
+
+		test('should include line number in each result', () => {
+			const divResult = setupDivResult([['A'], ['B'], ['C']]);
+
+			const result = ImportFromCsv.getDataToImport(divResult, { val: '0' });
+
+			expect(result[0].line).toBe(1);
+			expect(result[1].line).toBe(2);
+			expect(result[2].line).toBe(3);
+		});
+
+		test('should return empty array for empty table', () => {
+			const divResult = setupDivResult([]);
+
+			const result = ImportFromCsv.getDataToImport(divResult, { name: '0' });
+
+			expect(result).toEqual([]);
 		});
 	});
 
 	describe('displayFormMatching', () => {
 		test('should create select elements for each import column', () => {
-			const importColumns = {
-				name: 'Name',
-				email: 'Email',
-				phone: 'Phone'
-			};
+			const formMatching = setupFormMatching();
+			const importColumns = { name: 'Name', email: 'Email', phone: 'Phone' };
 			const header = ['Name', 'Email', 'Phone', 'Address'];
-			const hasHeader = true;
 
-			const mockSelectContent = {
-				addClass: jest.fn().mockReturnThis(),
-				empty: jest.fn().mockReturnThis(),
-				append: jest.fn()
-			};
+			ImportFromCsv.displayFormMatching(formMatching, importColumns, header, true);
 
-			const mockDiv = {
-				addClass: jest.fn().mockReturnThis()
-			};
-
-			mockFormMatching.find = jest.fn((selector) => {
-				if (selector === '.import_matching_select_content') {
-					return mockSelectContent;
-				}
-				if (selector === 'div.errors') {
-					return mockDiv;
-				}
-				return { addClass: jest.fn().mockReturnThis(), removeClass: jest.fn().mockReturnThis() };
-			});
-
-			mockFormMatching.removeClass = jest.fn().mockReturnThis();
-
-			ImportFromCsv.displayFormMatching(mockFormMatching, importColumns, header, hasHeader);
-
-			expect(mockSelectContent.empty).toHaveBeenCalled();
-			expect(mockSelectContent.append).toHaveBeenCalledTimes(3); // name, email, phone
-			expect(mockFormMatching.removeClass).toHaveBeenCalledWith('hide');
+			const selects = formMatching.querySelectorAll('select');
+			expect(selects).toHaveLength(3);
+			expect(selects[0].name).toBe('name');
+			expect(selects[1].name).toBe('email');
+			expect(selects[2].name).toBe('phone');
 		});
 
-		test('should use index as value when hasHeader is false', () => {
-			const importColumns = { field1: 'Field 1' };
+		test('should populate options from header', () => {
+			const formMatching = setupFormMatching();
+			const header = ['Col A', 'Col B'];
+
+			ImportFromCsv.displayFormMatching(formMatching, { field: 'Field' }, header, true);
+
+			const select = formMatching.querySelector('select');
+			const optionValues = [...select.options].map(o => o.value);
+			expect(optionValues).toContain('Col A');
+			expect(optionValues).toContain('Col B');
+			expect(optionValues).toContain('-1');
+		});
+
+		test('should use index as option value when hasHeader is false', () => {
+			const formMatching = setupFormMatching();
 			const header = ['Col1', 'Col2'];
-			const hasHeader = false;
 
-			const mockSelectContent = {
-				addClass: jest.fn().mockReturnThis(),
-				empty: jest.fn().mockReturnThis(),
-				append: jest.fn()
-			};
+			ImportFromCsv.displayFormMatching(formMatching, { field: 'Field' }, header, false);
 
-			mockFormMatching.find = jest.fn((selector) => {
-				if (selector === '.import_matching_select_content') {
-					return mockSelectContent;
-				}
-				return {
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis()
-				};
-			});
+			const select = formMatching.querySelector('select');
+			const optionValues = [...select.options].map(o => o.value);
+			expect(optionValues).toContain('0');
+			expect(optionValues).toContain('1');
+		});
 
-			mockFormMatching.removeClass = jest.fn().mockReturnThis();
+		test('should auto-select option matching column label', () => {
+			const formMatching = setupFormMatching();
+			const importColumns = { name: 'Name', email: 'Email' };
+			const header = ['Name', 'Email', 'Phone'];
 
-			// Just verify it doesn't throw
-			expect(() => {
-				ImportFromCsv.displayFormMatching(mockFormMatching, importColumns, header, hasHeader);
-			}).not.toThrow();
+			ImportFromCsv.displayFormMatching(formMatching, importColumns, header, true);
+
+			const nameSelect = formMatching.querySelector('select[name="name"]');
+			expect(nameSelect.value).toBe('Name');
+
+			const emailSelect = formMatching.querySelector('select[name="email"]');
+			expect(emailSelect.value).toBe('Email');
+		});
+
+		test('should show formMatching and hide errors', () => {
+			const formMatching = setupFormMatching();
+			formMatching.classList.add('hide');
+
+			ImportFromCsv.displayFormMatching(formMatching, { col: 'Col' }, ['Col'], true);
+
+			expect(formMatching.classList.contains('hide')).toBe(false);
+			expect(formMatching.querySelector('div.errors').classList.contains('hide')).toBe(true);
+		});
+
+		test('should clear previous select content', () => {
+			const formMatching = setupFormMatching();
+
+			ImportFromCsv.displayFormMatching(formMatching, { a: 'A' }, ['A'], true);
+			ImportFromCsv.displayFormMatching(formMatching, { b: 'B', c: 'C' }, ['B', 'C'], true);
+
+			const selects = formMatching.querySelectorAll('select');
+			expect(selects).toHaveLength(2);
 		});
 	});
 
 	describe('displayData', () => {
 		test('should create table with header when header is provided', () => {
-			const data = [
-				['John', 'john@example.com'],
-				['Jane', 'jane@example.com']
-			];
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			divResult.classList.add('csv_result', 'hide');
+			document.body.appendChild(divResult);
+
+			const data = [['John', 'john@example.com'], ['Jane', 'jane@example.com']];
 			const header = ['Name', 'Email'];
 
-			const mockTable = {
-				empty: jest.fn().mockReturnThis(),
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn(() => ({
-					each: jest.fn()
-				})),
-				length: 1
-			};
+			ImportFromCsv.displayData(divResult, data, header, formMatching);
 
-			mockDivResult.find = jest.fn((selector) => {
-				if (selector === 'table') {
-					return mockTable;
-				}
-				return { length: 0 };
-			});
-
-			mockDivResult.removeClass = jest.fn().mockReturnThis();
-			mockDivResult.append = jest.fn().mockReturnThis();
-
-			ImportFromCsv.displayData(mockDivResult, data, header, mockFormMatching);
-
-			expect(mockTable.empty).toHaveBeenCalled();
-			expect(mockTable.html).toHaveBeenCalled();
-			const htmlContent = mockTable.html.mock.calls[0][0];
-			expect(htmlContent).toContain('<thead>');
-			expect(htmlContent).toContain('Name');
-			expect(htmlContent).toContain('Email');
-			expect(htmlContent).toContain('<tbody>');
-			expect(htmlContent).toContain('John');
-			expect(htmlContent).toContain('jane@example.com');
-			expect(mockDivResult.removeClass).toHaveBeenCalledWith('hide');
+			const thead = divResult.querySelector('thead');
+			expect(thead).not.toBeNull();
+			expect(thead.textContent).toContain('Name');
+			expect(thead.textContent).toContain('Email');
 		});
 
 		test('should create table without header when header is null', () => {
-			const data = [
-				['John', 'john@example.com']
-			];
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
 
-			const mockTable = {
-				empty: jest.fn().mockReturnThis(),
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn(() => ({
-					each: jest.fn()
-				})),
-				length: 1
-			};
+			ImportFromCsv.displayData(divResult, [['John']], null, formMatching);
 
-			mockDivResult.find = jest.fn(() => mockTable);
-			mockDivResult.removeClass = jest.fn().mockReturnThis();
-
-			ImportFromCsv.displayData(mockDivResult, data, null, mockFormMatching);
-
-			const htmlContent = mockTable.html.mock.calls[0][0];
-			expect(htmlContent).not.toContain('<thead>');
-			expect(htmlContent).toContain('<tbody>');
+			expect(divResult.querySelector('thead')).toBeNull();
+			expect(divResult.querySelector('tbody')).not.toBeNull();
 		});
 
 		test('should add checkboxes for each row', () => {
-			const data = [['John'], ['Jane']];
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
 
-			const mockTable = {
-				empty: jest.fn().mockReturnThis(),
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn(() => ({
-					each: jest.fn()
-				})),
-				length: 1
-			};
+			ImportFromCsv.displayData(divResult, [['John'], ['Jane']], null, formMatching);
 
-			mockDivResult.find = jest.fn(() => mockTable);
-			mockDivResult.removeClass = jest.fn().mockReturnThis();
+			const checkboxes = divResult.querySelectorAll('input.import_line_checkbox');
+			expect(checkboxes).toHaveLength(2);
+			expect(checkboxes[0].checked).toBe(true);
+		});
 
-			ImportFromCsv.displayData(mockDivResult, data, null, mockFormMatching);
+		test('should set data-line attribute on rows', () => {
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
 
-			const htmlContent = mockTable.html.mock.calls[0][0];
-			expect(htmlContent).toContain('import_line_checkbox');
-			expect(htmlContent).toContain('checked="checked"');
-			expect(htmlContent).toContain('data-line="1"');
-			expect(htmlContent).toContain('data-line="2"');
+			ImportFromCsv.displayData(divResult, [['A'], ['B'], ['C']], null, formMatching);
+
+			expect(divResult.querySelector('tr[data-line="1"]')).not.toBeNull();
+			expect(divResult.querySelector('tr[data-line="2"]')).not.toBeNull();
+			expect(divResult.querySelector('tr[data-line="3"]')).not.toBeNull();
 		});
 
 		test('should create table if it does not exist', () => {
-			const data = [['test']];
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
 
-			mockDivResult.find = jest.fn((selector) => {
-				if (selector === 'table') {
-					return { length: 0 }; // No table exists
-				}
-				return {
-					each: jest.fn()
-				};
-			});
+			ImportFromCsv.displayData(divResult, [['test']], null, formMatching);
 
-			let appendedTable = null;
-			mockDivResult.append = jest.fn((html) => {
-				appendedTable = html;
-				// After append, table exists
-				mockDivResult.find = jest.fn((sel) => {
-					if (sel === 'table') {
-						return {
-							empty: jest.fn().mockReturnThis(),
-							html: jest.fn().mockReturnThis(),
-							find: jest.fn(() => ({ each: jest.fn() })),
-							length: 1
-						};
-					}
-					return { each: jest.fn() };
-				});
-				return mockDivResult;
-			});
-
-			mockDivResult.removeClass = jest.fn().mockReturnThis();
-
-			ImportFromCsv.displayData(mockDivResult, data, null, mockFormMatching);
-
-			expect(mockDivResult.append).toHaveBeenCalledWith('<table class="table table-sm table-bordered"></table>');
+			expect(divResult.querySelector('table')).not.toBeNull();
+			expect(divResult.querySelector('table').classList.contains('table')).toBe(true);
 		});
 
 		test('should handle null values in data', () => {
-			const data = [
-				['John', null, 'test@example.com']
-			];
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
 
-			const mockTable = {
-				empty: jest.fn().mockReturnThis(),
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn(() => ({
-					each: jest.fn()
-				})),
-				length: 1
-			};
+			ImportFromCsv.displayData(divResult, [['John', null, 'test@example.com']], null, formMatching);
 
-			mockDivResult.find = jest.fn(() => mockTable);
-			mockDivResult.removeClass = jest.fn().mockReturnThis();
+			const tds = divResult.querySelectorAll('tbody td[data-key]');
+			expect(tds[0].textContent).toBe('John');
+			expect(tds[1].textContent).toBe('');
+			expect(tds[2].textContent).toBe('test@example.com');
+		});
 
-			ImportFromCsv.displayData(mockDivResult, data, null, mockFormMatching);
+		test('should show divResult after populating data', () => {
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			divResult.classList.add('hide');
+			document.body.appendChild(divResult);
 
-			const htmlContent = mockTable.html.mock.calls[0][0];
-			expect(htmlContent).toContain('John');
-			expect(htmlContent).toContain('test@example.com');
-			// Null should be replaced with empty string
-			expect(htmlContent).toMatch(/data-key="1">(<\/td>|<)/);
+			ImportFromCsv.displayData(divResult, [['A']], null, formMatching);
+
+			expect(divResult.classList.contains('hide')).toBe(false);
+		});
+
+		test('should add edit links to each row', () => {
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
+
+			ImportFromCsv.displayData(divResult, [['A'], ['B']], null, formMatching);
+
+			const editLinks = divResult.querySelectorAll('a.import_edit_line');
+			expect(editLinks).toHaveLength(2);
+		});
+
+		test('should handle object-based rows (with header)', () => {
+			const formMatching = setupFormMatching();
+			const divResult = document.createElement('div');
+			document.body.appendChild(divResult);
+
+			const data = [{ name: 'John', email: 'john@example.com' }];
+			const header = ['name', 'email'];
+
+			ImportFromCsv.displayData(divResult, data, header, formMatching);
+
+			expect(divResult.querySelector('td[data-key="name"]').textContent).toBe('John');
+			expect(divResult.querySelector('td[data-key="email"]').textContent).toBe('john@example.com');
 		});
 	});
 
 	describe('initEditLink', () => {
-		test('should setup edit link with click handler', () => {
-			const mockTd = {
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn().mockReturnThis()
-			};
+		test('should set up edit link in td', () => {
+			const { editTd, fm } = setupTableWithRow();
 
-			let clickHandler = null;
-			mockTd.find = jest.fn((selector) => {
-				if (selector === 'a.import_edit_line') {
-					return {
-						click: jest.fn((handler) => {
-							clickHandler = handler;
-							return mockTd;
-						})
-					};
-				}
-				return mockTd;
-			});
+			ImportFromCsv.initEditLink(fm, editTd);
 
-			global.$ = jest.fn((selector) => {
-				if (typeof selector === 'string' && selector.includes('<a')) {
-					return mockTd;
-				}
-				return mockTd;
-			});
-
-			ImportFromCsv.initEditLink(mockFormMatching, mockTd);
-
-			expect(mockTd.html).toHaveBeenCalled();
-			expect(clickHandler).toBeDefined();
+			expect(editTd.querySelector('a.import_edit_line')).not.toBeNull();
 		});
 
-		test('should convert td contents to inputs when edit link is clicked', () => {
-			const mockInput = {
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn().mockReturnThis(),
-				val: jest.fn()
-			};
+		test('should convert cells to inputs on click', () => {
+			const { editTd, fm } = setupTableWithRow(['John', 'john@example.com']);
 
-			const mockTdToEdit = {
-				hasClass: jest.fn((className) => false),
-				html: jest.fn(function(value) {
-					if (value !== undefined) return this;
-					return 'John Doe';
-			}),
-				data: jest.fn().mockReturnThis()
-			};
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
 
-			const mockTr = {
-				find: jest.fn((selector) => {
-					if (selector === 'td') {
-						return {
-							each: jest.fn((callback) => {
-								callback(0, mockTdToEdit);
-							})
-						};
-					}
-					return mockInput;
-				})
-			};
+			const inputs = document.querySelectorAll('td[data-key] input[type="text"]');
+			expect(inputs).toHaveLength(2);
+			expect(inputs[0].value).toBe('John');
+			expect(inputs[1].value).toBe('john@example.com');
+		});
 
-			const mockEditTd = {
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn().mockReturnThis(),
-				parent: jest.fn(() => ({ parent: jest.fn(() => mockTr) }))
-			};
+		test('should disable submit button when editing', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
 
-			let clickHandler = null;
-			const mockValidateLink = {
-				click: jest.fn().mockReturnThis()
-			};
-			mockEditTd.find = jest.fn((selector) => {
-				if (selector === 'a.import_edit_line') {
-					return {
-						click: jest.fn((handler) => {
-							clickHandler = handler;
-							return mockEditTd;
-						})
-					};
-				}
-				if (selector === 'a.import_validate_line') {
-					return mockValidateLink;
-				}
-				if (selector === 'td input[type="text"]') {
-					return { length: 1 };
-				}
-				return mockEditTd;
-			});
-			mockEditTd.closest = jest.fn(() => ({
-				find: jest.fn((selector) => {
-					if (selector === 'td input[type="text"]') {
-						return { length: 1 };
-					}
-					return { length: 0 };
-				})
-			}));
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
 
-			global.$ = jest.fn((selector) => {
-				if (typeof selector === 'string') {
-					if (selector.includes('<a')) {
-						return mockEditTd;
-					}
-					if (selector.includes('<input')) {
-						return mockInput;
-					}
-				}
-				if (selector === mockTdToEdit) return mockTdToEdit;
-				return { parent: jest.fn(() => ({ parent: jest.fn(() => mockTr) })) };
-			});
+			expect(fm.querySelector('button[type="submit"]').disabled).toBe(true);
+		});
 
-			mockFormMatching.find = jest.fn(() => ({
-				prop: jest.fn().mockReturnThis()
-			}));
+		test('should save original cell value in dataset', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
 
-			ImportFromCsv.initEditLink(mockFormMatching, mockEditTd);
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
 
-			// Trigger the click
-			clickHandler();
+			const dataCell = document.querySelector('td[data-key="0"]');
+			expect(dataCell.dataset.original_value).toBe('John');
+		});
 
-			expect(mockTdToEdit.data).toHaveBeenCalledWith('original_value', 'John Doe');
-			expect(mockTdToEdit.html).toHaveBeenCalled();
+		test('should replace edit link with validate link after click', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
+
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
+
+			expect(editTd.querySelector('a.import_edit_line')).toBeNull();
+			expect(editTd.querySelector('a.import_validate_line')).not.toBeNull();
+		});
+
+		test('should not affect select_line_checkbox or edit_line_button cells', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
+
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
+
+			const checkboxTd = document.querySelector('td.select_line_checkbox');
+			expect(checkboxTd.querySelector('input[type="text"]')).toBeNull();
 		});
 	});
 
 	describe('initValidateLine', () => {
-		test('should setup validate link with click handler', () => {
-			const mockTd = {
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn().mockReturnThis()
-			};
+		test('should set up validate link in td', () => {
+			const { editTd, fm } = setupTableWithRow();
 
-			let clickHandler = null;
-			mockTd.find = jest.fn((selector) => {
-				if (selector === 'a.import_validate_line') {
-					return {
-						click: jest.fn((handler) => {
-							clickHandler = handler;
-							return mockTd;
-						})
-					};
-				}
-				return mockTd;
-			});
+			ImportFromCsv.initValidateLine(fm, editTd);
 
-			global.$ = jest.fn((selector) => {
-				if (typeof selector === 'string' && selector.includes('<a')) {
-					return mockTd;
-				}
-				return mockTd;
-			});
-
-			ImportFromCsv.initValidateLine(mockFormMatching, mockTd);
-
-			expect(mockTd.html).toHaveBeenCalled();
-			expect(clickHandler).toBeDefined();
+			expect(editTd.querySelector('a.import_validate_line')).not.toBeNull();
 		});
 
-		test('should convert inputs back to text when validate is clicked', () => {
-			const mockInput = {
-				val: jest.fn(() => 'Updated Value')
-			};
+		test('should convert inputs back to text on click', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
 
-			const mockTdWithInput = {
-				hasClass: jest.fn((className) => false),
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn(() => mockInput)
-			};
+			// First enter edit mode
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
 
-			const mockTr = {
-				find: jest.fn((selector) => {
-					if (selector === 'td') {
-						return {
-							each: jest.fn((callback) => {
-								callback(0, mockTdWithInput);
-							})
-						};
-					}
-					return { length: 0 };
-				})
-			};
+			// Now validate
+			editTd.querySelector('a.import_validate_line').click();
 
-			const mockValidateTd = {
-				html: jest.fn().mockReturnThis(),
-				find: jest.fn().mockReturnThis(),
-				parent: jest.fn(() => ({ parent: jest.fn(() => mockTr) })),
-				closest: jest.fn(() => ({
-					find: jest.fn(() => ({ length: 0 }))
-				}))
-			};
-
-			let clickHandler = null;
-			mockValidateTd.find = jest.fn((selector) => {
-				if (selector === 'a.import_validate_line') {
-					return {
-						click: jest.fn((handler) => {
-							clickHandler = handler;
-							return mockValidateTd;
-						})
-					};
-				}
-				if (selector === 'a.import_edit_line') {
-					return { click: jest.fn().mockReturnThis() };
-				}
-				if (selector === 'td input[type="text"]') {
-					return { length: 0 };
-				}
-				return mockValidateTd;
-			});
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string' && selector.includes('<a')) {
-				return mockValidateTd;
-			}
-			if (selector === mockTdWithInput) return mockTdWithInput;
-			return { parent: jest.fn(() => ({ parent: jest.fn(() => mockTr) })) };
+			const dataCell = document.querySelector('td[data-key="0"]');
+			expect(dataCell.querySelector('input')).toBeNull();
+			expect(dataCell.textContent).toBe('John');
 		});
 
-			mockFormMatching.find = jest.fn(() => ({
-				prop: jest.fn().mockReturnThis()
-			}));
+		test('should use input value when restoring cell content', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
 
-			ImportFromCsv.initValidateLine(mockFormMatching, mockValidateTd);
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
 
-			// Trigger the click
-			clickHandler();
+			// Change input value
+			document.querySelector('td[data-key="0"] input').value = 'Jane';
 
-			expect(mockTdWithInput.html).toHaveBeenCalledWith('Updated Value');
+			editTd.querySelector('a.import_validate_line').click();
+
+			expect(document.querySelector('td[data-key="0"]').textContent).toBe('Jane');
+		});
+
+		test('should re-enable submit button when no inputs remain', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
+			fm.querySelector('button[type="submit"]').disabled = true;
+
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
+			editTd.querySelector('a.import_validate_line').click();
+
+			expect(fm.querySelector('button[type="submit"]').disabled).toBe(false);
+		});
+
+		test('should replace validate link with edit link after click', () => {
+			const { editTd, fm } = setupTableWithRow(['John']);
+
+			ImportFromCsv.initEditLink(fm, editTd);
+			editTd.querySelector('a.import_edit_line').click();
+			editTd.querySelector('a.import_validate_line').click();
+
+			expect(editTd.querySelector('a.import_validate_line')).toBeNull();
+			expect(editTd.querySelector('a.import_edit_line')).not.toBeNull();
 		});
 	});
 });

@@ -4,277 +4,239 @@
 require('../array'); // For removeEmptyValues method
 const { FormHelper, ArrayField, EditValue } = require('../form_helper');
 
+// Helper functions
+function setupForm() {
+	const form = document.createElement('form');
+	document.body.appendChild(form);
+	return form;
+}
+
+function addButton(form, name = 'validate', label = 'Submit') {
+	const btn = document.createElement('button');
+	btn.type = 'submit';
+	btn.name = name;
+	btn.textContent = label;
+	form.appendChild(btn);
+	return btn;
+}
+
+function addInput(form, name, type = 'text', value = '') {
+	const input = document.createElement('input');
+	input.name = name;
+	input.type = type;
+	input.value = value;
+	form.appendChild(input);
+	return input;
+}
+
+function addSelect(form, name, options = []) {
+	const select = document.createElement('select');
+	select.name = name;
+	options.forEach(({ value, text, disabled }) => {
+		const opt = document.createElement('option');
+		opt.value = value;
+		opt.textContent = text;
+		if (disabled) opt.disabled = true;
+		select.appendChild(opt);
+	});
+	form.appendChild(select);
+	return select;
+}
+
+afterEach(() => {
+	document.body.innerHTML = '';
+	jest.clearAllMocks();
+});
+
 describe('FormHelper', () => {
-	let mockForm;
-	let mockButton;
-	let mockInput;
-
-	beforeEach(() => {
-		// Setup common jQuery mocks
-		mockInput = {
-			val: jest.fn().mockReturnThis(),
-			prop: jest.fn().mockReturnThis(),
-			attr: jest.fn().mockReturnThis(),
-			off: jest.fn().mockReturnThis(),
-			click: jest.fn().mockReturnThis(),
-			on: jest.fn().mockReturnThis(),
-			each: jest.fn().mockReturnThis(),
-			filter: jest.fn().mockReturnThis(),
-			data: jest.fn().mockReturnThis(),
-			parent: jest.fn().mockReturnThis(),
-			closest: jest.fn().mockReturnThis(),
-			addClass: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis(),
-			find: jest.fn().mockReturnThis(),
-			remove: jest.fn().mockReturnThis(),
-			append: jest.fn().mockReturnThis(),
-			prepend: jest.fn().mockReturnThis(),
-			before: jest.fn().mockReturnThis(),
-			after: jest.fn().mockReturnThis(),
-			wrap: jest.fn().mockReturnThis(),
-			html: jest.fn().mockReturnThis(),
-			text: jest.fn().mockReturnThis(),
-			css: jest.fn().mockReturnThis(),
-			hasClass: jest.fn(() => false),
-			length: 1,
-			serialize: jest.fn(() => 'field1=value1&field2=value2'),
-			0: document.createElement('form')
-		};
-
-		mockButton = {
-			...mockInput,
-			attr: jest.fn((key, value) => {
-				if (key === 'disabled' && value === undefined) return false;
-				return mockButton;
-			})
-		};
-
-		mockForm = {
-			...mockInput,
-			find: jest.fn((selector) => {
-				if (selector.includes('button[name="validate"]')) return mockButton;
-				if (selector.includes('input[name]:not')) return mockInput;
-				if (selector.includes('select.selectpicker')) return mockInput;
-				if (selector.includes('div.form_errors')) return mockInput;
-				if (selector.includes('.form_errors_content')) return { length: 0 };
-				if (selector.includes('.modal-body')) return { length: 0 };
-				if (selector.includes('.form-group:first')) return mockInput;
-				return mockInput;
-			})
-		};
-
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'function') {
-				// Document ready
-				return mockInput;
-			}
-			if (selector === mockButton || selector === mockInput || selector === mockForm) {
-				return selector;
-			}
-			return mockInput;
-		});
-
-		global.$.each = jest.fn((obj, callback) => {
-			if (Array.isArray(obj)) {
-				obj.forEach((item, idx) => callback(idx, item));
-			} else {
-				Object.keys(obj).forEach(key => callback(key, obj[key]));
-			}
-		});
-	});
-
-	afterEach(() => {
-		delete global.$;
-		jest.clearAllMocks();
-	});
-
 	describe('init', () => {
-		test('should initialize form with default submit button', () => {
+		test('should initialize form with default submit button and return form', () => {
+			const form = setupForm();
+			addButton(form, 'validate', 'Submit');
 			const onSubmitCallback = jest.fn();
 
-			const result = FormHelper.init(mockForm, onSubmitCallback);
+			const result = FormHelper.init(form, onSubmitCallback);
 
-			expect(mockForm.find).toHaveBeenCalledWith('button[name="validate"]');
-			expect(mockButton.off).toHaveBeenCalledWith('click');
-			expect(mockButton.click).toHaveBeenCalled();
-			expect(result).toBe(mockForm);
+			expect(result).toBe(form);
 		});
 
-		test('should initialize form with custom submit button', () => {
+		test('should call callback on button click', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
 			const onSubmitCallback = jest.fn();
-			const customButton = { ...mockButton };
 
-			FormHelper.init(mockForm, onSubmitCallback, customButton);
+			FormHelper.init(form, onSubmitCallback);
 
-			expect(customButton.off).toHaveBeenCalledWith('click');
-			expect(customButton.click).toHaveBeenCalled();
+			btn.click();
+
+			expect(onSubmitCallback).toHaveBeenCalledWith(form, btn);
 		});
 
-		test('should call callback on submit', () => {
+		test('should use custom submit button when provided', () => {
+			const form = setupForm();
+			addInput(form, 'name');
+			const customBtn = document.createElement('button');
+			customBtn.type = 'button';
+			customBtn.name = 'custom';
+			customBtn.textContent = 'Custom';
+			document.body.appendChild(customBtn);
 			const onSubmitCallback = jest.fn();
-			let clickHandler;
 
-			mockButton.click.mockImplementation((handler) => {
-				clickHandler = handler;
-				return mockButton;
-			});
+			FormHelper.init(form, onSubmitCallback, customBtn);
+			customBtn.click();
 
-			FormHelper.init(mockForm, onSubmitCallback);
-
-			// Simulate button click
-			const mockEvent = { preventDefault: jest.fn() };
-			clickHandler.call(mockButton, mockEvent);
-
-			expect(mockButton.data).toHaveBeenCalled();
-			expect(onSubmitCallback).toHaveBeenCalledWith(mockForm, mockButton);
+			expect(onSubmitCallback).toHaveBeenCalledWith(form, customBtn);
 		});
 
-		test('should prevent default on submit', () => {
-			const onSubmitCallback = jest.fn();
-			let clickHandler;
-			const mockEvent = { preventDefault: jest.fn() };
+		test('should call buttonLoader with loading on submit', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+			const loaderSpy = jest.spyOn(FormHelper, 'buttonLoader');
 
-			mockButton.click.mockImplementation((handler) => {
-				clickHandler = handler;
-				return mockButton;
-			});
+			FormHelper.init(form, jest.fn());
+			btn.click();
 
-			FormHelper.init(mockForm, onSubmitCallback);
-			clickHandler.call(mockButton, { preventDefault: () => {} });
-
-			expect(onSubmitCallback).toHaveBeenCalledWith(mockForm, mockButton);
+			expect(loaderSpy).toHaveBeenCalledWith(btn, 'loading');
+			loaderSpy.mockRestore();
 		});
 	});
 
 	describe('reset', () => {
-		test('should reset form fields', () => {
-			mockInput.each.mockImplementation((callback) => {
-				callback(0, {});
-				return mockInput;
-			});
+		test('should reset text input values', () => {
+			const form = setupForm();
+			addButton(form, 'validate', 'Submit');
+			const input = addInput(form, 'name', 'text', 'hello');
 
-			const result = FormHelper.reset(mockForm);
+			const result = FormHelper.reset(form);
 
-			expect(mockInput.val).toHaveBeenCalledWith('');
-			expect(mockInput.off).toHaveBeenCalledWith('change');
-			expect(result).toBe(mockForm);
+			expect(input.value).toBe('');
+			expect(result).toBe(form);
 		});
 
-		test('should reset form with custom submit button', () => {
-			const customButton = { ...mockButton };
+		test('should reset textarea values', () => {
+			const form = setupForm();
+			addButton(form, 'validate', 'Submit');
+			const textarea = document.createElement('textarea');
+			textarea.name = 'bio';
+			textarea.value = 'some text';
+			form.appendChild(textarea);
 
-			FormHelper.reset(mockForm, customButton);
+			FormHelper.reset(form);
 
-			expect(mockForm.find).toHaveBeenCalled();
+			expect(textarea.value).toBe('');
+		});
+
+		test('should not reset checkbox/radio inputs', () => {
+			const form = setupForm();
+			addButton(form, 'validate', 'Submit');
+			const checkbox = addInput(form, 'agree', 'checkbox');
+			checkbox.checked = true;
+
+			FormHelper.reset(form);
+
+			// checkboxes should not be cleared by reset (they match :not([type="checkbox"]) exclusion)
+			// The selector explicitly excludes them
+			expect(checkbox.checked).toBe(true);
+		});
+
+		test('should reset with custom submit button', () => {
+			const form = setupForm();
+			const customBtn = document.createElement('button');
+			customBtn.type = 'button';
+			customBtn.innerHTML = 'Save';
+			document.body.appendChild(customBtn);
+			const input = addInput(form, 'name', 'text', 'hello');
+
+			FormHelper.reset(form, customBtn);
+
+			expect(input.value).toBe('');
 		});
 	});
 
 	describe('populateForm', () => {
 		test('should skip null values', () => {
-			const data = { field1: 'value1', field2: null };
+			const form = setupForm();
+			const input = addInput(form, 'field1', 'text', 'original');
 
-			FormHelper.populateForm(mockForm, data);
+			FormHelper.populateForm(form, { field1: null });
 
-			// Should only process non-null values
-			expect(mockForm.find).toHaveBeenCalled();
+			expect(input.value).toBe('original');
 		});
 
-		test('should handle object values as array select', () => {
-			const selectMock = {
-				find: jest.fn().mockReturnThis(),
-				prop: jest.fn().mockReturnThis(),
-				data: jest.fn().mockReturnThis()
-			};
+		test('should set text input value', () => {
+			const form = setupForm();
+			const input = addInput(form, 'name', 'text', '');
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector.includes('employees_display_type')) return mockInput;
-				if (selector.includes('[]')) return selectMock;
-				return mockInput;
-			});
+			FormHelper.populateForm(form, { name: 'John' });
 
-			const data = { tags: ['tag1', 'tag2'] };
-
-			FormHelper.populateForm(mockForm, data);
-
-			expect(selectMock.find).toHaveBeenCalled();
-			expect(selectMock.data).toHaveBeenCalledWith('default_id', 'tag1,tag2');
+			expect(input.value).toBe('John');
 		});
 
 		test('should handle radio button values', () => {
-			mockInput.prop = jest.fn((key) => {
-				if (key === 'type') return 'radio';
-				return mockInput;
-			});
+			const form = setupForm();
+			const radio1 = addInput(form, 'gender', 'radio', 'male');
+			const radio2 = addInput(form, 'gender', 'radio', 'female');
 
-			const data = { gender: 'male' };
+			FormHelper.populateForm(form, { gender: 'female' });
 
-			FormHelper.populateForm(mockForm, data);
-
-			expect(mockInput.filter).toHaveBeenCalledWith('[value="male"]');
+			expect(radio1.checked).toBe(false);
+			expect(radio2.checked).toBe(true);
 		});
 
 		test('should handle checkbox values', () => {
-			mockInput.prop = jest.fn((key) => {
-				if (key === 'type') return 'checkbox';
-				return mockInput;
+			const form = setupForm();
+			const cb1 = addInput(form, 'terms', 'checkbox', 'accepted');
+			const cb2 = addInput(form, 'terms', 'checkbox', 'declined');
+
+			FormHelper.populateForm(form, { terms: 'accepted' });
+
+			expect(cb1.checked).toBe(true);
+			expect(cb2.checked).toBe(false);
+		});
+
+		test('should handle object values as array select', () => {
+			const form = setupForm();
+			const select = document.createElement('select');
+			select.name = 'tags[]';
+			select.multiple = true;
+			['tag1', 'tag2', 'tag3'].forEach(v => {
+				const opt = document.createElement('option');
+				opt.value = v;
+				opt.textContent = v;
+				select.appendChild(opt);
 			});
+			form.appendChild(select);
 
-			const data = { terms: 'accepted' };
+			FormHelper.populateForm(form, { tags: ['tag1', 'tag3'] });
 
-			FormHelper.populateForm(mockForm, data);
-
-			expect(mockInput.filter).toHaveBeenCalledWith('[value="accepted"]');
-		});
-
-		test('should handle regular input values', () => {
-			mockInput.prop = jest.fn(() => 'text');
-
-			const data = { name: 'John' };
-
-			FormHelper.populateForm(mockForm, data);
-
-			expect(mockInput.val).toHaveBeenCalled();
-		});
-	});
-
-	describe('reset', () => {
-		test('should reset form fields', () => {
-			mockInput.each.mockImplementation((callback) => {
-				callback(0, document.createElement('input'));
-				return mockInput;
-			});
-
-			const result = FormHelper.reset(mockForm);
-
-			expect(mockForm.find).toHaveBeenCalled();
-			expect(mockInput.each).toHaveBeenCalled();
-			expect(result).toBe(mockForm);
-		});
-
-		test('should reset with custom button', () => {
-			const customButton = { ...mockButton };
-			mockInput.each.mockImplementation(() => mockInput);
-
-			FormHelper.reset(mockForm, customButton);
-
-			expect(mockInput.each).toHaveBeenCalled();
+			expect(select.querySelector('option[value="tag1"]').selected).toBe(true);
+			expect(select.querySelector('option[value="tag2"]').selected).toBe(false);
+			expect(select.querySelector('option[value="tag3"]').selected).toBe(true);
+			expect(select.dataset.default_id).toBe('tag1,tag3');
 		});
 	});
 
 	describe('getFormData', () => {
-		test('should return FormData from form element', () => {
-			const result = FormHelper.getFormData(mockForm);
+		test('should return FormData from native form element', () => {
+			const form = setupForm();
+			addInput(form, 'name', 'text', 'John');
+
+			const result = FormHelper.getFormData(form);
 
 			expect(result).toBeInstanceOf(FormData);
 		});
 	});
 
 	describe('getFormDataQueryString', () => {
-		test('should return serialized form data', () => {
-			const result = FormHelper.getFormDataQueryString(mockForm);
+		test('should return query string from form data', () => {
+			const form = setupForm();
+			addInput(form, 'name', 'text', 'John');
+			addInput(form, 'age', 'text', '30');
 
-			expect(result).toBe('field1=value1&field2=value2');
-			expect(mockForm.serialize).toHaveBeenCalled();
+			const result = FormHelper.getFormDataQueryString(form);
+
+			expect(result).toContain('name=John');
+			expect(result).toContain('age=30');
 		});
 	});
 
@@ -287,338 +249,491 @@ describe('FormHelper', () => {
 			jest.useRealTimers();
 		});
 
-		test('should setup keyup handler with timeout', () => {
+		test('should call callback after keyup + timeout', () => {
+			const form = setupForm();
+			const input = addInput(form, 'search');
 			const callback = jest.fn();
-			let keyupHandler;
 
-			mockInput.on.mockImplementation((event, handler) => {
-				if (event === 'keyup') keyupHandler = handler;
-				return mockInput;
-			});
+			FormHelper.setOnInputChange(input, callback, 500);
 
-			FormHelper.setOnInputChange(mockInput, callback, 500);
-
-			expect(mockInput.on).toHaveBeenCalledWith('keyup', expect.any(Function));
-
-			keyupHandler();
+			input.dispatchEvent(new KeyboardEvent('keyup'));
 			jest.advanceTimersByTime(500);
 
 			expect(callback).toHaveBeenCalled();
 		});
 
-		test('should clear timeout on keydown', () => {
+		test('should clear timeout on keydown after keyup', () => {
+			const form = setupForm();
+			const input = addInput(form, 'search');
 			const callback = jest.fn();
-			let keyupHandler, keydownHandler;
 
-			mockInput.on.mockImplementation((event, handler) => {
-				if (event === 'keyup') keyupHandler = handler;
-				if (event === 'keydown') keydownHandler = handler;
-				return mockInput;
-			});
+			FormHelper.setOnInputChange(input, callback, 500);
 
-			FormHelper.setOnInputChange(mockInput, callback, 500);
-
-			keyupHandler();
-			keydownHandler();
+			input.dispatchEvent(new KeyboardEvent('keyup'));
+			input.dispatchEvent(new KeyboardEvent('keydown'));
 			jest.advanceTimersByTime(500);
 
 			expect(callback).not.toHaveBeenCalled();
 		});
 
-		test('should call callback on focusout', () => {
+		test('should call callback immediately on focusout', () => {
+			const form = setupForm();
+			const input = addInput(form, 'search');
 			const callback = jest.fn();
-			let focusoutHandler;
 
-			mockInput.on.mockImplementation((event, handler) => {
-				if (event === 'focusout') focusoutHandler = handler;
-				return mockInput;
-			});
+			FormHelper.setOnInputChange(input, callback);
 
-			FormHelper.setOnInputChange(mockInput, callback);
-
-			focusoutHandler();
+			input.dispatchEvent(new Event('focusout'));
 
 			expect(callback).toHaveBeenCalled();
 		});
 
 		test('should use default interval of 700ms', () => {
+			const form = setupForm();
+			const input = addInput(form, 'search');
 			const callback = jest.fn();
-			let keyupHandler;
 
-			mockInput.on.mockImplementation((event, handler) => {
-				if (event === 'keyup') keyupHandler = handler;
-				return mockInput;
-			});
+			FormHelper.setOnInputChange(input, callback);
 
-			FormHelper.setOnInputChange(mockInput, callback);
-
-			keyupHandler();
-			jest.advanceTimersByTime(700);
-
+			input.dispatchEvent(new KeyboardEvent('keyup'));
+			jest.advanceTimersByTime(699);
+			expect(callback).not.toHaveBeenCalled();
+			jest.advanceTimersByTime(1);
 			expect(callback).toHaveBeenCalled();
 		});
 	});
 
 	describe('Select methods', () => {
-		test('resetSelectOption should reset select options', () => {
-			const optionMock = {
-				prop: jest.fn().mockReturnThis()
-			};
+		test('resetSelectOption should reset all options', () => {
+			const form = setupForm();
+			const select = addSelect(form, 'category', [
+				{ value: '', text: '-- choose --' },
+				{ value: '1', text: 'One' },
+				{ value: '2', text: 'Two', disabled: true },
+			]);
+			select.querySelector('option[value="1"]').selected = true;
+			select.querySelector('option[value="2"]').disabled = true;
 
-			mockForm.find = jest.fn(() => optionMock);
+			FormHelper.resetSelectOption(form, 'category');
 
-			FormHelper.resetSelectOption(mockForm, 'category');
-
-			expect(mockForm.find).toHaveBeenCalledWith('select[name="category"] option');
-			expect(optionMock.prop).toHaveBeenCalledWith('disabled', false);
-			expect(optionMock.prop).toHaveBeenCalledWith('selected', false);
+			expect(select.querySelector('option[value="1"]').disabled).toBe(false);
+			expect(select.querySelector('option[value="1"]').selected).toBe(false);
+			expect(select.querySelector('option[value="2"]').disabled).toBe(false);
 		});
 
-		test('setSelectedSelectOption should select option', () => {
-			const optionMock = {
-				prop: jest.fn().mockReturnThis()
-			};
+		test('setSelectedSelectOption should select specific option', () => {
+			const form = setupForm();
+			addSelect(form, 'category', [
+				{ value: '1', text: 'One' },
+				{ value: '5', text: 'Five' },
+			]);
 
-			mockForm.find = jest.fn(() => optionMock);
+			FormHelper.setSelectedSelectOption(form, 'category', '5');
 
-			FormHelper.setSelectedSelectOption(mockForm, 'category', '5');
-
-			expect(mockForm.find).toHaveBeenCalledWith('select[name="category"] option[value="5"]');
-			expect(optionMock.prop).toHaveBeenCalledWith('selected', true);
+			expect(form.querySelector('select[name="category"] option[value="5"]').selected).toBe(true);
 		});
 
 		test('setSelectedSelectOptions should select multiple options', () => {
-			const optionMock = {
-				prop: jest.fn().mockReturnThis()
-			};
+			const form = setupForm();
+			const select = document.createElement('select');
+			select.name = 'tags';
+			select.multiple = true;
+			['1', '2', '3'].forEach(v => {
+				const opt = document.createElement('option');
+				opt.value = v;
+				select.appendChild(opt);
+			});
+			form.appendChild(select);
 
-			mockForm.find = jest.fn(() => optionMock);
+			FormHelper.setSelectedSelectOptions(form, 'tags', ['1', '3']);
 
-			FormHelper.setSelectedSelectOptions(mockForm, 'tags', ['1', '2', '3']);
-
-			expect(mockForm.find).toHaveBeenCalledTimes(3);
-			expect(optionMock.prop).toHaveBeenCalledWith('selected', true);
+			expect(select.querySelector('option[value="1"]').selected).toBe(true);
+			expect(select.querySelector('option[value="2"]').selected).toBe(false);
+			expect(select.querySelector('option[value="3"]').selected).toBe(true);
 		});
 
-		test('disableSelectOption should disable option', () => {
-			const optionMock = {
-				prop: jest.fn().mockReturnThis()
-			};
+		test('disableSelectOption should disable specific option', () => {
+			const form = setupForm();
+			addSelect(form, 'category', [
+				{ value: '1', text: 'One' },
+				{ value: '5', text: 'Five' },
+			]);
 
-			mockForm.find = jest.fn(() => optionMock);
+			FormHelper.disableSelectOption(form, 'category', '5');
 
-			FormHelper.disableSelectOption(mockForm, 'category', '5');
-
-			expect(mockForm.find).toHaveBeenCalledWith('select[name="category"] option[value="5"]');
-			expect(optionMock.prop).toHaveBeenCalledWith('disabled', true);
+			expect(form.querySelector('select[name="category"] option[value="5"]').disabled).toBe(true);
+			expect(form.querySelector('select[name="category"] option[value="1"]').disabled).toBe(false);
 		});
 
 		test('disableSelectOptions should disable multiple options', () => {
-			const optionMock = {
-				prop: jest.fn().mockReturnThis()
-			};
+			const form = setupForm();
+			addSelect(form, 'category', [
+				{ value: '1', text: 'One' },
+				{ value: '2', text: 'Two' },
+				{ value: '3', text: 'Three' },
+			]);
 
-			mockForm.find = jest.fn(() => optionMock);
+			FormHelper.disableSelectOptions(form, 'category', ['1', '2']);
 
-			FormHelper.disableSelectOptions(mockForm, 'category', ['1', '2']);
-
-			expect(mockForm.find).toHaveBeenCalledTimes(2);
-			expect(optionMock.prop).toHaveBeenCalledWith('disabled', true);
+			expect(form.querySelector('option[value="1"]').disabled).toBe(true);
+			expect(form.querySelector('option[value="2"]').disabled).toBe(true);
+			expect(form.querySelector('option[value="3"]').disabled).toBe(false);
 		});
 
 		test('countSelectOptions should count non-disabled options', () => {
-			const optionMock = {
-				length: 5
-			};
+			const form = setupForm();
+			addSelect(form, 'category', [
+				{ value: '1', text: 'One' },
+				{ value: '2', text: 'Two', disabled: true },
+				{ value: '3', text: 'Three' },
+				{ value: '4', text: 'Four', disabled: true },
+				{ value: '5', text: 'Five' },
+			]);
 
-			mockForm.find = jest.fn(() => optionMock);
+			const count = FormHelper.countSelectOptions(form, 'category');
 
-			const count = FormHelper.countSelectOptions(mockForm, 'category');
-
-			expect(mockForm.find).toHaveBeenCalledWith('select[name="category"] option:not([disabled])');
-			expect(count).toBe(5);
+			expect(count).toBe(3);
 		});
 	});
 
 	describe('Checkbox methods', () => {
 		test('getCheckedValues should return checked values', () => {
-			const mockCheckboxes = {
-				map: jest.fn((callback) => {
-					const results = [
-						callback.call({ checked: true, value: 'option1' }),
-						callback.call({ checked: false, value: 'option2' }),
-						callback.call({ checked: true, value: 'option3' })
-					];
-					return { get: () => results.filter(r => r !== undefined) };
-				})
-			};
+			const form = setupForm();
+			const cb1 = addInput(form, 'opt', 'checkbox', 'option1');
+			const cb2 = addInput(form, 'opt', 'checkbox', 'option2');
+			const cb3 = addInput(form, 'opt', 'checkbox', 'option3');
+			cb1.checked = true;
+			cb3.checked = true;
 
-			const result = FormHelper.getCheckedValues(mockCheckboxes);
+			const result = FormHelper.getCheckedValues(form.querySelectorAll('[name="opt"]'));
 
 			expect(result).toEqual(['option1', 'option3']);
 		});
 
 		test('setCheckedValues should check specified values', () => {
-			const parentMock = {
-				find: jest.fn().mockReturnThis(),
-				prop: jest.fn().mockReturnThis()
-			};
+			const form = setupForm();
+			const container = document.createElement('div');
+			form.appendChild(container);
+			const cb1 = document.createElement('input');
+			cb1.type = 'checkbox'; cb1.value = 'value1';
+			const cb2 = document.createElement('input');
+			cb2.type = 'checkbox'; cb2.value = 'value2';
+			const cb3 = document.createElement('input');
+			cb3.type = 'checkbox'; cb3.value = 'value3';
+			container.appendChild(cb1);
+			container.appendChild(cb2);
+			container.appendChild(cb3);
 
-			mockInput.parent = jest.fn(() => parentMock);
+			FormHelper.setCheckedValues(container.querySelectorAll('input'), ['value1', 'value3']);
 
-			FormHelper.setCheckedValues(mockInput, ['value1', 'value2']);
-
-			expect(parentMock.find).toHaveBeenCalledWith('[value="value1"]');
-			expect(parentMock.find).toHaveBeenCalledWith('[value="value2"]');
-			expect(parentMock.prop).toHaveBeenCalledWith('checked', true);
+			expect(cb1.checked).toBe(true);
+			expect(cb2.checked).toBe(false);
+			expect(cb3.checked).toBe(true);
 		});
 
-		test('getInputListValues should return all input values', () => {
-			const mockInputs = {
-				map: jest.fn((callback) => {
-					const results = [
-						callback.call({ value: 'value1' }),
-						callback.call({ value: 'value2' }),
-						callback.call({ value: '' })
-					];
-					return {
-						get: () => results.filter(r => r.length > 0)
-					};
-				})
-			};
+		test('getInputListValues should return non-empty input values', () => {
+			const form = setupForm();
+			const i1 = addInput(form, 'item', 'text', 'value1');
+			const i2 = addInput(form, 'item', 'text', 'value2');
+			const i3 = addInput(form, 'item', 'text', '');
 
-			const result = FormHelper.getInputListValues(mockInputs);
+			const result = FormHelper.getInputListValues(form.querySelectorAll('[name="item"]'));
 
 			expect(result).toEqual(['value1', 'value2']);
 		});
 	});
 
 	describe('initTypeFields', () => {
-		test('should wrap password fields with toggle button', () => {
-			const passwordInput = {
-				wrap: jest.fn().mockReturnThis(),
-				after: jest.fn().mockReturnThis()
-			};
+		test('should wrap password fields with input-group.password', () => {
+			const form = setupForm();
+			const input = addInput(form, 'password', 'password');
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector === 'input[type="password"]') return passwordInput;
-				if (selector.includes('input[type="date"]')) return { length: 0 };
-				if (selector.includes('input[type="time"]')) return { length: 0 };
-				return mockInput;
-			});
+			FormHelper.initTypeFields(form);
 
-			FormHelper.initTypeFields(mockForm);
-
-			expect(passwordInput.wrap).toHaveBeenCalled();
-			expect(passwordInput.after).toHaveBeenCalled();
+			const wrapper = form.querySelector('.input-group.password');
+			expect(wrapper).not.toBeNull();
+			expect(wrapper.querySelector('input[type="password"]')).not.toBeNull();
 		});
 
-		test('should handle date inputs when Modernizr not available', () => {
-			const dateInput = {
-				css: jest.fn().mockReturnThis(),
-				length: 1
-			};
+		test('should add toggle button span inside wrapper', () => {
+			const form = setupForm();
+			addInput(form, 'password', 'password');
 
-			const passwordInput = {
-				wrap: jest.fn().mockReturnThis(),
-				after: jest.fn().mockReturnThis(),
-				length: 0
-			};
+			FormHelper.initTypeFields(form);
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector.includes('input[type="date"]')) return dateInput;
-				if (selector.includes('input[type="time"]')) return { length: 0 };
-				if (selector === 'input[type="password"]') return passwordInput;
-				return mockInput;
-			});
+			const span = form.querySelector('.input-group.password .input-group-text');
+			expect(span).not.toBeNull();
+			expect(span.querySelector('i.fa-eye')).not.toBeNull();
+		});
 
-			global.Modernizr = {
-				inputtypes: {
-					date: false,
-					time: true
-				}
-			};
+		test('should toggle password visibility on icon click', () => {
+			const form = setupForm();
+			addInput(form, 'password', 'password');
 
-			FormHelper.initTypeFields(mockForm);
+			FormHelper.initTypeFields(form);
 
-			expect(dateInput.css).toHaveBeenCalledWith('max-width', '120px');
+			const icon = form.querySelector('.input-group.password i.fa-eye');
+			const passwordInput = form.querySelector('.input-group.password input');
 
+			expect(passwordInput.type).toBe('password');
+			icon.click();
+			expect(passwordInput.type).toBe('text');
+			icon.click();
+			expect(passwordInput.type).toBe('password');
+		});
+
+		test('should set max-width on date inputs when Modernizr.inputtypes.date is false', () => {
+			const form = setupForm();
+			const dateInput = addInput(form, 'mydate', 'date');
+			global.Modernizr = { inputtypes: { date: false, time: true } };
+
+			FormHelper.initTypeFields(form);
+
+			expect(dateInput.style.maxWidth).toBe('120px');
 			delete global.Modernizr;
 		});
 
-		test('should handle time inputs when not supported', () => {
-			const timeInput = {
-				css: jest.fn().mockReturnThis(),
-				attr: jest.fn().mockReturnThis(),
-				length: 1
-			};
+		test('should set placeholder on time inputs when Modernizr.inputtypes.time is false', () => {
+			const form = setupForm();
+			const timeInput = addInput(form, 'mytime', 'time');
+			global.Modernizr = { inputtypes: { date: true, time: false } };
 
-			const passwordInput = {
-				wrap: jest.fn().mockReturnThis(),
-				after: jest.fn().mockReturnThis(),
-				length: 0
-			};
+			FormHelper.initTypeFields(form);
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector.includes('input[type="time"]')) return timeInput;
-				if (selector.includes('[step="1"]')) return timeInput;
-				if (selector.includes('input[type="date"]')) return { length: 0 };
-				if (selector === 'input[type="password"]') return passwordInput;
-				return mockInput;
-			});
-
-			global.Modernizr = {
-				inputtypes: {
-					date: true,
-					time: false
-				}
-			};
-
-			FormHelper.initTypeFields(mockForm);
-
-			expect(timeInput.css).toHaveBeenCalledWith('max-width', '100px');
-			expect(timeInput.attr).toHaveBeenCalledWith('placeholder', 'hh:mm');
-
+			expect(timeInput.style.maxWidth).toBe('100px');
+			expect(timeInput.placeholder).toBe('hh:mm');
 			delete global.Modernizr;
 		});
 
-		test('should skip when Modernizr not defined', () => {
-			const passwordInput = {
-				wrap: jest.fn().mockReturnThis(),
-				after: jest.fn().mockReturnThis(),
-				length: 1
-			};
+		test('should skip Modernizr block when Modernizr not defined', () => {
+			const form = setupForm();
+			addInput(form, 'password', 'password');
 
-			const emptyElement = {
-				length: 0,
-				css: jest.fn().mockReturnThis(),
-				attr: jest.fn().mockReturnThis()
-			};
-
-			mockForm.find = jest.fn((selector) => {
-				if (selector === 'input[type="password"]') return passwordInput;
-				return emptyElement;
-			});
-
-			FormHelper.initTypeFields(mockForm);
-
-			// Should still wrap password fields
-			expect(passwordInput.wrap).toHaveBeenCalled();
+			// Should not throw when Modernizr is undefined
+			expect(() => FormHelper.initTypeFields(form)).not.toThrow();
 		});
 	});
 
 	describe('hideField', () => {
-		test('should hide field form-group', () => {
-			const formGroupMock = {
-				addClass: jest.fn().mockReturnThis()
-			};
+		test('should add hide class to closest .form-group', () => {
+			const form = setupForm();
+			const formGroup = document.createElement('div');
+			formGroup.className = 'form-group';
+			form.appendChild(formGroup);
+			const input = document.createElement('input');
+			formGroup.appendChild(input);
 
-			mockInput.closest = jest.fn(() => formGroupMock);
+			FormHelper.hideField(input);
 
-			FormHelper.hideField(mockInput);
+			expect(formGroup.classList.contains('hide')).toBe(true);
+		});
+	});
 
-			expect(mockInput.closest).toHaveBeenCalledWith('.form-group');
-			expect(formGroupMock.addClass).toHaveBeenCalledWith('hide');
+	describe('hideFormErrors', () => {
+		test('should remove all div.form_errors elements', () => {
+			const form = setupForm();
+			const err1 = document.createElement('div');
+			err1.className = 'form_errors';
+			const err2 = document.createElement('div');
+			err2.className = 'form_errors';
+			form.appendChild(err1);
+			form.appendChild(err2);
+
+			const result = FormHelper.hideFormErrors(form);
+
+			expect(form.querySelectorAll('div.form_errors').length).toBe(0);
+			expect(result).toBe(form);
+		});
+	});
+
+	describe('displayFormErrorsFromText', () => {
+		test('should insert into errorWrapperDiv when provided', () => {
+			const form = setupForm();
+			const wrapper = document.createElement('div');
+			document.body.appendChild(wrapper);
+
+			FormHelper.displayFormErrorsFromText(form, 'Error text', wrapper);
+
+			expect(wrapper.querySelector('.form_errors')).not.toBeNull();
+			expect(wrapper.querySelector('.form_errors').textContent).toBe('Error text');
+		});
+
+		test('should insert into .form_errors_content when exists', () => {
+			const form = setupForm();
+			const container = document.createElement('div');
+			container.className = 'form_errors_content';
+			form.appendChild(container);
+
+			FormHelper.displayFormErrorsFromText(form, 'Error text');
+
+			expect(container.querySelector('.form_errors')).not.toBeNull();
+		});
+
+		test('should insert before first .form-group when present', () => {
+			const form = setupForm();
+			const fg = document.createElement('div');
+			fg.className = 'form-group';
+			form.appendChild(fg);
+
+			FormHelper.displayFormErrorsFromText(form, 'Error text');
+
+			const errors = form.querySelector('.form_errors');
+			expect(errors).not.toBeNull();
+			// The error div should be before the form-group
+			expect(form.children[0].classList.contains('form_errors')).toBe(true);
+		});
+
+		test('should insert before row grandparent when form-group is inside a .row', () => {
+			const form = setupForm();
+			const row = document.createElement('div');
+			row.className = 'row';
+			form.appendChild(row);
+			const col = document.createElement('div');
+			col.className = 'col';
+			row.appendChild(col);
+			const fg = document.createElement('div');
+			fg.className = 'form-group';
+			col.appendChild(fg);
+
+			FormHelper.displayFormErrorsFromText(form, 'Error text');
+
+			// Error should be inserted before the .row
+			const errors = form.querySelector('.form_errors');
+			expect(errors).not.toBeNull();
+			expect(form.children[0].classList.contains('form_errors')).toBe(true);
+		});
+
+		test('should prepend to form when no other location found', () => {
+			const form = setupForm();
+
+			FormHelper.displayFormErrorsFromText(form, 'Error text');
+
+			expect(form.children[0].classList.contains('form_errors')).toBe(true);
+		});
+
+		test('should place errors inside modal-body when present', () => {
+			const form = setupForm();
+			const modalBody = document.createElement('div');
+			modalBody.className = 'modal-body';
+			form.appendChild(modalBody);
+
+			FormHelper.displayFormErrorsFromText(form, 'Error text');
+
+			// The form_errors should be inside modal-body (prepended)
+			expect(modalBody.querySelector('.form_errors')).not.toBeNull();
+		});
+	});
+
+	describe('buttonLoader', () => {
+		test('should disable button and set loading text on loading action', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+
+			FormHelper.buttonLoader(btn, 'loading');
+
+			expect(btn.disabled).toBe(true);
+			expect(btn.classList.contains('disabled')).toBe(true);
+			expect(btn.innerHTML).toContain('fa-spin');
+		});
+
+		test('should not process if already disabled', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+			btn.disabled = true;
+			const originalHTML = btn.innerHTML;
+
+			FormHelper.buttonLoader(btn, 'loading');
+
+			expect(btn.innerHTML).toBe(originalHTML);
+		});
+
+		test('should restore original text on reset', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+
+			FormHelper.buttonLoader(btn, 'loading');
+			FormHelper.buttonLoader(btn, 'reset');
+
+			expect(btn.innerHTML).toBe('Submit');
+			expect(btn.disabled).toBe(false);
+			expect(btn.classList.contains('disabled')).toBe(false);
+		});
+
+		test('should use data-load-text when provided', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+			btn.dataset.loadText = 'Loading...';
+
+			FormHelper.buttonLoader(btn, 'start');
+
+			expect(btn.innerHTML).toBe('Loading...');
+		});
+
+		test('should use data-loading-text when provided', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+			btn.dataset.loadingText = 'Custom...';
+
+			FormHelper.buttonLoader(btn, 'start');
+
+			expect(btn.innerHTML).toBe('Custom...');
+		});
+
+		test('should return the button element', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+
+			const result = FormHelper.buttonLoader(btn, 'reset');
+
+			expect(result).toBe(btn);
+		});
+	});
+
+	describe('getInputValue', () => {
+		test('should return null for undefined input', () => {
+			expect(FormHelper.getInputValue(undefined)).toBeNull();
+		});
+
+		test('should return null for null input', () => {
+			expect(FormHelper.getInputValue(null)).toBeNull();
+		});
+
+		test('should return null for empty string value', () => {
+			const form = setupForm();
+			const input = addInput(form, 'name', 'text', '');
+
+			expect(FormHelper.getInputValue(input)).toBeNull();
+		});
+
+		test('should return value when present', () => {
+			const form = setupForm();
+			const input = addInput(form, 'name', 'text', 'test value');
+
+			expect(FormHelper.getInputValue(input)).toBe('test value');
+		});
+	});
+
+	describe('getLinesOfTextarea', () => {
+		test('should split textarea by newlines and filter empty', () => {
+			const form = setupForm();
+			const textarea = document.createElement('textarea');
+			textarea.value = 'line1\nline2\nline3';
+			form.appendChild(textarea);
+
+			const result = FormHelper.getLinesOfTextarea(textarea);
+
+			expect(result).toEqual(['line1', 'line2', 'line3']);
+		});
+
+		test('should handle Windows line endings', () => {
+			const form = setupForm();
+			const textarea = document.createElement('textarea');
+			textarea.value = 'line1\r\nline2\r\nline3';
+			form.appendChild(textarea);
+
+			const result = FormHelper.getLinesOfTextarea(textarea);
+
+			expect(result).toEqual(['line1', 'line2', 'line3']);
 		});
 	});
 
@@ -756,16 +871,18 @@ describe('FormHelper', () => {
 
 	describe('displayFormErrors', () => {
 		test('should display errors and reset button', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
 			const errors = { field: 'Error message' };
 			const displaySpy = jest.spyOn(FormHelper, 'displayFormErrorsFromText');
 			const getTextSpy = jest.spyOn(FormHelper, 'getFormErrorText').mockReturnValue('<span>Error</span>');
 			const buttonLoaderSpy = jest.spyOn(FormHelper, 'buttonLoader');
 
-			FormHelper.displayFormErrors(mockForm, mockButton, errors);
+			FormHelper.displayFormErrors(form, btn, errors);
 
 			expect(getTextSpy).toHaveBeenCalledWith(errors);
-			expect(displaySpy).toHaveBeenCalledWith(mockForm, '<span>Error</span>', null);
-			expect(buttonLoaderSpy).toHaveBeenCalledWith(mockButton, 'reset');
+			expect(displaySpy).toHaveBeenCalledWith(form, '<span>Error</span>', null);
+			expect(buttonLoaderSpy).toHaveBeenCalledWith(btn, 'reset');
 
 			displaySpy.mockRestore();
 			getTextSpy.mockRestore();
@@ -773,271 +890,34 @@ describe('FormHelper', () => {
 		});
 
 		test('should work without button', () => {
+			const form = setupForm();
 			const errors = { field: 'Error message' };
 			const displaySpy = jest.spyOn(FormHelper, 'displayFormErrorsFromText');
 			const getTextSpy = jest.spyOn(FormHelper, 'getFormErrorText').mockReturnValue('<span>Error</span>');
 
-			FormHelper.displayFormErrors(mockForm, null, errors);
+			FormHelper.displayFormErrors(form, null, errors);
 
-			expect(displaySpy).toHaveBeenCalledWith(mockForm, '<span>Error</span>', null);
+			expect(displaySpy).toHaveBeenCalledWith(form, '<span>Error</span>', null);
 
 			displaySpy.mockRestore();
 			getTextSpy.mockRestore();
 		});
 
 		test('should use custom error wrapper', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
 			const errors = { field: 'Error message' };
-			const wrapper = { append: jest.fn() };
+			const wrapper = document.createElement('div');
+			document.body.appendChild(wrapper);
 			const displaySpy = jest.spyOn(FormHelper, 'displayFormErrorsFromText');
 			const getTextSpy = jest.spyOn(FormHelper, 'getFormErrorText').mockReturnValue('<span>Error</span>');
 
-			FormHelper.displayFormErrors(mockForm, mockButton, errors, wrapper);
+			FormHelper.displayFormErrors(form, btn, errors, wrapper);
 
-			expect(displaySpy).toHaveBeenCalledWith(mockForm, '<span>Error</span>', wrapper);
+			expect(displaySpy).toHaveBeenCalledWith(form, '<span>Error</span>', wrapper);
 
 			displaySpy.mockRestore();
 			getTextSpy.mockRestore();
-		});
-	});
-
-	describe('displayFormErrorsFromText', () => {
-		test('should append to errorWrapperDiv when provided', () => {
-			const wrapper = {
-				append: jest.fn()
-			};
-
-			FormHelper.displayFormErrorsFromText(mockForm, 'Error text', wrapper);
-
-			expect(wrapper.append).toHaveBeenCalledWith('<div class="alert alert-danger form_errors">Error text</div>');
-		});
-
-		test('should append to .form_errors_content when exists', () => {
-			const errorContent = {
-				append: jest.fn(),
-				length: 1
-			};
-
-			mockForm.find = jest.fn((selector) => {
-				if (selector === '.form_errors_content') return errorContent;
-				return { length: 0 };
-			});
-
-			FormHelper.displayFormErrorsFromText(mockForm, 'Error text');
-
-			expect(errorContent.append).toHaveBeenCalled();
-		});
-
-		test('should prepend to modal-body when exists', () => {
-			const formGroupMock = {
-				parent: jest.fn().mockReturnThis(),
-				hasClass: jest.fn(() => false),
-				before: jest.fn(),
-				length: 1
-			};
-
-			const modalBody = {
-				find: jest.fn((selector) => {
-					if (selector === '.form-group:first') return formGroupMock;
-					return { length: 0 };
-				}),
-				length: 1
-			};
-
-			mockForm.find = jest.fn((selector) => {
-				if (selector === '.form_errors_content') return { length: 0 };
-				if (selector === '.modal-body') return modalBody;
-				if (selector === '.form-group:first') return { length: 0 };
-				return mockInput;
-			});
-
-			FormHelper.displayFormErrorsFromText(mockForm, 'Error text');
-
-			expect(mockForm.find).toHaveBeenCalledWith('.modal-body');
-		});
-
-		test('should insert before first form-group when exists', () => {
-			const formGroup = {
-				parent: jest.fn().mockReturnThis(),
-				hasClass: jest.fn(() => false),
-				before: jest.fn(),
-				length: 1
-			};
-
-			mockForm.find = jest.fn((selector) => {
-				if (selector === '.form_errors_content') return { length: 0 };
-				if (selector === '.modal-body') return { length: 0 };
-				if (selector === '.form-group:first') return formGroup;
-				return mockInput;
-			});
-
-			FormHelper.displayFormErrorsFromText(mockForm, 'Error text');
-
-			expect(formGroup.before).toHaveBeenCalled();
-		});
-
-		test('should insert before row parent when form-group is in row', () => {
-			const parentRow = {
-				parent: jest.fn().mockReturnThis(),
-				hasClass: jest.fn(() => true),
-				before: jest.fn()
-			};
-
-			const formGroup = {
-				parent: jest.fn(() => parentRow),
-				length: 1
-			};
-
-			mockForm.find = jest.fn((selector) => {
-				if (selector === '.form_errors_content') return { length: 0 };
-				if (selector === '.modal-body') return { length: 0 };
-				if (selector === '.form-group:first') return formGroup;
-				return mockInput;
-			});
-
-			FormHelper.displayFormErrorsFromText(mockForm, 'Error text');
-
-			expect(parentRow.before).toHaveBeenCalled();
-		});
-
-		test('should prepend to form when no other location found', () => {
-			mockForm.find = jest.fn(() => ({ length: 0 }));
-			mockForm.prepend = jest.fn();
-
-			FormHelper.displayFormErrorsFromText(mockForm, 'Error text');
-
-			expect(mockForm.prepend).toHaveBeenCalledWith('<div class="alert alert-danger form_errors">Error text</div>');
-		});
-	});
-
-	describe('buttonLoader', () => {
-		test('should disable button on loading', () => {
-			mockButton.attr.mockImplementation((key, value) => {
-				if (key === 'disabled' && value === undefined) return false;
-				return mockButton;
-			});
-			mockButton.data.mockImplementation((key, value) => {
-				if (key === 'btn-text') return 'Original Text';
-				return mockButton;
-			});
-
-			FormHelper.buttonLoader(mockButton, 'loading');
-
-			expect(mockButton.attr).toHaveBeenCalledWith('disabled', true);
-			expect(mockButton.addClass).toHaveBeenCalledWith('disabled');
-		});
-
-		test('should not process if already disabled', () => {
-			mockButton.attr.mockImplementation((key) => {
-				if (key === 'disabled') return true;
-				return mockButton;
-			});
-
-			FormHelper.buttonLoader(mockButton, 'loading');
-
-			expect(mockButton.html).not.toHaveBeenCalled();
-		});
-
-		test('should enable button on reset', () => {
-			mockButton.data.mockReturnValue('Original Text');
-
-			FormHelper.buttonLoader(mockButton, 'reset');
-
-			expect(mockButton.html).toHaveBeenCalledWith('Original Text');
-			expect(mockButton.removeClass).toHaveBeenCalledWith('disabled');
-			expect(mockButton.attr).toHaveBeenCalledWith('disabled', false);
-		});
-
-		test('should use load-text when provided', () => {
-			mockButton.attr.mockImplementation((key) => {
-				if (key === 'disabled') return false;
-				return mockButton;
-			});
-			mockButton.data.mockImplementation((key) => {
-				if (key === 'load-text') return 'Loading...';
-				return null;
-			});
-
-			FormHelper.buttonLoader(mockButton, 'start');
-
-			expect(mockButton.html).toHaveBeenCalledWith('Loading...');
-		});
-
-		test('should use loading-text when provided', () => {
-			mockButton.attr.mockImplementation((key) => {
-				if (key === 'disabled') return false;
-				return mockButton;
-			});
-			mockButton.data.mockImplementation((key) => {
-				if (key === 'loading-text') return 'Custom Loading...';
-				return null;
-			});
-
-			FormHelper.buttonLoader(mockButton, 'start');
-
-			expect(mockButton.html).toHaveBeenCalledWith('Custom Loading...');
-		});
-
-		test('should return button object', () => {
-			mockButton.data.mockReturnValue('Text');
-			const result = FormHelper.buttonLoader(mockButton, 'reset');
-
-			expect(result).toBe(mockButton);
-		});
-	});
-
-	describe('getInputValue', () => {
-		test('should return null for undefined input', () => {
-			expect(FormHelper.getInputValue(undefined)).toBeNull();
-		});
-
-		test('should return null for empty string value', () => {
-			const mockInput = { val: jest.fn(() => '') };
-			global.$ = jest.fn(() => mockInput);
-
-			expect(FormHelper.getInputValue(mockInput)).toBeNull();
-
-			delete global.$;
-		});
-
-		test('should return value when present', () => {
-			const mockInput = { val: jest.fn(() => 'test value') };
-			global.$ = jest.fn(() => mockInput);
-
-			expect(FormHelper.getInputValue(mockInput)).toBe('test value');
-
-			delete global.$;
-		});
-	});
-
-	describe('getLinesOfTextarea', () => {
-		test('should split textarea by newlines and filter empty', () => {
-			const mockTextarea = {
-				val: jest.fn(() => 'line1\nline2\nline3')
-			};
-
-			const result = FormHelper.getLinesOfTextarea(mockTextarea);
-
-			expect(result).toEqual(['line1', 'line2', 'line3']);
-		});
-
-		test('should handle Windows line endings', () => {
-			const mockTextarea = {
-				val: jest.fn(() => 'line1\r\nline2\r\nline3')
-			};
-
-			const result = FormHelper.getLinesOfTextarea(mockTextarea);
-
-			expect(result).toEqual(['line1', 'line2', 'line3']);
-		});
-	});
-
-	describe('hideFormErrors', () => {
-		test('should remove form_errors div', () => {
-			const result = FormHelper.hideFormErrors(mockForm);
-
-			expect(mockForm.find).toHaveBeenCalledWith('div.form_errors');
-			expect(mockInput.remove).toHaveBeenCalled();
-			expect(result).toBe(mockForm);
 		});
 	});
 });

@@ -1,37 +1,36 @@
 class SortableList {
 	static init(sortableList, clientYOffset=0) {
-		const items = sortableList.find('[draggable="true"]');
-		items.get().forEach(item => {
-			$(item).on('dragstart', () => {
+		sortableList.querySelectorAll('[draggable="true"]').forEach(item => {
+			item.addEventListener('dragstart', () => {
 				// Adding dragging class to an item after a delay
-				setTimeout(() => $(item).addClass('dragging'), 0);
-
+				setTimeout(() => item.classList.add('dragging'), 0);
 			});
 
 			// Removing dragging class from the item on the dragend event
-			$(item).on('dragend', () => $(item).removeClass('dragging'));
+			item.addEventListener('dragend', () => item.classList.remove('dragging'));
 		});
 
 		const initSortableList = (e) => {
 			e.preventDefault();
 
-			const draggingItem = sortableList.find('.dragging');
+			const draggingItem = sortableList.querySelector('.dragging');
 
 			// Getting all items except currently dragging and making an array of them
-			const siblings = [...sortableList.find('[draggable="true"]:not(.dragging)').get()];
+			const siblings = [...sortableList.querySelectorAll('[draggable="true"]:not(.dragging)')];
 
 			// Finding the sibling after which the dragging item should be placed
 			let nextSibling = siblings.find(sibling => {
-				//console.log(e.clientY, sibling.offsetTop + sibling.offsetHeight / 2, sibling.offsetTop, sibling.offsetHeight, sibling);
-				return e.clientY+clientYOffset <= sibling.offsetTop + sibling.offsetHeight / 2;
+				return e.clientY + clientYOffset <= sibling.offsetTop + sibling.offsetHeight / 2;
 			});
 
 			// Inserting the dragging item before the found sibling
-			sortableList.get()[0].insertBefore(draggingItem.get()[0], nextSibling);
+			if (draggingItem) {
+				sortableList.insertBefore(draggingItem, nextSibling);
+			}
 		};
 
-		sortableList.on('dragover', initSortableList);
-		sortableList.on('dragenter', e => e.preventDefault());
+		sortableList.addEventListener('dragover', initSortableList);
+		sortableList.addEventListener('dragenter', e => e.preventDefault());
 	}
 }
 

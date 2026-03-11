@@ -5,7 +5,7 @@ class GoogleMap {
 		this.locations = [];
 		this.mapId = mapId;
 
-		if (!$('#'+mapId).length) {
+		if (!document.getElementById(mapId)) {
 			return;
 		}
 

@@ -28,219 +28,221 @@ class ImportFromCsv {
 			lineLabel,
 			errorMessageImportFailed,
 		} = { ...ImportFromCsv._defaults, ...options };
-		div.empty().append($('.import_form_base').clone().removeClass('import_form_base hide'));
 
-		let formUpload = div.find('.form_upload');
-		let formMatching = div.find('.form_matching');
-		let divResult = div.find('.csv_result');
+		const template = document.querySelector('.import_form_base');
+		if (!template) return;
+		const clone = template.cloneNode(true);
+		clone.classList.remove('import_form_base', 'hide');
+		div.innerHTML = '';
+		div.appendChild(clone);
+
+		const formUpload = div.querySelector('.form_upload');
+		const formMatching = div.querySelector('.form_matching');
+		const divResult = div.querySelector('.csv_result');
 
 		function resetUi() {
-			formMatching.addClass('hide');
-			formUpload.removeClass('hide');
-			formUpload.find('div.errors').addClass('hide');
+			formMatching.classList.add('hide');
+			formUpload.classList.remove('hide');
+			formUpload.querySelector('div.errors')?.classList.add('hide');
 		}
 
-		if (typeof specificDescDiv != 'undefined' && specificDescDiv != null) {
-			div.find('.specific_desc').append(specificDescDiv);
+		if (specificDescDiv != null) {
+			div.querySelector('.specific_desc')?.append(specificDescDiv);
 		}
 
-		if (typeof additionalFormField != 'undefined' && additionalFormField != null) {
-			div.find('.import_matching_select_content').after(additionalFormField);
+		if (additionalFormField != null) {
+			div.querySelector('.import_matching_select_content')?.insertAdjacentHTML('afterend', additionalFormField);
 		}
 
-		formUpload.find('button[type="submit"]').click(function(event) {
+		const submitUploadBtn = formUpload.querySelector('button[type="submit"]');
+		submitUploadBtn.addEventListener('click', function(event) {
 			event.preventDefault();
-			FormHelper.buttonLoader($(this), 'loading');
-			formUpload.find('div.errors').addClass('hide');
+			FormHelper.buttonLoader(this, 'loading');
+			formUpload.querySelector('div.errors')?.classList.add('hide');
 
-			let isFileParsed = false;
-			let hasHeader = formUpload.find('input[name="header"][value="1"]:checked').length;
-			let encoding = formUpload.find('select[name="encoding"]').val();
-
-			formUpload.find('input[type="file"]').parse({
-				config: {
-					header: hasHeader,
-					encoding: encoding,
-					dynamicTyping: false,
-					skipEmptyLines: true,
-					beforeFirstChunk: function(chunk) {
-						return chunk.trim();
-					},
-					complete: function(results, file) {
-						isFileParsed = true;
-						//console.log(file, results);
-
-						if (false === CSV.checkFile(file.name, file.type)) {
-							$('#form_import_upload div.errors').html(errorMessageFileNotValid).removeClass('hide');
-							return;
-						}
-
-						let parsedImportList = results.data;
-						let header = hasHeader?results.meta.fields:results.data[0];
-
-						ImportFromCsv.displayData(divResult, parsedImportList, (hasHeader?header:null), formMatching);
-						ImportFromCsv.displayFormMatching(formMatching, importColumns, header, hasHeader, selectDefaultOptionLabel);
-
-						formUpload.addClass('hide');
-					}
-				},
-				before: function(file, inputElem) {
-				},
-				error: function(err, file, inputElem, reason) {
-					isFileParsed = true;
-					formUpload.find('div.errors').html(errorMessageFileNotValid).removeClass('hide');
-					console.error(err, file, reason);
-				},
-				complete: function() {
-					if (!isFileParsed) {
-						formUpload.find('div.errors').html(errorMessageFileEmpty).removeClass('hide');
-					}
-					FormHelper.buttonLoader(formUpload.find('button[type="submit"]'), 'reset');
-				}
-			});
-			event.preventDefault();
-		});
-
-		formMatching.find('button[type="submit"]').click(function (event) {
-			event.preventDefault();
-			FormHelper.buttonLoader($(this), 'loading');
-			formMatching.find('div.errors').addClass('hide').empty();
-			divResult.find('table tr').removeClass('danger');
-			
-			let tabLink = ImportFromCsv.getTabLink(formMatching);
-			//console.log('tabLink', tabLink);
-
-			if ($.isEmptyObject(tabLink)) {
-				formMatching.find('div.errors').html(errorMessageImportSelectColumns).removeClass('hide');
-				FormHelper.buttonLoader($(this), 'reset');
-				return false;
+			const fileInput = formUpload.querySelector('input[type="file"]');
+			if (!fileInput.files || !fileInput.files.length) {
+				const errDiv = formUpload.querySelector('div.errors');
+				if (errDiv) { errDiv.innerHTML = errorMessageFileEmpty; errDiv.classList.remove('hide'); }
+				FormHelper.buttonLoader(submitUploadBtn, 'reset');
+				return;
 			}
 
-			let dataToImport = ImportFromCsv.getDataToImport(divResult, tabLink);
-			//console.log('dataToImport', dataToImport);
+			const hasHeader = formUpload.querySelectorAll('input[name="header"][value="1"]:checked').length;
+			const encoding = formUpload.querySelector('select[name="encoding"]').value;
+
+			Papa.parse(fileInput.files[0], {
+				header: hasHeader,
+				encoding: encoding,
+				dynamicTyping: false,
+				skipEmptyLines: true,
+				beforeFirstChunk: function(chunk) {
+					return chunk.trim();
+				},
+				complete: function(results, file) {
+					if (false === CSV.checkFile(file.name, file.type)) {
+						const errDiv = document.querySelector('#form_import_upload div.errors');
+						if (errDiv) { errDiv.innerHTML = errorMessageFileNotValid; errDiv.classList.remove('hide'); }
+						FormHelper.buttonLoader(submitUploadBtn, 'reset');
+						return;
+					}
+
+					const parsedImportList = results.data;
+					const header = hasHeader ? results.meta.fields : results.data[0];
+
+					ImportFromCsv.displayData(divResult, parsedImportList, (hasHeader ? header : null), formMatching);
+					ImportFromCsv.displayFormMatching(formMatching, importColumns, header, hasHeader, selectDefaultOptionLabel);
+
+					formUpload.classList.add('hide');
+					FormHelper.buttonLoader(submitUploadBtn, 'reset');
+				},
+				error: function(err, file) {
+					const errDiv = formUpload.querySelector('div.errors');
+					if (errDiv) { errDiv.innerHTML = errorMessageFileNotValid; errDiv.classList.remove('hide'); }
+					console.error(err, file);
+					FormHelper.buttonLoader(submitUploadBtn, 'reset');
+				}
+			});
+		});
+
+		const submitMatchingBtn = formMatching.querySelector('button[type="submit"]');
+		submitMatchingBtn.addEventListener('click', function(event) {
+			event.preventDefault();
+			FormHelper.buttonLoader(this, 'loading');
+			const errDiv = formMatching.querySelector('div.errors');
+			if (errDiv) { errDiv.classList.add('hide'); errDiv.innerHTML = ''; }
+			divResult.querySelectorAll('table tr').forEach(tr => tr.classList.remove('danger'));
+
+			const tabLink = ImportFromCsv.getTabLink(formMatching);
+
+			if (Object.keys(tabLink).length === 0) {
+				if (errDiv) { errDiv.innerHTML = errorMessageImportSelectColumns; errDiv.classList.remove('hide'); }
+				FormHelper.buttonLoader(this, 'reset');
+				return;
+			}
+
+			const dataToImport = ImportFromCsv.getDataToImport(divResult, tabLink);
 
 			requestImportData(dataToImport,
-				// fonction callback en cas d'erreur de formulaire
 				(json) => {
-					//console.log(json);
-					if (typeof json['import_list'] !== 'undefined') {
-						formMatching.find('div.errors').html(json['import_list']).removeClass('hide');
+					if (errDiv) {
+						errDiv.innerHTML = typeof json['import_list'] !== 'undefined'
+							? json['import_list']
+							: ImportFromCsv.getErrorsHtmlOfImportData(json, divResult, errorMessageImportFailed, lineLabel);
+						errDiv.classList.remove('hide');
 					}
-					else {
-						formMatching.find('div.errors').html(ImportFromCsv.getErrorsHtmlOfImportData(json, divResult, errorMessageImportFailed, lineLabel)).removeClass('hide');
-					}
-					FormHelper.buttonLoader(formMatching.find('button[type="submit"]'), 'reset');
+					FormHelper.buttonLoader(formMatching.querySelector('button[type="submit"]'), 'reset');
 				}
 			);
 		});
 
-		formMatching.find('a.cancel_link').click(function (event) {
-			resetUi();
-		});
+		const cancelLink = formMatching.querySelector('a.cancel_link');
+		if (cancelLink) {
+			cancelLink.addEventListener('click', (event) => {
+				event.preventDefault();
+				resetUi();
+			});
+		}
 
 		resetUi();
 	}
 
 	static getDataToImport(divResult, tabLink) {
-		let importListWithFieldNames = [];
-		$.each(divResult.find('table tbody tr'), function(index, line) {
-			// console.log('line', line);
-			if (!$(line).find('input.import_line_checkbox:checked').length) {
-			// if (!divResult.find('table tr[data-line="'+(index+1)+'"] input.import_line_checkbox:checked').length) {
+		const importListWithFieldNames = [];
+		divResult.querySelectorAll('table tbody tr').forEach((line, index) => {
+			if (!line.querySelectorAll('input.import_line_checkbox:checked').length) {
 				return;
 			}
 
-			let lineData = {line: (index+1)};
-			$.each(tabLink, function(key, listeImportIndex) {
+			const lineData = { line: (index + 1) };
+			Object.entries(tabLink).forEach(([key, listeImportIndex]) => {
 				if (listeImportIndex != -1) {
-					var td = $(line).find('td[data-key="'+listeImportIndex+'"]');
-					if (td.length) {
-						lineData[key] = td.text();
+					const td = line.querySelector('td[data-key="' + listeImportIndex + '"]');
+					if (td) {
+						lineData[key] = td.textContent;
 					}
 				}
 			});
-			//console.log('lineData', lineData);
 			importListWithFieldNames.push(lineData);
 		});
 		return importListWithFieldNames;
 	}
 
 	static displayData(divResult, data, header, formMatching) {
-		let table = divResult.find('table');
-		if (table.length === 0) {
-			divResult.append('<table class="table table-sm table-bordered"></table>');
-			table = divResult.find('table');
+		let table = divResult.querySelector('table');
+		if (!table) {
+			divResult.insertAdjacentHTML('beforeend', '<table class="table table-sm table-bordered"></table>');
+			table = divResult.querySelector('table');
 		}
-		table.empty();
+		table.innerHTML = '';
 
 		let tableContent = '';
 		if (null !== header) {
 			tableContent += '<thead><tr>';
-			//tableContent += '<th><input type="checkbox" class="import_line_select_all" /></th>';
 			tableContent += '<th></th>';
-			$.each(header, function (index, value) {
-				tableContent += '<th>'+value+'</th>';
+			header.forEach((value) => {
+				tableContent += '<th>' + value + '</th>';
 			});
 			tableContent += '<th></th>';
 			tableContent += '</tr></thead>';
 		}
 
 		tableContent += '<tbody>';
-		$.each(data, function (index, line) {
-			tableContent += '<tr data-line="'+(index+1)+'">';
-			tableContent += '<td class="text-bold text-end select_line_checkbox"><input type="checkbox" class="import_line_checkbox pull-left" checked="checked" /> '+(index+1)+'.</td>';
-			$.each(line, function (key, value) {
-				tableContent += '<td data-key="'+key+'">'+(value!==null?value:'')+'</td>';
+		data.forEach((line, index) => {
+			tableContent += '<tr data-line="' + (index + 1) + '">';
+			tableContent += '<td class="text-bold text-end select_line_checkbox"><input type="checkbox" class="import_line_checkbox pull-left" checked="checked" /> ' + (index + 1) + '.</td>';
+			const entries = Array.isArray(line) ? line.map((v, i) => [i, v]) : Object.entries(line);
+			entries.forEach(([key, value]) => {
+				tableContent += '<td data-key="' + key + '">' + (value !== null ? value : '') + '</td>';
 			});
 			tableContent += '<td class="text-center edit_line_button"></td>';
-			tableContent +='</tr>';
+			tableContent += '</tr>';
 		});
 		tableContent += '</tbody>';
 
-		table.html(tableContent);
+		table.innerHTML = tableContent;
 
-		table.find('td.edit_line_button').each(function(idx, el) {
-			ImportFromCsv.initEditLink(formMatching, $(el));
+		table.querySelectorAll('td.edit_line_button').forEach(el => {
+			ImportFromCsv.initEditLink(formMatching, el);
 		});
 
-		divResult.removeClass('hide');
+		divResult.classList.remove('hide');
 	}
 
 	static initValidateLine(formMatching, td) {
-		td.html($('<a href="#" class="import_validate_line text-success"><i class="fas fa-check"></i></a>'));
-		td.find('a.import_validate_line').click(function () {
-			let tr = $(this).parent().parent();
-			tr.find('td').each(function(key, el) {
-				let td = $(el);
-				if (td.hasClass('select_line_checkbox') || td.hasClass('edit_line_button')) {
+		td.innerHTML = '<a href="#" class="import_validate_line text-success"><i class="fas fa-check"></i></a>';
+		td.querySelector('a.import_validate_line').addEventListener('click', function(e) {
+			e.preventDefault();
+			const tr = this.closest('tr');
+			tr.querySelectorAll('td').forEach((cell) => {
+				if (cell.classList.contains('select_line_checkbox') || cell.classList.contains('edit_line_button')) {
 					return;
 				}
-				td.html(td.find('input').val());
+				const input = cell.querySelector('input');
+				cell.innerHTML = input ? input.value : '';
 			});
 
-			if (!td.closest('table').find('td input[type="text"]').length) {
-				formMatching.find('button[type="submit"]').prop('disabled', false);
+			if (!td.closest('table').querySelectorAll('td input[type="text"]').length) {
+				formMatching.querySelector('button[type="submit"]').disabled = false;
 			}
 			ImportFromCsv.initEditLink(formMatching, td);
-			return false;
 		});
 	}
 
 	static initEditLink(formMatching, td) {
-		td.html($('<a href="#" class="import_edit_line text-danger"><i class="fas fa-pencil-alt"></i></a>'));
-		td.find('a.import_edit_line').click(function () {
-			let tr = $(this).parent().parent();
-			tr.find('td').each(function(key, el) {
-				let td = $(el);
-				if (td.hasClass('select_line_checkbox') || td.hasClass('edit_line_button')) {
+		td.innerHTML = '<a href="#" class="import_edit_line text-danger"><i class="fas fa-pencil-alt"></i></a>';
+		td.querySelector('a.import_edit_line').addEventListener('click', function(e) {
+			e.preventDefault();
+			const tr = this.closest('tr');
+			tr.querySelectorAll('td').forEach((cell) => {
+				if (cell.classList.contains('select_line_checkbox') || cell.classList.contains('edit_line_button')) {
 					return;
 				}
-				td.data('original_value', td.html());
-				td.html($('<input type="text" class="form-control" value="'+td.html()+'" />'));
+				cell.dataset.original_value = cell.innerHTML;
+				cell.innerHTML = '<input type="text" class="form-control" value="' + cell.innerHTML.replace(/"/g, '&quot;') + '" />';
 			});
-			formMatching.find('button[type="submit"]').prop('disabled', true);
+			formMatching.querySelector('button[type="submit"]').disabled = true;
 			ImportFromCsv.initValidateLine(formMatching, td);
-			return false;
 		});
 	}
 
@@ -249,19 +251,18 @@ class ImportFromCsv {
 		lineLabel = lineLabel ?? ImportFromCsv._defaults.lineLabel;
 		let resultError = errorMessageImportFailed;
 		resultError += '<ul>';
-		$.each(json, function(idx, errorData) {
+		json.forEach((errorData) => {
 			console.error(errorData);
 			if (null != divResult) {
-				divResult.find('table tr[data-line="'+errorData.line+'"]').addClass('danger');
+				divResult.querySelector('table tr[data-line="' + errorData.line + '"]')?.classList.add('danger');
 			}
-
-			resultError += '<li>'+lineLabel.format(errorData.line)+'<ul>';
-			$.each(errorData.errors, function(index, error) {
-				resultError += '<li>'+error+'</li>';
+			resultError += '<li>' + lineLabel.format(errorData.line) + '<ul>';
+			errorData.errors.forEach((error) => {
+				resultError += '<li>' + error + '</li>';
 			});
 			resultError += '</ul></li>';
 		});
-		resultError +='</ul>';
+		resultError += '</ul>';
 		return resultError;
 	}
 
@@ -281,12 +282,11 @@ class ImportFromCsv {
 	}
 
 	static getTabLink(formMatching) {
-		let tabLink = {};
-		formMatching.find('select').each(function(idx, select) {
-			var listeImportIndex = $(select).val();
+		const tabLink = {};
+		formMatching.querySelectorAll('select').forEach((select) => {
+			const listeImportIndex = select.value;
 			if (listeImportIndex != -1) {
-				let key = $(select).prop('name');
-				tabLink[key] = listeImportIndex;
+				tabLink[select.name] = listeImportIndex;
 			}
 		});
 		return tabLink;
@@ -294,25 +294,34 @@ class ImportFromCsv {
 
 	static displayFormMatching(formMatching, importColumns, header, hasHeader, selectDefaultOptionLabel = null) {
 		selectDefaultOptionLabel = selectDefaultOptionLabel ?? ImportFromCsv._defaults.selectDefaultOptionLabel;
-		let options = '<option value="-1">'+selectDefaultOptionLabel+'</option>';
-		$.each(header, function (index, value) {
-			options += '<option value="'+(hasHeader?value:index)+'">' + value + '</option>';
+		let options = '<option value="-1">' + selectDefaultOptionLabel + '</option>';
+		header.forEach((value, index) => {
+			options += '<option value="' + (hasHeader ? value : index) + '">' + value + '</option>';
 		});
 
-		let selectContent = formMatching.find('.import_matching_select_content').addClass('row').empty();
-		$.each(importColumns, function (key, label) {
-			let selectFormGroup = $(
+		const selectContent = formMatching.querySelector('.import_matching_select_content');
+		selectContent.classList.add('row');
+		selectContent.innerHTML = '';
+
+		Object.entries(importColumns).forEach(([key, label]) => {
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML =
 				'<div class="form-group col-md-3">' +
-					'<label for="form_import_'+key+'">'+label+'</label>' +
-					'<select class="form-control" name="'+key+'" id="form_import_'+key+'">'+options+'</select>' +
-				'</div>'
-			);
-			selectFormGroup.find('select option:contains('+label+')').prop('selected', true);
-			selectContent.append(selectFormGroup);
+					'<label for="form_import_' + key + '">' + label + '</label>' +
+					'<select class="form-control" name="' + key + '" id="form_import_' + key + '">' + options + '</select>' +
+				'</div>';
+			const selectFormGroup = tempDiv.firstElementChild;
+			for (const option of selectFormGroup.querySelector('select').options) {
+				if (option.textContent.trim() === label) {
+					option.selected = true;
+					break;
+				}
+			}
+			selectContent.appendChild(selectFormGroup);
 		});
 
-		formMatching.find('div.errors').addClass('hide');
-		formMatching.removeClass('hide');
+		formMatching.querySelector('div.errors')?.classList.add('hide');
+		formMatching.classList.remove('hide');
 	}
 
 }

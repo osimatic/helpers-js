@@ -1,602 +1,278 @@
+/**
+ * @jest-environment jsdom
+ */
 const { SortableList } = require('../sortable_list');
 
+function setupList(nbItems = 3) {
+	document.body.innerHTML = `
+		<ul id="sortable">
+			${Array.from({ length: nbItems }, (_, i) => `<li draggable="true" id="item${i}">Item ${i}</li>`).join('')}
+		</ul>`;
+
+	const container = document.getElementById('sortable');
+	const items = [...container.querySelectorAll('[draggable="true"]')];
+
+	// jsdom doesn't compute layout — mock offsetTop/offsetHeight
+	items.forEach((item, i) => {
+		Object.defineProperty(item, 'offsetTop', { value: i * 50, configurable: true });
+		Object.defineProperty(item, 'offsetHeight', { value: 50, configurable: true });
+	});
+
+	return { container, items };
+}
+
+afterEach(() => {
+	document.body.innerHTML = '';
+	jest.useRealTimers();
+});
+
 describe('SortableList', () => {
-	let mockSortableList;
-	let mockItems;
-	let eventHandlers;
-	let itemEventHandlers;
-
-	beforeEach(() => {
-		// Reset event handlers storage
-		eventHandlers = {
-			dragover: null,
-			dragenter: null
-		};
-
-		itemEventHandlers = [];
-
-		// Mock items (draggable elements)
-		mockItems = [
-			{
-				offsetTop: 0,
-				offsetHeight: 50,
-				classList: {
-					add: jest.fn(),
-					remove: jest.fn()
-				}
-			},
-			{
-				offsetTop: 50,
-				offsetHeight: 50,
-				classList: {
-					add: jest.fn(),
-					remove: jest.fn()
-				}
-			},
-			{
-				offsetTop: 100,
-				offsetHeight: 50,
-				classList: {
-					add: jest.fn(),
-					remove: jest.fn()
-				}
-			}
-		];
-
-		// Create jQuery-like objects for each item
-		const jQueryItems = mockItems.map((item, index) => {
-			const handlers = {
-				dragstart: null,
-				dragend: null
-			};
-			itemEventHandlers[index] = handlers;
-
-			return {
-				on: jest.fn((event, handler) => {
-					handlers[event] = handler;
-					return jQueryItems[index];
-				}),
-				addClass: jest.fn(function(className) {
-					item.classList.add(className);
-					return this;
-				}),
-				removeClass: jest.fn(function(className) {
-					item.classList.remove(className);
-					return this;
-				}),
-				get: jest.fn(() => [item]),
-				_rawElement: item
-			};
-		});
-
-		// Mock sortable list container
-		const mockContainer = {
-			insertBefore: jest.fn()
-		};
-
-		mockSortableList = {
-			find: jest.fn((selector) => {
-				if (selector === '[draggable="true"]') {
-					return {
-						get: jest.fn(() => mockItems)
-					};
-				}
-				if (selector === '.dragging') {
-					// Find the item with dragging class
-					const draggingIndex = mockItems.findIndex(item =>
-						item.classList.add.mock.calls.some(call => call[0] === 'dragging')
-					);
-					if (draggingIndex !== -1) {
-						return jQueryItems[draggingIndex];
-					}
-					return { get: jest.fn(() => [null]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					// Return items without dragging class
-					const nonDraggingItems = mockItems.filter((item, index) => {
-						const hasBeenMarkedDragging = item.classList.add.mock.calls.some(
-							call => call[0] === 'dragging'
-						);
-						const hasBeenUnmarkedDragging = item.classList.remove.mock.calls.some(
-							call => call[0] === 'dragging'
-						);
-						// If it was marked dragging and not unmarked, it's dragging
-						return !(hasBeenMarkedDragging && !hasBeenUnmarkedDragging);
-					});
-					return {
-						get: jest.fn(() => nonDraggingItems)
-					};
-				}
-				return { get: jest.fn(() => []) };
-			}),
-			on: jest.fn((event, handler) => {
-				eventHandlers[event] = handler;
-				return mockSortableList;
-			}),
-			get: jest.fn(() => [mockContainer])
-		};
-
-		// Mock jQuery $ function
-		global.$ = jest.fn((selector) => {
-			// If selector is an element, wrap it
-			if (selector && typeof selector === 'object' && selector._rawElement) {
-				return selector;
-			}
-			const itemIndex = mockItems.indexOf(selector);
-			if (itemIndex !== -1) {
-				return jQueryItems[itemIndex];
-			}
-			return {
-				on: jest.fn().mockReturnThis(),
-				addClass: jest.fn().mockReturnThis(),
-				removeClass: jest.fn().mockReturnThis(),
-				get: jest.fn(() => [selector])
-			};
-		});
-
-		// Mock setTimeout
-		jest.useFakeTimers();
-	});
-
-	afterEach(() => {
-		jest.useRealTimers();
-	});
 
 	describe('init', () => {
-		test('should initialize sortable list with draggable items', () => {
-			SortableList.init(mockSortableList);
-
-			expect(mockSortableList.find).toHaveBeenCalledWith('[draggable="true"]');
+		test('should add dragover event listener to container', () => {
+			const { container } = setupList();
+			const spy = jest.spyOn(container, 'addEventListener');
+			SortableList.init(container);
+			expect(spy).toHaveBeenCalledWith('dragover', expect.any(Function));
 		});
 
-		test('should add dragstart event listeners to all items', () => {
-			SortableList.init(mockSortableList);
+		test('should add dragenter event listener to container', () => {
+			const { container } = setupList();
+			const spy = jest.spyOn(container, 'addEventListener');
+			SortableList.init(container);
+			expect(spy).toHaveBeenCalledWith('dragenter', expect.any(Function));
+		});
 
-			// Verify $ was called for each item to wrap them (twice per item: dragstart + dragend)
-			expect(global.$).toHaveBeenCalledTimes(mockItems.length * 2);
-			mockItems.forEach(item => {
-				expect(global.$).toHaveBeenCalledWith(item);
+		test('should add event listeners to all draggable items', () => {
+			const { container, items } = setupList(3);
+			SortableList.init(container);
+			const spies = items.map(item => jest.spyOn(item, 'addEventListener'));
+			// Re-init to capture calls
+			SortableList.init(container);
+			spies.forEach(spy => {
+				expect(spy).toHaveBeenCalledWith('dragstart', expect.any(Function));
+				expect(spy).toHaveBeenCalledWith('dragend', expect.any(Function));
 			});
-		});
-
-		test('should add dragend event listeners to all items', () => {
-			SortableList.init(mockSortableList);
-
-			itemEventHandlers.forEach(handlers => {
-				expect(handlers.dragend).toBeDefined();
-			});
-		});
-
-		test('should add dragover event listener to sortable list', () => {
-			SortableList.init(mockSortableList);
-
-			expect(mockSortableList.on).toHaveBeenCalledWith('dragover', expect.any(Function));
-			expect(eventHandlers.dragover).toBeDefined();
-		});
-
-		test('should add dragenter event listener to sortable list', () => {
-			SortableList.init(mockSortableList);
-
-			expect(mockSortableList.on).toHaveBeenCalledWith('dragenter', expect.any(Function));
-			expect(eventHandlers.dragenter).toBeDefined();
-		});
-
-		test('should initialize with custom clientYOffset', () => {
-			SortableList.init(mockSortableList, 100);
-
-			// Should not throw error
-			expect(mockSortableList.find).toHaveBeenCalled();
 		});
 
 		test('should initialize with default clientYOffset of 0', () => {
-			SortableList.init(mockSortableList);
+			const { container } = setupList();
+			expect(() => SortableList.init(container)).not.toThrow();
+		});
 
-			// Should not throw error
-			expect(mockSortableList.find).toHaveBeenCalled();
+		test('should initialize with custom clientYOffset', () => {
+			const { container } = setupList();
+			expect(() => SortableList.init(container, 100)).not.toThrow();
+		});
+
+		test('should handle empty item list', () => {
+			const { container } = setupList(0);
+			expect(() => SortableList.init(container)).not.toThrow();
 		});
 	});
 
-	describe('drag and drop functionality', () => {
+	describe('drag events on items', () => {
 		beforeEach(() => {
-			SortableList.init(mockSortableList);
+			jest.useFakeTimers();
 		});
 
-		test('should add dragging class on dragstart after timeout', () => {
-			const handlers = itemEventHandlers[0];
+		test('should add dragging class after dragstart timeout', () => {
+			const { container, items } = setupList();
+			SortableList.init(container);
 
-			handlers.dragstart();
+			items[0].dispatchEvent(new Event('dragstart'));
+			expect(items[0].classList.contains('dragging')).toBe(false);
 
-			// Initially no class added
-			expect(mockItems[0].classList.add).not.toHaveBeenCalled();
-
-			// After timeout
 			jest.runAllTimers();
+			expect(items[0].classList.contains('dragging')).toBe(true);
+		});
 
-			expect(global.$).toHaveBeenCalledWith(mockItems[0]);
-			expect(mockItems[0].classList.add).toHaveBeenCalledWith('dragging');
+		test('should not add dragging class immediately on dragstart', () => {
+			const { container, items } = setupList();
+			SortableList.init(container);
+
+			items[0].dispatchEvent(new Event('dragstart'));
+			expect(items[0].classList.contains('dragging')).toBe(false);
 		});
 
 		test('should remove dragging class on dragend', () => {
-			const handlers = itemEventHandlers[1];
+			const { container, items } = setupList();
+			SortableList.init(container);
 
-			handlers.dragend();
-
-			expect(global.$).toHaveBeenCalledWith(mockItems[1]);
-			expect(mockItems[1].classList.remove).toHaveBeenCalledWith('dragging');
+			items[1].classList.add('dragging');
+			items[1].dispatchEvent(new Event('dragend'));
+			expect(items[1].classList.contains('dragging')).toBe(false);
 		});
 
 		test('should add and remove dragging class in sequence', () => {
-			const handlers = itemEventHandlers[2];
+			const { container, items } = setupList();
+			SortableList.init(container);
 
-			// Start dragging
-			handlers.dragstart();
+			items[2].dispatchEvent(new Event('dragstart'));
 			jest.runAllTimers();
-			expect(mockItems[2].classList.add).toHaveBeenCalledWith('dragging');
+			expect(items[2].classList.contains('dragging')).toBe(true);
 
-			// Stop dragging
-			handlers.dragend();
-			expect(mockItems[2].classList.remove).toHaveBeenCalledWith('dragging');
+			items[2].dispatchEvent(new Event('dragend'));
+			expect(items[2].classList.contains('dragging')).toBe(false);
 		});
 
-		test('should handle multiple items being dragged in sequence', () => {
-			// Drag first item
-			itemEventHandlers[0].dragstart();
-			jest.runAllTimers();
-			expect(mockItems[0].classList.add).toHaveBeenCalledWith('dragging');
-			itemEventHandlers[0].dragend();
-			expect(mockItems[0].classList.remove).toHaveBeenCalledWith('dragging');
+		test('should handle multiple items dragged in sequence', () => {
+			const { container, items } = setupList();
+			SortableList.init(container);
 
-			// Drag second item
-			itemEventHandlers[1].dragstart();
+			items[0].dispatchEvent(new Event('dragstart'));
 			jest.runAllTimers();
-			expect(mockItems[1].classList.add).toHaveBeenCalledWith('dragging');
-			itemEventHandlers[1].dragend();
-			expect(mockItems[1].classList.remove).toHaveBeenCalledWith('dragging');
+			expect(items[0].classList.contains('dragging')).toBe(true);
+			items[0].dispatchEvent(new Event('dragend'));
+			expect(items[0].classList.contains('dragging')).toBe(false);
+
+			items[1].dispatchEvent(new Event('dragstart'));
+			jest.runAllTimers();
+			expect(items[1].classList.contains('dragging')).toBe(true);
+			items[1].dispatchEvent(new Event('dragend'));
+			expect(items[1].classList.contains('dragging')).toBe(false);
 		});
 	});
 
 	describe('dragenter event', () => {
-		beforeEach(() => {
-			SortableList.init(mockSortableList);
-		});
-
 		test('should prevent default on dragenter', () => {
-			const mockEvent = {
-				preventDefault: jest.fn()
-			};
+			const { container } = setupList();
+			SortableList.init(container);
 
-			eventHandlers.dragenter(mockEvent);
-
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
+			const event = new Event('dragenter', { cancelable: true });
+			container.dispatchEvent(event);
+			expect(event.defaultPrevented).toBe(true);
 		});
 
 		test('should handle dragenter without error', () => {
-			const mockEvent = {
-				preventDefault: jest.fn()
-			};
+			const { container } = setupList();
+			SortableList.init(container);
 
 			expect(() => {
-				eventHandlers.dragenter(mockEvent);
+				container.dispatchEvent(new Event('dragenter', { cancelable: true }));
 			}).not.toThrow();
 		});
 	});
 
-	describe('dragover and item reordering', () => {
-		let mockContainer;
-		let draggingItem;
-
-		beforeEach(() => {
-			SortableList.init(mockSortableList);
-			mockContainer = mockSortableList.get()[0];
-
-			// Setup: mark first item as dragging
-			itemEventHandlers[0].dragstart();
-			jest.runAllTimers();
-
-			draggingItem = mockItems[0];
-		});
-
+	describe('dragover and reordering', () => {
 		test('should prevent default on dragover', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 75
-			};
+			const { container } = setupList();
+			SortableList.init(container);
 
-			eventHandlers.dragover(mockEvent);
-
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
+			const event = new Event('dragover', { cancelable: true });
+			container.dispatchEvent(event);
+			expect(event.defaultPrevented).toBe(true);
 		});
 
-		test('should find dragging item on dragover', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 75
-			};
+		test('should insert dragging item before correct sibling', () => {
+			const { container, items } = setupList(3);
+			SortableList.init(container);
 
-			mockSortableList.find.mockClear();
-			eventHandlers.dragover(mockEvent);
+			items[0].classList.add('dragging');
+			const spy = jest.spyOn(container, 'insertBefore');
 
-			expect(mockSortableList.find).toHaveBeenCalledWith('.dragging');
+			// item1: offsetTop=50, height=50, midpoint=75 → clientY=74 ≤ 75 → insert before item1
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 74 });
+			container.dispatchEvent(event);
+
+			expect(spy).toHaveBeenCalledWith(items[0], items[1]);
 		});
 
-		test('should find siblings (non-dragging items) on dragover', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 75
-			};
+		test('should insert at end when clientY is past all items', () => {
+			const { container, items } = setupList(3);
+			SortableList.init(container);
 
-			mockSortableList.find.mockClear();
-			eventHandlers.dragover(mockEvent);
+			items[0].classList.add('dragging');
+			const spy = jest.spyOn(container, 'insertBefore').mockImplementation(() => {});
 
-			expect(mockSortableList.find).toHaveBeenCalledWith('[draggable="true"]:not(.dragging)');
-		});
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 999 });
+			container.dispatchEvent(event);
 
-		test('should insert item before next sibling when dragging down', () => {
-			// Drag first item (offsetTop 0) to position between second and third items
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 75 // Between item 2 (50-100) and item 3 (100-150)
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-
-			// Mock the return for .dragging
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return {
-						get: jest.fn(() => [draggingItem])
-					};
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					// Return items 2 and 3 (not dragging)
-					return {
-						get: jest.fn(() => [mockItems[1], mockItems[2]])
-					};
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			eventHandlers.dragover(mockEvent);
-
-			expect(mockContainer.insertBefore).toHaveBeenCalledWith(
-				draggingItem,
-				mockItems[1] // Should insert before item 2
-			);
-		});
-
-		test('should calculate position with clientYOffset', () => {
-			SortableList.init(mockSortableList, 20);
-
-			// Mark first item as dragging again
-			itemEventHandlers[0].dragstart();
-			jest.runAllTimers();
-
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 55 // With offset of 20, effective position is 75
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [draggingItem]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			eventHandlers.dragover(mockEvent);
-
-			expect(mockContainer.insertBefore).toHaveBeenCalled();
-		});
-
-		test('should handle dragover at top of list', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 10 // Very top
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [draggingItem]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			eventHandlers.dragover(mockEvent);
-
-			// Should insert before the first sibling
-			expect(mockContainer.insertBefore).toHaveBeenCalledWith(
-				draggingItem,
-				mockItems[1]
-			);
-		});
-
-		test('should handle dragover at bottom of list', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 200 // Past all items
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [draggingItem]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			eventHandlers.dragover(mockEvent);
-
-			// When no sibling found, nextSibling is undefined
-			expect(mockContainer.insertBefore).toHaveBeenCalledWith(
-				draggingItem,
-				undefined
-			);
+			expect(spy).toHaveBeenCalledWith(items[0], undefined);
+			spy.mockRestore();
 		});
 
 		test('should insert at exact midpoint of sibling', () => {
-			// Test at exact midpoint: item at offsetTop 50, height 50, midpoint is 75
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 75
-			};
+			const { container, items } = setupList(3);
+			SortableList.init(container);
 
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [draggingItem]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
+			items[0].classList.add('dragging');
+			const spy = jest.spyOn(container, 'insertBefore');
 
-			eventHandlers.dragover(mockEvent);
+			// item1 midpoint = 50 + 50/2 = 75 → clientY=75 ≤ 75 → insert before item1
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 75 });
+			container.dispatchEvent(event);
 
-			expect(mockContainer.insertBefore).toHaveBeenCalledWith(
-				draggingItem,
-				mockItems[1]
-			);
+			expect(spy).toHaveBeenCalledWith(items[0], items[1]);
+		});
+
+		test('should apply clientYOffset to position calculation', () => {
+			const { container, items } = setupList(3);
+			SortableList.init(container, 20);
+
+			items[0].classList.add('dragging');
+			const spy = jest.spyOn(container, 'insertBefore');
+
+			// clientY=54 + offset=20 = 74 ≤ 75 → insert before item1
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 54 });
+			container.dispatchEvent(event);
+
+			expect(spy).toHaveBeenCalledWith(items[0], items[1]);
+		});
+
+		test('should find dragging item via querySelector on dragover', () => {
+			const { container, items } = setupList();
+			SortableList.init(container);
+
+			items[0].classList.add('dragging');
+			const spy = jest.spyOn(container, 'querySelector');
+
+			container.dispatchEvent(Object.assign(new Event('dragover', { cancelable: true }), { clientY: 0 }));
+
+			expect(spy).toHaveBeenCalledWith('.dragging');
 		});
 	});
 
 	describe('edge cases', () => {
-		test('should handle empty draggable items list', () => {
-			mockSortableList.find = jest.fn((selector) => {
-				if (selector === '[draggable="true"]') {
-					return { get: jest.fn(() => []) };
-				}
-				return { get: jest.fn(() => []) };
-			});
-
-			expect(() => {
-				SortableList.init(mockSortableList);
-			}).not.toThrow();
-		});
-
-		test('should handle sortable list with single item', () => {
-			mockSortableList.find = jest.fn((selector) => {
-				if (selector === '[draggable="true"]') {
-					return { get: jest.fn(() => [mockItems[0]]) };
-				}
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [mockItems[0]]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => []) };
-				}
-				return { get: jest.fn(() => []) };
-			});
-
-			SortableList.init(mockSortableList);
-
-			// Should initialize without error
-			expect(mockSortableList.on).toHaveBeenCalledWith('dragover', expect.any(Function));
+		test('should handle single item', () => {
+			const { container } = setupList(1);
+			expect(() => SortableList.init(container)).not.toThrow();
 		});
 
 		test('should handle negative clientYOffset', () => {
-			SortableList.init(mockSortableList, -50);
+			const { container, items } = setupList(3);
+			SortableList.init(container, -50);
 
-			itemEventHandlers[0].dragstart();
-			jest.runAllTimers();
-
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 100
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [mockItems[0]]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			// Should work with negative offset: 100 + (-50) = 50
-			eventHandlers.dragover(mockEvent);
-
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
+			items[0].classList.add('dragging');
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 100 });
+			expect(() => container.dispatchEvent(event)).not.toThrow();
 		});
 
 		test('should handle very large clientYOffset', () => {
-			SortableList.init(mockSortableList, 10000);
-
-			expect(mockSortableList.on).toHaveBeenCalled();
+			const { container } = setupList(3);
+			expect(() => SortableList.init(container, 10000)).not.toThrow();
 		});
 
-		test('should handle zero height items', () => {
-			mockItems[1].offsetHeight = 0;
+		test('should handle items with zero height', () => {
+			const { container, items } = setupList(3);
+			Object.defineProperty(items[1], 'offsetHeight', { value: 0, configurable: true });
+			SortableList.init(container);
 
-			SortableList.init(mockSortableList);
-
-			itemEventHandlers[0].dragstart();
-			jest.runAllTimers();
-
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 50
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [mockItems[0]]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			expect(() => {
-				eventHandlers.dragover(mockEvent);
-			}).not.toThrow();
+			items[0].classList.add('dragging');
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 50 });
+			expect(() => container.dispatchEvent(event)).not.toThrow();
 		});
 
 		test('should handle items with varying heights', () => {
-			mockItems[0].offsetHeight = 30;
-			mockItems[1].offsetHeight = 70;
-			mockItems[2].offsetHeight = 100;
+			const { container, items } = setupList(3);
+			Object.defineProperty(items[0], 'offsetHeight', { value: 30, configurable: true });
+			Object.defineProperty(items[1], 'offsetHeight', { value: 70, configurable: true });
+			Object.defineProperty(items[2], 'offsetHeight', { value: 100, configurable: true });
+			SortableList.init(container);
 
-			SortableList.init(mockSortableList);
-
-			itemEventHandlers[0].dragstart();
-			jest.runAllTimers();
-
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				clientY: 50
-			};
-
-			const findSpy = jest.spyOn(mockSortableList, 'find');
-			findSpy.mockImplementation((selector) => {
-				if (selector === '.dragging') {
-					return { get: jest.fn(() => [mockItems[0]]) };
-				}
-				if (selector === '[draggable="true"]:not(.dragging)') {
-					return { get: jest.fn(() => [mockItems[1], mockItems[2]]) };
-				}
-				return { get: jest.fn(() => mockItems) };
-			});
-
-			expect(() => {
-				eventHandlers.dragover(mockEvent);
-			}).not.toThrow();
+			items[0].classList.add('dragging');
+			const event = Object.assign(new Event('dragover', { cancelable: true }), { clientY: 50 });
+			expect(() => container.dispatchEvent(event)).not.toThrow();
 		});
 	});
 });

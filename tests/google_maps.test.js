@@ -85,17 +85,6 @@ describe('GoogleMap', () => {
 			}
 		};
 
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string') {
-				if (selector.startsWith('#map')) {
-					return { length: 1 };
-				}
-				return { length: 0 };
-			}
-			return { length: 0 };
-		});
-
 		// Mock document.getElementById
 		document.getElementById = jest.fn((id) => {
 			return { id: id };
@@ -108,12 +97,11 @@ describe('GoogleMap', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 		delete global.google;
-		delete global.$;
 	});
 
 	describe('constructor', () => {
 		test('should return early when element does not exist', () => {
-			global.$ = jest.fn(() => ({ length: 0 }));
+			document.getElementById = jest.fn(() => null);
 
 			const googleMap = new GoogleMap('nonexistent');
 
@@ -149,10 +137,10 @@ describe('GoogleMap', () => {
 			expect(mockMap.setZoom).toHaveBeenCalledWith(6);
 		});
 
-		test('should check if element exists with jQuery', () => {
+		test('should check if element exists via getElementById', () => {
 			const googleMap = new GoogleMap('my-map');
 
-			expect(global.$).toHaveBeenCalledWith('#my-map');
+			expect(document.getElementById).toHaveBeenCalledWith('my-map');
 		});
 	});
 

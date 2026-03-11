@@ -1,62 +1,70 @@
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton=null) {
 		FormHelper.reset(form, submitButton);
-		submitButton = null != submitButton ? submitButton : form.find('button[name="validate"]');
-		submitButton.off('click').click(function(e) {
+		submitButton = null != submitButton ? submitButton : form.querySelector('button[name="validate"]');
+		submitButton.onclick = function(e) {
 			e.preventDefault();
-			FormHelper.buttonLoader($(this), 'loading');
+			FormHelper.buttonLoader(this, 'loading');
 			FormHelper.hideFormErrors(form);
 			if (typeof onSubmitCallback == 'function') {
 				onSubmitCallback(form, submitButton);
 			}
-		});
+		};
 		return form;
 	}
 
 	static reset(form, submitButton=null) {
-		submitButton = null != submitButton ? submitButton : form.find('button[name="validate"]');
-		form.find('input[name]:not([type="checkbox"], [type="radio"]), select:not(.selectpicker), textarea').each((idx, el) => $(el).val('')).off('change');
-		form.find('select.selectpicker').each((idx, el) => $(el).val(''));
+		submitButton = null != submitButton ? submitButton : form.querySelector('button[name="validate"]');
+		form.querySelectorAll('input[name]:not([type="checkbox"]):not([type="radio"]), select:not(.selectpicker), textarea').forEach(el => {
+			el.value = '';
+			el.onchange = null;
+		});
+		form.querySelectorAll('select.selectpicker').forEach(el => el.value = '');
 		FormHelper.buttonLoader(submitButton, 'reset');
 		FormHelper.hideFormErrors(form);
 		return form;
 	}
 
 	static populateForm(form, data) {
-		form.find('[name="employees_display_type"][value="NONE"]').prop('checked', true); //todo à retirer
+		const employeesDisplayType = form.querySelector('[name="employees_display_type"][value="NONE"]');
+		if (employeesDisplayType) employeesDisplayType.checked = true; //todo à retirer
 
-		$.each(data, function(key, value) {
+		Object.entries(data).forEach(([key, value]) => {
 			if (value == null) {
 				return;
 			}
 
 			if (typeof value == 'object') {
-				let select = form.find('[name="'+key+'[]"]');
-				select.find('option').prop('selected', false);
-				select.data('default_id', value.join(','));
-				$.each(value, function(key, val) {
-					select.find('option[value="'+val+'"]').prop('selected', true);
-				});
+				let select = form.querySelector('[name="'+key+'[]"]');
+				if (select) {
+					select.querySelectorAll('option').forEach(o => o.selected = false);
+					select.dataset.default_id = value.join(',');
+					value.forEach(val => {
+						const opt = select.querySelector('option[value="'+val+'"]');
+						if (opt) opt.selected = true;
+					});
+				}
 				return;
 			}
 
-			let input = form.find('[name="'+key+'"]');
+			const inputs = form.querySelectorAll('[name="'+key+'"]');
+			if (!inputs.length) return;
 
-			if (input.prop('type') === 'radio' || input.prop('type') === 'checkbox') {
-				input.prop('checked', false);
-				input.filter('[value="'+value+'"]').prop('checked', true);
+			if (inputs[0].type === 'radio' || inputs[0].type === 'checkbox') {
+				inputs.forEach(i => i.checked = false);
+				const target = form.querySelector('[name="'+key+'"][value="'+value+'"]');
+				if (target) target.checked = true;
 				return;
 			}
 
-			input.val(value);
-			// console.log(form.find('[name="'+key+'"]').length);
+			inputs[0].value = value;
+			// console.log(form.querySelectorAll('[name="'+key+'"]').length);
 		});
 	}
 
 
 	static getFormData(form) {
-		// var formElement = document.getElementById("myFormElement");
-		return new FormData(form[0]);
+		return new FormData(form);
 	}
 
 	static getDataFromFormData(formData) {
@@ -69,14 +77,7 @@ class FormHelper {
 	}
 
 	static getFormDataQueryString(form) {
-		return form.serialize();
-		// cette soluce marche pas pour les clés sous forme de tableau : ids[]=1&ids[]=2
-		/*
-		return form.serializeArray().reduce(function(obj, item) {
-			obj[item.name] = item.value;
-			return obj;
-		}, {});
-		*/
+		return new URLSearchParams(new FormData(form)).toString();
 	}
 
 
@@ -86,10 +87,10 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static getInputValue(input) {
-		if (typeof input == 'undefined') {
+		if (typeof input == 'undefined' || input == null) {
 			return null;
 		}
-		let value = $(input).val();
+		let value = input.value;
 		if (value === null || value === '') {
 			return null;
 		}
@@ -97,7 +98,7 @@ class FormHelper {
 	}
 
 	static getLinesOfTextarea(textarea) {
-		return textarea.val().replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
+		return textarea.value.replace(/(\r\n|\n|\r)/g, "\n").split("\n").filter(word => word.length > 0);
 	}
 
 	static setOnInputChange(input, callback, doneTypingInterval=700) {
@@ -105,18 +106,18 @@ class FormHelper {
 		let typingTimer;  // timer identifier
 
 		// on keyup, start the countdown
-		input.on('keyup', function () {
+		input.addEventListener('keyup', function () {
 			clearTimeout(typingTimer);
 			typingTimer = setTimeout(callback, doneTypingInterval); // time in ms
 		});
 
 		// on keydown, clear the countdown
-		input.on('keydown', function () {
+		input.addEventListener('keydown', function () {
 			clearTimeout(typingTimer);
 		});
 
 		// on focusout, clear the countdown and call callback
-		input.on('focusout', function () {
+		input.addEventListener('focusout', function () {
 			clearTimeout(typingTimer);
 			callback();
 		});
@@ -127,26 +128,27 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static resetSelectOption(form, selectName) {
-		form.find('select[name="'+selectName+'"] option').prop('disabled', false).prop('selected', false);
+		form.querySelectorAll('select[name="'+selectName+'"] option').forEach(o => {
+			o.disabled = false;
+			o.selected = false;
+		});
 	}
 	static setSelectedSelectOption(form, selectName, optionValue) {
-		form.find('select[name="'+selectName+'"] option[value="'+optionValue+'"]').prop('selected', true);
+		const opt = form.querySelector('select[name="'+selectName+'"] option[value="'+optionValue+'"]');
+		if (opt) opt.selected = true;
 	}
 	static setSelectedSelectOptions(form, selectName, optionValues) {
-		$.each(optionValues, function(idx, id) {
-			FormHelper.setSelectedSelectOption(form, selectName, id);
-		});
+		optionValues.forEach(id => FormHelper.setSelectedSelectOption(form, selectName, id));
 	}
 	static disableSelectOption(form, selectName, optionValue) {
-		form.find('select[name="'+selectName+'"] option[value="'+optionValue+'"]').prop('disabled', true);
+		const opt = form.querySelector('select[name="'+selectName+'"] option[value="'+optionValue+'"]');
+		if (opt) opt.disabled = true;
 	}
 	static disableSelectOptions(form, selectName, optionValues) {
-		$.each(optionValues, function(idx, id) {
-			FormHelper.disableSelectOption(form, selectName, id);
-		});
+		optionValues.forEach(id => FormHelper.disableSelectOption(form, selectName, id));
 	}
 	static countSelectOptions(form, selectName) {
-		return form.find('select[name="'+selectName+'"] option:not([disabled])').length;
+		return form.querySelectorAll('select[name="'+selectName+'"] option:not([disabled])').length;
 	}
 
 
@@ -155,23 +157,21 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static getCheckedValues(inputs) {
-		return inputs.map(function() {
-			if (this.checked) {
-				return this.value;
-			}
-		}).get();
+		return [...inputs].filter(i => i.checked).map(i => i.value);
 	}
 
 	static setCheckedValues(inputs, defaultValues) {
-		$.each(defaultValues, function(idx, value) {
-			inputs.parent().find('[value="'+value+'"]').prop('checked', true);
+		const parent = inputs[0]?.parentElement;
+		defaultValues.forEach(value => {
+			if (parent) {
+				const t = parent.querySelector('[value="'+value+'"]');
+				if (t) t.checked = true;
+			}
 		});
 	}
 
 	static getInputListValues(inputs) {
-		return inputs.map(function() {
-			return this.value;
-		}).get().filter(word => word.length > 0);
+		return [...inputs].map(i => i.value).filter(word => word.length > 0);
 	}
 
 
@@ -180,54 +180,42 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static initTypeFields(form) {
-		//if ( $('[type="date"]').prop('type') != 'date' ) {
-		//	$('[type="date"]').datepicker();
-		//}
 		if (typeof Modernizr != 'undefined') {
 			if (!Modernizr.inputtypes.date) {
-				// $.fn.datepicker.defaults.language = 'fr';
-				// $.datepicker.setDefaults( $.datepicker.regional["fr"]);
-				form.find('input[type="date"]')
-					.css('max-width', '120px')
-					// 28/06/2021 : désactivation du datepicker car safari le gere en natif
-					/*
-					.datepicker({
-						dateFormat: 'yy-mm-dd',
-						changeMonth: true,
-						changeYear: true,
-						showOn: "both",
-						buttonImage: ROOT_PATH+'images/icons/calendar-alt.png',
-						buttonImageOnly: true,
-					})
-					*/
-				;
-				//form.find('input[type="date"]').datepicker({dateFormat: 'yy-mm-dd', minDate: "-10Y", maxDate: "+3Y"});
-				// $("#date_conf").datepicker("option", $.datepicker.regional["fr"]);
-				// $("#date_conf").datepicker("option", "dateFormat", "yy-mm-dd");
+				form.querySelectorAll('input[type="date"]').forEach(el => el.style.maxWidth = '120px');
 			}
 			if (!Modernizr.inputtypes.time) {
-				form.find('input[type="time"]')
-					.css('max-width', '100px')
-					.attr('placeholder', 'hh:mm')
-				;
-				form.find('input[type="time"][step="1"]').attr('placeholder', 'hh:mm:ss');
+				form.querySelectorAll('input[type="time"]').forEach(el => {
+					el.style.maxWidth = '100px';
+					el.placeholder = 'hh:mm';
+				});
+				form.querySelectorAll('input[type="time"][step="1"]').forEach(el => el.placeholder = 'hh:mm:ss');
 			}
 		}
 
 		// Show/Hide password
-		let linkTogglePassword = $('<span class="input-group-text"><i class="fas fa-eye toggle_password"></i></span>');
-		linkTogglePassword.find('i').click(function(e) {
-			e.preventDefault();
-			let input = $(this).closest('.input-group').find('input');
-			let passwordHidden = input.attr('type') === 'password';
-			input.attr('type', passwordHidden ? 'text' : 'password');
-			$(this).removeClass('fa-eye fa-eye-slash').addClass(passwordHidden ? 'fa-eye-slash' : 'fa-eye');
+		form.querySelectorAll('input[type="password"]').forEach(inputEl => {
+			const wrapper = document.createElement('div');
+			wrapper.className = 'input-group password';
+			inputEl.parentNode.insertBefore(wrapper, inputEl);
+			wrapper.appendChild(inputEl);
+			const span = document.createElement('span');
+			span.className = 'input-group-text';
+			span.innerHTML = '<i class="fas fa-eye toggle_password"></i>';
+			span.querySelector('i').addEventListener('click', function(e) {
+				e.preventDefault();
+				const inp = this.closest('.input-group').querySelector('input');
+				const passwordHidden = inp.type === 'password';
+				inp.type = passwordHidden ? 'text' : 'password';
+				this.classList.remove('fa-eye', 'fa-eye-slash');
+				this.classList.add(passwordHidden ? 'fa-eye-slash' : 'fa-eye');
+			});
+			wrapper.appendChild(span);
 		});
-		form.find('input[type="password"]').wrap('<div class="input-group password"></div>').after(linkTogglePassword);
 	}
 
 	static hideField(inputOrSelect) {
-		inputOrSelect.closest('.form-group').addClass('hide');
+		inputOrSelect.closest('.form-group')?.classList.add('hide');
 	}
 
 	// ------------------------------------------------------------
@@ -283,7 +271,7 @@ class FormHelper {
 	}
 
 	static hideFormErrors(form) {
-		form.find('div.form_errors').remove();
+		form.querySelectorAll('div.form_errors').forEach(el => el.remove());
 		return form;
 	}
 
@@ -311,11 +299,6 @@ class FormHelper {
 		this.displayFormErrorsFromText(form, this.getFormErrorText(errors), errorWrapperDiv);
 		if (btnSubmit != null) {
 			FormHelper.buttonLoader(btnSubmit, 'reset');
-			//if (btnSubmit.buttonLoader != null) {
-			//	btnSubmit.buttonLoader('reset');
-			//} else {
-			//	btnSubmit.attr('disabled', false).button('reset');
-			//}
 		}
 	}
 
@@ -323,32 +306,34 @@ class FormHelper {
 		let errorDiv = '<div class="alert alert-danger form_errors">'+errorLabels+'</div>';
 
 		if (null != errorWrapperDiv) {
-			errorWrapperDiv.append(errorDiv);
+			errorWrapperDiv.insertAdjacentHTML('beforeend', errorDiv);
 			return;
 		}
 
-		if (form.find('.form_errors_content').length) {
-			form.find('.form_errors_content').append(errorDiv);
+		const formErrorsContent = form.querySelector('.form_errors_content');
+		if (formErrorsContent) {
+			formErrorsContent.insertAdjacentHTML('beforeend', errorDiv);
 			return;
 		}
 
 		let errorsParentDiv = form;
-		if (form.find('.modal-body').length) {
-			errorsParentDiv = form.find('.modal-body');
+		const modalBody = form.querySelector('.modal-body');
+		if (modalBody) {
+			errorsParentDiv = modalBody;
 		}
 
-		let firstFormGroup = errorsParentDiv.find('.form-group:first');
-		if (firstFormGroup.length) {
-			if (firstFormGroup.parent().parent().hasClass('row')) {
-				firstFormGroup.parent().parent().before(errorDiv);
+		const firstFormGroup = errorsParentDiv.querySelector('.form-group');
+		if (firstFormGroup) {
+			if (firstFormGroup.parentElement?.parentElement?.classList.contains('row')) {
+				firstFormGroup.parentElement.parentElement.insertAdjacentHTML('beforebegin', errorDiv);
 			}
 			else {
-				errorsParentDiv.find('.form-group:first').before(errorDiv);
+				firstFormGroup.insertAdjacentHTML('beforebegin', errorDiv);
 			}
 			return;
 		}
 
-		errorsParentDiv.prepend(errorDiv);
+		errorsParentDiv.insertAdjacentHTML('afterbegin', errorDiv);
 	}
 
 
@@ -357,33 +342,31 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static buttonLoader(button, action) {
-		button = $(button);
 		if (action === 'start' || action === 'loading') {
-			if (button.attr('disabled')) {
-				return self;
+			if (button.disabled) {
+				return button;
 			}
-			button.attr('disabled', true);
-			button.data('btn-text', button.html());
+			button.disabled = true;
+			button.dataset.btnText = button.innerHTML;
 			//let text = '<span class="spinner"><i class=\'fa fa-circle-notch fa-spin\'></i></span>Traitement en cours…';
 			let text = '<i class=\'fa fa-circle-notch fa-spin\'></i> Traitement en cours…';
-			if (button.data('load-text') != null && button.data('load-text') !== '') {
-				text = button.data('load-text');
+			if (button.dataset.loadText != null && button.dataset.loadText !== '') {
+				text = button.dataset.loadText;
 			}
-			if (button.data('loading-text') != null && button.data('loading-text') !== '') {
-				text = button.data('loading-text');
+			if (button.dataset.loadingText != null && button.dataset.loadingText !== '') {
+				text = button.dataset.loadingText;
 			}
-			button.html(text);
-			button.addClass('disabled');
+			button.innerHTML = text;
+			button.classList.add('disabled');
 		}
 		if (action === 'stop' || action === 'reset') {
-			button.html(button.data('btn-text'));
-			button.removeClass('disabled');
-			button.attr('disabled', false);
-			//button.removeAttr("disabled");
+			button.innerHTML = button.dataset.btnText;
+			button.classList.remove('disabled');
+			button.disabled = false;
 		}
 		return button;
 	}
-	
+
 
 }
 
@@ -408,35 +391,44 @@ class ArrayField {
 			return typeof options[optionName] != 'undefined' && null !== options[optionName];
 		}
 
+		function createElement(html) {
+			const tmpDiv = document.createElement('div');
+			tmpDiv.innerHTML = html.trim();
+			return tmpDiv.firstElementChild;
+		}
+
 		let itemsList = defaultValues;
 
-		if (!formGroupDiv.find('table').length) {
-			formGroupDiv.append($('<table class="table table-sm"><tbody></tbody></table>'));
+		if (!formGroupDiv.querySelector('table')) {
+			formGroupDiv.insertAdjacentHTML('beforeend', '<table class="table table-sm"><tbody></tbody></table>');
 		}
-		if (!formGroupDiv.find('.list_empty').length) {
-			formGroupDiv.append($('<div class="list_empty">'+(isOptionDefined('list_empty_text') ? options['list_empty_text'] : '<em>aucun</em>')+'</div>'));
+		if (!formGroupDiv.querySelector('.list_empty')) {
+			formGroupDiv.insertAdjacentHTML('beforeend', '<div class="list_empty">'+(isOptionDefined('list_empty_text') ? options['list_empty_text'] : '<em>aucun</em>')+'</div>');
 		}
-		if (!options['entering_field_in_table'] && !formGroupDiv.find('.add_one, .add_multi').length) {
-			let divLinks = formGroupDiv.find('.links');
-			if (!divLinks.length) {
-				divLinks = $('<div class="links text-center"></div>');
-				formGroupDiv.append(divLinks);
+		if (!options['entering_field_in_table'] && !formGroupDiv.querySelector('.add_one, .add_multi')) {
+			let divLinks = formGroupDiv.querySelector('.links');
+			if (!divLinks) {
+				divLinks = createElement('<div class="links text-center"></div>');
+				formGroupDiv.appendChild(divLinks);
 			}
 
 			if (options['add_one_button_enabled']) {
-				divLinks.append($('<a href="#" class="add_one btn btn-sm btn-success">'+(isOptionDefined('add_one_button_label') ? options['add_one_button_label'] : 'Ajouter')+'</a>'));
+				divLinks.insertAdjacentHTML('beforeend', '<a href="#" class="add_one btn btn-sm btn-success">'+(isOptionDefined('add_one_button_label') ? options['add_one_button_label'] : 'Ajouter')+'</a>');
 			}
 			if (options['add_multi_button_enabled']) {
-				divLinks.append($('<a href="#" class="add_multi btn btn-sm btn-success">'+(isOptionDefined('add_multi_button_label') ? options['add_multi_button_label'] : 'Ajout multiple')+'</a>'));
+				divLinks.insertAdjacentHTML('beforeend', '<a href="#" class="add_multi btn btn-sm btn-success">'+(isOptionDefined('add_multi_button_label') ? options['add_multi_button_label'] : 'Ajout multiple')+'</a>');
 			}
-			formGroupDiv.append(divLinks);
+			formGroupDiv.appendChild(divLinks);
 		}
 
 		function addLine(item) {
-			const table = formGroupDiv.find('table').removeClass('hide');
+			const table = formGroupDiv.querySelector('table');
+			table.classList.remove('hide');
 			let tr;
-			if (table.find('tbody tr.base').length) {
-				tr = table.find('tbody tr.base').clone().removeClass('hide').removeClass('base');
+			const baseTr = table.querySelector('tbody tr.base');
+			if (baseTr) {
+				tr = baseTr.cloneNode(true);
+				tr.classList.remove('hide', 'base');
 			}
 			else {
 				let links = '';
@@ -445,7 +437,7 @@ class ArrayField {
 				}
 				links += '<a href="#" title="Supprimer" class="remove btn btn-sm btn-danger ms-1"><i class="fas fa-times"></i></a>';
 
-				tr = $(
+				tr = createElement(
 					'<tr>' +
 						'<td class="table-input" style="vertical-align: middle">' +
 							(options['entering_field_in_table'] ? '<input type="text" name="'+options['input_name']+'" class="form-control pt-1 pb-1">' : '<input type="hidden" name="'+options['input_name']+'"> <span class="value"></span>') +
@@ -455,62 +447,85 @@ class ArrayField {
 				);
 			}
 
-			tr.find('a.add').click(function () {
-				const tr = $(this).closest('tr');
-				const tableBody = tr.closest('tbody');
+			const addLink = tr.querySelector('a.add');
+			if (addLink) {
+				addLink.onclick = function () {
+					const trEl = this.closest('tr');
+					const tableBody = trEl.closest('tbody');
 
-				if (isOptionDefined('nb_max_lines') && tableBody.find('tr').length >= options['nb_max_lines']) {
+					if (isOptionDefined('nb_max_lines') && tableBody.querySelectorAll('tr').length >= options['nb_max_lines']) {
+						return false;
+					}
+					addLine();
+					onUpdateList();
 					return false;
-				}
-				addLine();
-				onUpdateList();
-				return false;
-			});
-			tr.find('a.remove').click(function () {
-				const tr = $(this).closest('tr');
-				const tableBody = tr.closest('tbody');
-				if (options['entering_field_in_table'] && tableBody.find('tr').length <= 1) {
+				};
+			}
+			const removeLink = tr.querySelector('a.remove');
+			if (removeLink) {
+				removeLink.onclick = function () {
+					const trEl = this.closest('tr');
+					const tableBody = trEl.closest('tbody');
+					if (options['entering_field_in_table'] && tableBody.querySelectorAll('tr').length <= 1) {
+						return false;
+					}
+
+					if (!options['entering_field_in_table'] || '' !== trEl.dataset.item) {
+						itemsList.unsetVal(trEl.dataset.item);
+					}
+
+					trEl.remove();
+					onUpdateList();
 					return false;
-				}
-
-				if (!options['entering_field_in_table'] || '' !== tr.data('item')) {
-					itemsList.unsetVal(tr.data('item'));
-				}
-
-				tr.remove();
-				onUpdateList();
-				return false;
-			});
-
-			if (typeof item != 'undefined' && null !== item) {
-				tr.data('item', item);
-				tr.find('input').val(item);
-				tr.find('span.value').text(item);
+				};
 			}
 
-			table.find('tbody').append(tr);
+			if (typeof item != 'undefined' && null !== item) {
+				tr.dataset.item = item ?? '';
+				const inputEl = tr.querySelector('input');
+				if (inputEl) inputEl.value = item;
+				const spanEl = tr.querySelector('span.value');
+				if (spanEl) spanEl.textContent = item;
+			}
+
+			table.querySelector('tbody').appendChild(tr);
 			return tr;
 		}
 
 		function onUpdateList() {
-			formGroupDiv.find('.list_empty, table').addClass('hide');
+			formGroupDiv.querySelectorAll('.list_empty, table').forEach(el => el.classList.add('hide'));
 
 			// Maj tableau
-			let table = formGroupDiv.find('table');
-			const tableLines = table.find('tbody tr:not(.base)');
+			let table = formGroupDiv.querySelector('table');
+			const tableLines = [...table.querySelectorAll('tbody tr:not(.base)')];
 			if ((options['entering_field_in_table'] && tableLines.length ) || (!options['entering_field_in_table'] && itemsList.length)) {
-				table.removeClass('hide');
+				table.classList.remove('hide');
 			}
 			else {
-				formGroupDiv.find('.list_empty').removeClass('hide');
+				formGroupDiv.querySelector('.list_empty')?.classList.remove('hide');
 			}
 
-			tableLines.find('a').prop('disabled', false).removeClass('disabled');
+			tableLines.forEach(line => {
+				line.querySelectorAll('a').forEach(a => {
+					a.disabled = false;
+					a.classList.remove('disabled');
+				});
+			});
 			if (isOptionDefined('nb_max_lines') && tableLines.length >= options['nb_max_lines']) {
-				tableLines.find('a.add').prop('disabled', true).addClass('disabled');
+				tableLines.forEach(line => {
+					line.querySelectorAll('a.add').forEach(a => {
+						a.disabled = true;
+						a.classList.add('disabled');
+					});
+				});
 			}
 			if (options['entering_field_in_table'] && tableLines.length <= 1) {
-				tableLines.find('a.remove').prop('disabled', true).addClass('disabled');
+				tableLines.forEach(line => {
+					line.querySelectorAll('a.remove').forEach(a => {
+						a.disabled = true;
+						a.classList.add('disabled');
+					});
+				});
 			}
 
 			if (typeof options['update_list_callback'] == 'function') {
@@ -521,14 +536,20 @@ class ArrayField {
 		}
 
 		function startAdd() {
-			formGroupDiv.find('a.add_one, a.add_multi').addClass('hide').closest('.links').addClass('hide');
-			formGroupDiv.find('.item_add_one, .item_add_multi').addClass('hide');
-			formGroupDiv.find('.item_add_one, .item_add_multi').find('input[type="text"], textarea').val('');
-			formGroupDiv.find('.item_add_one, .item_add_multi').find('.errors').addClass('hide');
+			formGroupDiv.querySelectorAll('a.add_one, a.add_multi').forEach(el => {
+				el.classList.add('hide');
+				el.closest('.links')?.classList.add('hide');
+			});
+			formGroupDiv.querySelectorAll('.item_add_one, .item_add_multi').forEach(el => el.classList.add('hide'));
+			formGroupDiv.querySelectorAll('.item_add_one input[type="text"], .item_add_multi textarea').forEach(el => el.value = '');
+			formGroupDiv.querySelectorAll('.item_add_one .errors, .item_add_multi .errors').forEach(el => el.classList.add('hide'));
 		}
 		function cancelAdd() {
-			formGroupDiv.find('a.add_one, a.add_multi').removeClass('hide').closest('.links').removeClass('hide');
-			formGroupDiv.find('.item_add_one, .item_add_multi').addClass('hide');
+			formGroupDiv.querySelectorAll('a.add_one, a.add_multi').forEach(el => {
+				el.classList.remove('hide');
+				el.closest('.links')?.classList.remove('hide');
+			});
+			formGroupDiv.querySelectorAll('.item_add_one, .item_add_multi').forEach(el => el.classList.add('hide'));
 		}
 
 		function addItemsInList(items) {
@@ -568,17 +589,21 @@ class ArrayField {
 			if (!Array.isArray(errors)) {
 				errors = [errors];
 			}
-			divAdd.find('.errors').text(errors.join('<br/>')).removeClass('hide');
+			const errorsEl = divAdd.querySelector('.errors');
+			if (errorsEl) {
+				errorsEl.textContent = errors.join('<br/>');
+				errorsEl.classList.remove('hide');
+			}
 		}
 
 		function initLinkAddOne() {
-			if (!formGroupDiv.find('a.add_one').length || !formGroupDiv.find('a.add_one:not([disabled])').length) {
+			if (!formGroupDiv.querySelector('a.add_one') || !formGroupDiv.querySelector('a.add_one:not([disabled])')) {
 				return;
 			}
 
-			let divAdd = formGroupDiv.find('.item_add_one');
-			if (!divAdd.length) {
-				divAdd = $(
+			let divAdd = formGroupDiv.querySelector('.item_add_one');
+			if (!divAdd) {
+				divAdd = createElement(
 					'<div class="item_add_one">' +
 						'<div class="alert alert-danger pt-1 pb-1 errors hide"></div>' +
 						'<div class="form-inline">' +
@@ -589,33 +614,33 @@ class ArrayField {
 						(isOptionDefined('form_desc')?'<br><span class="form-text">'+options['form_desc']+'</span>':'') +
 					'</div>'
 				);
-				formGroupDiv.append(divAdd);
+				formGroupDiv.appendChild(divAdd);
 			}
 
-			divAdd.find('a.cancel').off('click').click(function () {
+			divAdd.querySelector('a.cancel').onclick = function () {
 				cancelAdd();
 				return false;
-			});
-			divAdd.find('a.add').off('click').click(function () {
-				submitAddNewItem(divAdd.find('input.form-control[type="text"]').val(), divAdd);
+			};
+			divAdd.querySelector('a.add').onclick = function () {
+				submitAddNewItem(divAdd.querySelector('input.form-control[type="text"]').value, divAdd);
 				return false;
-			});
+			};
 
-			formGroupDiv.find('a.add_one').off('click').click(function () {
+			formGroupDiv.querySelector('a.add_one').onclick = function () {
 				startAdd();
-				formGroupDiv.find('.item_add_one').removeClass('hide');
+				formGroupDiv.querySelector('.item_add_one').classList.remove('hide');
 				return false;
-			});
+			};
 		}
 
 		function initLinkAddMulti() {
-			if (!formGroupDiv.find('a.add_multi').length || !formGroupDiv.find('a.add_multi:not([disabled])').length) {
+			if (!formGroupDiv.querySelector('a.add_multi') || !formGroupDiv.querySelector('a.add_multi:not([disabled])')) {
 				return;
 			}
 
-			let divAdd = formGroupDiv.find('.item_add_multi');
-			if (!divAdd.length) {
-				divAdd = $(
+			let divAdd = formGroupDiv.querySelector('.item_add_multi');
+			if (!divAdd) {
+				divAdd = createElement(
 					'<div class="item_add_multi">' +
 						'<div class="alert alert-danger pt-1 pb-1 errors hide"></div>' +
 						'<div class="form-group">' +
@@ -629,24 +654,24 @@ class ArrayField {
 						'</div>' +
 					'</div>'
 				);
-				formGroupDiv.append(divAdd);
+				formGroupDiv.appendChild(divAdd);
 			}
 
-			divAdd.find('a.cancel').off('click').click(function () {
+			divAdd.querySelector('a.cancel').onclick = function () {
 				cancelAdd();
 				return false;
-			});
-			divAdd.find('a.add').off('click').click(function () {
-				const items = divAdd.find('textarea').val().normalizeBreaks("\n").split(/\n/ms).filter(value => value.length > 0);
+			};
+			divAdd.querySelector('a.add').onclick = function () {
+				const items = divAdd.querySelector('textarea').value.normalizeBreaks("\n").split(/\n/ms).filter(value => value.length > 0);
 				submitAddNewItem(items, divAdd);
 				return false;
-			});
+			};
 
-			formGroupDiv.find('a.add_multi').off('click').click(function () {
+			formGroupDiv.querySelector('a.add_multi').onclick = function () {
 				startAdd();
-				formGroupDiv.find('.item_add_multi').removeClass('hide');
+				formGroupDiv.querySelector('.item_add_multi').classList.remove('hide');
 				return false;
-			});
+			};
 		}
 
 		initLinkAddOne();
@@ -669,44 +694,70 @@ class ArrayField {
 
 class EditValue {
 	static init(valueDiv, onSubmitCallback, getInputCallback) {
-		let link = $('<a href="#" class="text-warning"><i class="fas fa-pencil-alt"></i></a>');
-		valueDiv.parent().append('&nbsp;').append(link);
+		const link = document.createElement('a');
+		link.href = '#';
+		link.className = 'text-warning';
+		link.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+		valueDiv.parentElement.insertAdjacentHTML('beforeend', '&nbsp;');
+		valueDiv.parentElement.appendChild(link);
 
 		function cancelEdit(valueParentDiv) {
-			valueParentDiv.find('a, span').removeClass('hide');
-			valueParentDiv.find('form').remove();
+			valueParentDiv.querySelectorAll('a, span').forEach(el => el.classList.remove('hide'));
+			const formEl = valueParentDiv.querySelector('form');
+			if (formEl) formEl.remove();
 		}
 
-		link.click(function (e) {
+		link.addEventListener('click', function (e) {
 			e.preventDefault();
 
-			let parent = $(this).parent();
+			let parent = this.parentElement;
 
-			parent.find('a, span').addClass('hide');
+			parent.querySelectorAll('a, span').forEach(el => el.classList.add('hide'));
 
-			let form = $('<form class="form-inline"></form>');
+			let form = document.createElement('form');
+			form.className = 'form-inline';
 
-			let value = parent.find('span').data('value') || parent.find('span').text();
-			let input = $( typeof getInputCallback == 'function' ? getInputCallback(value) : '<input type="text" />');
-			form.append(input);
-			form.find('input').addClass('form-control').css('width', 'auto').val(value);
+			const spanEl = parent.querySelector('span');
+			let value = spanEl?.dataset.value || spanEl?.textContent || '';
+			let inputEl;
+			if (typeof getInputCallback == 'function') {
+				const tmpDiv = document.createElement('div');
+				tmpDiv.innerHTML = getInputCallback(value).trim();
+				inputEl = tmpDiv.firstElementChild;
+			} else {
+				inputEl = document.createElement('input');
+				inputEl.type = 'text';
+			}
+			inputEl.classList.add('form-control');
+			inputEl.style.width = 'auto';
+			inputEl.value = value;
+			form.appendChild(inputEl);
 
-			let button = $('<button type="submit" class="btn btn-success ms-2" data-loading-text="<i class=\'fa fa-circle-notch fa-spin\'></i>" style="vertical-align: baseline;"><i class="fas fa-check"></i></button>');
-			button.click(function (e) {
-				FormHelper.buttonLoader(parent.find('button'), 'loading');
-				let newValue = parent.find('input').val();
+			let button = document.createElement('button');
+			button.type = 'submit';
+			button.className = 'btn btn-success ms-2';
+			button.dataset.loadingText = '<i class=\'fa fa-circle-notch fa-spin\'></i>';
+			button.style.verticalAlign = 'baseline';
+			button.innerHTML = '<i class="fas fa-check"></i>';
+			button.addEventListener('click', function (e) {
+				FormHelper.buttonLoader(parent.querySelector('button'), 'loading');
+				let newValue = parent.querySelector('input').value;
 				onSubmitCallback(newValue, parent,
 					(isSuccess, valueFormatCallback) => {
 						cancelEdit(parent);
 						if (isSuccess) {
-							parent.find('span').data('value', newValue).text(typeof valueFormatCallback == 'function' ? valueFormatCallback(newValue) : newValue);
+							const sp = parent.querySelector('span');
+							if (sp) {
+								sp.dataset.value = newValue;
+								sp.textContent = typeof valueFormatCallback == 'function' ? valueFormatCallback(newValue) : newValue;
+							}
 						}
 					}
 				);
 			});
-			form.append(button);
+			form.appendChild(button);
 
-			parent.append(form);
+			parent.appendChild(form);
 			return false;
 		});
 	}
