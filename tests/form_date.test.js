@@ -651,6 +651,14 @@ describe('InputPeriod', () => {
 		});
 	});
 
+	test('should not throw when form has no input[data-add_period_select_links]', () => {
+		document.body.innerHTML = `<form><div><input type="date" /></div></form>`;
+		const form = document.querySelector('form');
+
+		expect(() => InputPeriod.addLinks(form)).not.toThrow();
+		expect(form.querySelector('.select_period_links')).toBeNull();
+	});
+
 	describe('init', () => {
 		test('should set up click handlers for all period links', () => {
 			const linkSelectors = [

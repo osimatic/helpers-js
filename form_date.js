@@ -1,10 +1,16 @@
+const { toEl } = require('./util');
 const { DateTime } = require('./date_time');
 
 // input period de type : Du <input type="date" name="start_date" /> au <input type="date" name="end_date" />
 class InputPeriod {
 
 	static addLinks(form) {
-		let divParent = form.querySelector('input[type="date"][data-add_period_select_links]').parentElement;
+		form = toEl(form);
+		const input = form.querySelector('input[type="date"][data-add_period_select_links]');
+		if (!input) {
+			return;
+		}
+		let divParent = input.parentElement;
 		if (divParent.classList.contains('input-group')) {
 			divParent = divParent.parentElement;
 		}
@@ -22,6 +28,7 @@ class InputPeriod {
 	}
 
 	static init(form) {
+		form = toEl(form);
 		//console.log(form.querySelector('a.period_select_current_week'));
 
 		const linkToday = form.querySelector('a.period_select_today');
@@ -136,6 +143,7 @@ class InputPeriod {
 class FormDate {
 
 	static fillYearSelect(select, nbYearsBefore=5, nbYearsAfter=0) {
+		select = toEl(select);
 		const currentDate = new Date();
 		for (let year=currentDate.getUTCFullYear()-nbYearsBefore; year<=(currentDate.getUTCFullYear()+nbYearsAfter); year++) {
 			select.insertAdjacentHTML('beforeend', '<option value="'+year+'">'+year+'</option>');
@@ -143,18 +151,21 @@ class FormDate {
 	}
 
 	static fillMonthSelect(select, locale) {
+		select = toEl(select);
 		for (let month=1; month<=12; month++) {
 			select.insertAdjacentHTML('beforeend', '<option value="'+month+'">'+DateTime.getMonthNameByMonth(month, locale).capitalize()+'</option>');
 		}
 	}
 
 	static fillDayOfWeekSelect(select, locale) {
+		select = toEl(select);
 		for (let dayOfWeek=1; dayOfWeek<=7; dayOfWeek++) {
 			select.insertAdjacentHTML('beforeend', '<option value="'+dayOfWeek+'">'+DateTime.getDayNameByDayOfWeek(dayOfWeek, locale).capitalize()+'</option>');
 		}
 	}
 
 	static initForm(form) {
+		form = toEl(form);
 
 		function fillPeriodSelect(select) {
 			Object.entries(FormDate.getPeriodList()).forEach(([idx, tabListPeriode]) => {

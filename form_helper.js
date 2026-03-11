@@ -11,7 +11,8 @@ class FormHelper {
 			FormHelper.buttonLoader(this, 'loading');
 			FormHelper.hideFormErrors(form);
 			if (typeof onSubmitCallback == 'function') {
-				onSubmitCallback(form, submitButton);
+				const jq = wasJQuery && typeof $ !== 'undefined';
+				onSubmitCallback(jq ? $(form) : form, jq ? $(submitButton) : submitButton);
 			}
 		};
 		return wasJQuery && typeof $ !== 'undefined' ? $(form) : form;
@@ -365,10 +366,11 @@ class FormHelper {
 	// ------------------------------------------------------------
 
 	static buttonLoader(button, action) {
+		const wasJQuery = button && button.jquery;
 		button = toEl(button);
 		if (action === 'start' || action === 'loading') {
 			if (button.disabled) {
-				return button;
+				return wasJQuery && typeof $ !== 'undefined' ? $(button) : button;
 			}
 			button.disabled = true;
 			button.dataset.btnText = button.innerHTML;
@@ -390,7 +392,7 @@ class FormHelper {
 			button.classList.remove('disabled');
 			button.disabled = false;
 		}
-		return button;
+		return wasJQuery && typeof $ !== 'undefined' ? $(button) : button;
 	}
 
 
