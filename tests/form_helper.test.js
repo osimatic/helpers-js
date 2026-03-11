@@ -687,6 +687,15 @@ describe('FormHelper', () => {
 
 			expect(result).toBe(btn);
 		});
+
+		test('should not overwrite innerHTML with "undefined" when reset called before loading', () => {
+			const form = setupForm();
+			const btn = addButton(form, 'validate', 'Submit');
+
+			FormHelper.buttonLoader(btn, 'reset');
+
+			expect(btn.innerHTML).toBe('Submit');
+		});
 	});
 
 	describe('getInputValue', () => {

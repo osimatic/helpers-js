@@ -1,3 +1,4 @@
+const { toEl } = require('./util');
 const { HTTPClient } = require('./http_client');
 
 class File {
@@ -103,6 +104,7 @@ class Img {
 	}
 
 	static initImg(div) {
+		div = toEl(div);
 		div.querySelectorAll('.asynchronously_img').forEach(img => {
 			Img.loadImgUrl(img.dataset.url, img);
 		});

@@ -94,7 +94,7 @@ class UrlAndQueryString {
 		let params = UrlAndQueryString.parseQuery(queryString);
 		//console.log(params);
 		params[name] = value;
-		return decodeURI($.param(params));
+		return decodeURI(new URLSearchParams(params).toString());
 	}
 
 	static setParamOfUrl(name, value, url) {

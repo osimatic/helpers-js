@@ -2,6 +2,7 @@ const { toEl } = require('./util');
 
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton=null) {
+		const wasJQuery = form && form.jquery;
 		form = toEl(form); submitButton = toEl(submitButton);
 		FormHelper.reset(form, submitButton);
 		submitButton = null != submitButton ? submitButton : form.querySelector('button[name="validate"]');
@@ -13,10 +14,11 @@ class FormHelper {
 				onSubmitCallback(form, submitButton);
 			}
 		};
-		return form;
+		return wasJQuery && typeof $ !== 'undefined' ? $(form) : form;
 	}
 
 	static reset(form, submitButton=null) {
+		const wasJQuery = form && form.jquery;
 		form = toEl(form); submitButton = toEl(submitButton);
 		submitButton = null != submitButton ? submitButton : form.querySelector('button[name="validate"]');
 		form.querySelectorAll('input[name]:not([type="checkbox"]):not([type="radio"]), select:not(.selectpicker), textarea').forEach(el => {
@@ -26,7 +28,7 @@ class FormHelper {
 		form.querySelectorAll('select.selectpicker').forEach(el => el.value = '');
 		FormHelper.buttonLoader(submitButton, 'reset');
 		FormHelper.hideFormErrors(form);
-		return form;
+		return wasJQuery && typeof $ !== 'undefined' ? $(form) : form;
 	}
 
 	static populateForm(form, data) {
@@ -382,7 +384,9 @@ class FormHelper {
 			button.classList.add('disabled');
 		}
 		if (action === 'stop' || action === 'reset') {
-			button.innerHTML = button.dataset.btnText;
+			if (button.dataset.btnText !== undefined) {
+				button.innerHTML = button.dataset.btnText;
+			}
 			button.classList.remove('disabled');
 			button.disabled = false;
 		}

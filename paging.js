@@ -1,6 +1,3 @@
-// Fonction commune de pagination
-//Bootstrap class pagination https://getbootstrap.com/docs/3.3/components/#pagination
-
 const { UrlAndQueryString } = require('./network');
 const { toEl } = require('./util');
 
