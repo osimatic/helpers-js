@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 const { FormDate, InputPeriod } = require('../form_date');
 
 describe('FormDate', () => {
@@ -24,7 +27,7 @@ describe('FormDate', () => {
 			expect(periodList).toHaveProperty('1d');
 			expect(periodList['1d']).toHaveProperty('label', 'Un jour');
 			expect(periodList['1d']).toHaveProperty('list');
-			expect(periodList['1d'].list).toHaveProperty('ajd', "Aujourd’hui");
+			expect(periodList['1d'].list).toHaveProperty('ajd', 'Aujourd’hui');
 			expect(periodList['1d'].list).toHaveProperty('hier', 'Hier');
 			expect(periodList['1d'].list).toHaveProperty('jourMoins2', 'Avant-hier');
 		});
@@ -172,13 +175,11 @@ describe('FormDate', () => {
 		});
 	});
 
-	describe('fillYearSelect with jQuery mock', () => {
+	describe('fillYearSelect', () => {
 		let mockSelect;
 
 		beforeEach(() => {
-			mockSelect = {
-				append: jest.fn()
-			};
+			mockSelect = { insertAdjacentHTML: jest.fn() };
 		});
 
 		test('should fill select with years from 5 years before to current year', () => {
@@ -187,15 +188,17 @@ describe('FormDate', () => {
 			const currentYear = new Date().getUTCFullYear();
 
 			// Should be called 6 times (current year + 5 years before)
-			expect(mockSelect.append).toHaveBeenCalledTimes(6);
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledTimes(6);
 
 			// Check first year
-			expect(mockSelect.append).toHaveBeenCalledWith(
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith(
+				'beforeend',
 				`<option value="${currentYear - 5}">${currentYear - 5}</option>`
 			);
 
 			// Check last year (current year)
-			expect(mockSelect.append).toHaveBeenCalledWith(
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith(
+				'beforeend',
 				`<option value="${currentYear}">${currentYear}</option>`
 			);
 		});
@@ -206,15 +209,17 @@ describe('FormDate', () => {
 			const currentYear = new Date().getUTCFullYear();
 
 			// Should be called 6 times (3 before + current + 2 after)
-			expect(mockSelect.append).toHaveBeenCalledTimes(6);
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledTimes(6);
 
 			// Check first year
-			expect(mockSelect.append).toHaveBeenCalledWith(
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith(
+				'beforeend',
 				`<option value="${currentYear - 3}">${currentYear - 3}</option>`
 			);
 
 			// Check last year
-			expect(mockSelect.append).toHaveBeenCalledWith(
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith(
+				'beforeend',
 				`<option value="${currentYear + 2}">${currentYear + 2}</option>`
 			);
 		});
@@ -222,10 +227,8 @@ describe('FormDate', () => {
 		test('should handle only future years', () => {
 			FormDate.fillYearSelect(mockSelect, 0, 5);
 
-			const currentYear = new Date().getUTCFullYear();
-
 			// Should be called 6 times (current + 5 after)
-			expect(mockSelect.append).toHaveBeenCalledTimes(6);
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledTimes(6);
 		});
 
 		test('should handle only one year (current)', () => {
@@ -234,20 +237,19 @@ describe('FormDate', () => {
 			const currentYear = new Date().getUTCFullYear();
 
 			// Should be called 1 time (only current year)
-			expect(mockSelect.append).toHaveBeenCalledTimes(1);
-			expect(mockSelect.append).toHaveBeenCalledWith(
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledTimes(1);
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith(
+				'beforeend',
 				`<option value="${currentYear}">${currentYear}</option>`
 			);
 		});
 	});
 
-	describe('fillMonthSelect with jQuery mock', () => {
+	describe('fillMonthSelect', () => {
 		let mockSelect;
 
 		beforeEach(() => {
-			mockSelect = {
-				append: jest.fn()
-			};
+			mockSelect = { insertAdjacentHTML: jest.fn() };
 
 			// Mock String.prototype.capitalize for this test
 			if (!String.prototype.capitalize) {
@@ -260,19 +262,17 @@ describe('FormDate', () => {
 		test('should fill select with 12 months', () => {
 			FormDate.fillMonthSelect(mockSelect, 'fr');
 
-			expect(mockSelect.append).toHaveBeenCalledTimes(12);
-			expect(mockSelect.append).toHaveBeenCalledWith('<option value="1">Janvier</option>');
-			expect(mockSelect.append).toHaveBeenCalledWith('<option value="12">Décembre</option>');
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledTimes(12);
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', '<option value="1">Janvier</option>');
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', '<option value="12">Décembre</option>');
 		});
 	});
 
-	describe('fillDayOfWeekSelect with jQuery mock', () => {
+	describe('fillDayOfWeekSelect', () => {
 		let mockSelect;
 
 		beforeEach(() => {
-			mockSelect = {
-				append: jest.fn()
-			};
+			mockSelect = { insertAdjacentHTML: jest.fn() };
 
 			if (!String.prototype.capitalize) {
 				String.prototype.capitalize = function() {
@@ -284,25 +284,30 @@ describe('FormDate', () => {
 		test('should fill select with 7 days of week', () => {
 			FormDate.fillDayOfWeekSelect(mockSelect, 'fr');
 
-			expect(mockSelect.append).toHaveBeenCalledTimes(7);
-			expect(mockSelect.append).toHaveBeenCalledWith('<option value="1">Lundi</option>');
-			expect(mockSelect.append).toHaveBeenCalledWith('<option value="7">Dimanche</option>');
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledTimes(7);
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', '<option value="1">Lundi</option>');
+			expect(mockSelect.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', '<option value="7">Dimanche</option>');
 		});
 	});
 
-	describe('getSelectedDate with jQuery mock', () => {
+	function makeDateFormGroupMock(day, month, year) {
+		const dayObj = { value: day != null ? String(day) : undefined };
+		const monthObj = { value: month != null ? String(month) : undefined };
+		const yearObj = { value: year != null ? String(year) : undefined };
+		return {
+			querySelector: jest.fn((selector) => {
+				if (selector === 'select.day') return dayObj;
+				if (selector === 'select.month') return monthObj;
+				if (selector === 'select.year') return yearObj;
+				return null;
+			}),
+			_day: dayObj, _month: monthObj, _year: yearObj
+		};
+	}
+
+	describe('getSelectedDate', () => {
 		test('should return date from select values', () => {
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') {
-						return { val: () => '15' };
-					} else if (selector === 'select.month') {
-						return { val: () => '6' };
-					} else if (selector === 'select.year') {
-						return { val: () => '2023' };
-					}
-				})
-			};
+			const mockFormGroup = makeDateFormGroupMock(15, 6, 2023);
 
 			const result = FormDate.getSelectedDate(mockFormGroup);
 
@@ -312,14 +317,12 @@ describe('FormDate', () => {
 			expect(result.getFullYear()).toBe(2023);
 		});
 
-		test('should return current date when selects return null', () => {
-			const mockFormGroup = {
-				find: jest.fn(() => {
-					return { val: () => null };
-				})
+		test('should return current date when selects return null values', () => {
+			const periodFormGroup = {
+				querySelector: jest.fn(() => ({ value: null }))
 			};
 
-			const result = FormDate.getSelectedDate(mockFormGroup);
+			const result = FormDate.getSelectedDate(periodFormGroup);
 			const now = new Date();
 
 			expect(result).toBeInstanceOf(Date);
@@ -328,545 +331,263 @@ describe('FormDate', () => {
 		});
 	});
 
-	describe('setSelectedDate with jQuery mock', () => {
+	describe('setSelectedDate', () => {
 		test('should set values on selects', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
+			FormDate.setSelectedDate(mock, 25, 12, 2024);
 
-			FormDate.setSelectedDate(mockFormGroup, 25, 12, 2024);
-
-			expect(mockDaySelect.val).toHaveBeenCalledWith(25);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(12);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(2024);
+			expect(mock._day.value).toBe(25);
+			expect(mock._month.value).toBe(12);
+			expect(mock._year.value).toBe(2024);
 		});
 
 		test('should handle -1 values (for not setting day/month)', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
+			FormDate.setSelectedDate(mock, -1, -1, 2024);
 
-			FormDate.setSelectedDate(mockFormGroup, -1, -1, 2024);
-
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(-1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(2024);
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(-1);
+			expect(mock._year.value).toBe(2024);
 		});
 	});
 
-	describe('setTodaySelected with jQuery mock', () => {
+	describe('setTodaySelected', () => {
 		test('should set today as selected date', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
-
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
+			const mock = makeDateFormGroupMock();
 			const today = new Date();
-			FormDate.setTodaySelected(mockFormGroup);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(today.getDate());
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(today.getMonth() + 1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(today.getFullYear());
+			FormDate.setTodaySelected(mock);
+
+			expect(mock._day.value).toBe(today.getDate());
+			expect(mock._month.value).toBe(today.getMonth() + 1);
+			expect(mock._year.value).toBe(today.getFullYear());
 		});
 	});
 
-	describe('setCurrentMonthSelected with jQuery mock', () => {
+	describe('setCurrentMonthSelected', () => {
 		test('should set current month and year', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
-
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
+			const mock = makeDateFormGroupMock();
 			const today = new Date();
-			FormDate.setCurrentMonthSelected(mockFormGroup);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(today.getMonth() + 1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(today.getFullYear());
+			FormDate.setCurrentMonthSelected(mock);
+
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(today.getMonth() + 1);
+			expect(mock._year.value).toBe(today.getFullYear());
 		});
 	});
 
-	describe('setCurrentYearSelected with jQuery mock', () => {
+	describe('setCurrentYearSelected', () => {
 		test('should set current year only', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
-
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
+			const mock = makeDateFormGroupMock();
 			const today = new Date();
-			FormDate.setCurrentYearSelected(mockFormGroup);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(-1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(today.getFullYear());
+			FormDate.setCurrentYearSelected(mock);
+
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(-1);
+			expect(mock._year.value).toBe(today.getFullYear());
 		});
 	});
 
-	describe('addNbDaysToToday with jQuery mock', () => {
+	describe('addNbDaysToToday', () => {
 		test('should add 5 days to today', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
-			FormDate.addNbDaysToToday(mockFormGroup, 5);
+			FormDate.addNbDaysToToday(mock, 5);
 
 			const expectedDate = new Date();
 			expectedDate.setDate(expectedDate.getDate() + 5);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(expectedDate.getDate());
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(expectedDate.getMonth() + 1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(expectedDate.getFullYear());
+			expect(mock._day.value).toBe(expectedDate.getDate());
+			expect(mock._month.value).toBe(expectedDate.getMonth() + 1);
+			expect(mock._year.value).toBe(expectedDate.getFullYear());
 		});
 
 		test('should subtract 3 days from today', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
-			FormDate.addNbDaysToToday(mockFormGroup, -3);
+			FormDate.addNbDaysToToday(mock, -3);
 
 			const expectedDate = new Date();
 			expectedDate.setDate(expectedDate.getDate() - 3);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(expectedDate.getDate());
+			expect(mock._day.value).toBe(expectedDate.getDate());
 		});
 	});
 
-	describe('addNbMonthsToToday with jQuery mock', () => {
+	describe('addNbMonthsToToday', () => {
 		test('should add 2 months to today', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
-			FormDate.addNbMonthsToToday(mockFormGroup, 2);
+			FormDate.addNbMonthsToToday(mock, 2);
 
 			const expectedDate = new Date();
 			expectedDate.setDate(1);
 			expectedDate.setMonth(expectedDate.getMonth() - 2);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(expectedDate.getMonth() + 1);
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(expectedDate.getMonth() + 1);
 		});
 	});
 
-	describe('addNbYearsToToday with jQuery mock', () => {
+	describe('addNbYearsToToday', () => {
 		test('should subtract 1 year from today', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
-			FormDate.addNbYearsToToday(mockFormGroup, -1);
+			FormDate.addNbYearsToToday(mock, -1);
 
 			const expectedDate = new Date();
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(-1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(expectedDate.getFullYear() + 1);
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(-1);
+			expect(mock._year.value).toBe(expectedDate.getFullYear() + 1);
 		});
 	});
 
-	describe('addNbDaysToSelectedDate with jQuery mock', () => {
+	describe('addNbDaysToSelectedDate', () => {
 		test('should add days to selected date', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock(15, 6, 2023);
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') {
-						return { val: () => '15' };
-					} else if (selector === 'select.month') {
-						return { val: () => '6' };
-					} else if (selector === 'select.year') {
-						return { val: () => '2023' };
-					}
-
-					// For setting values
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
-			// Mock for reading
-			let callCount = 0;
-			mockFormGroup.find = jest.fn((selector) => {
-				if (selector === 'select.day') {
-					callCount++;
-					return callCount <= 1 ? { val: () => '15' } : mockDaySelect;
-				} else if (selector === 'select.month') {
-					callCount++;
-					return callCount <= 2 ? { val: () => '6' } : mockMonthSelect;
-				} else if (selector === 'select.year') {
-					callCount++;
-					return callCount <= 3 ? { val: () => '2023' } : mockYearSelect;
-				}
-			});
-
-			FormDate.addNbDaysToSelectedDate(mockFormGroup, 7);
+			FormDate.addNbDaysToSelectedDate(mock, 7);
 
 			const expectedDate = new Date(2023, 5, 15);
 			expectedDate.setDate(expectedDate.getDate() + 7);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(expectedDate.getDate());
+			expect(mock._day.value).toBe(expectedDate.getDate());
 		});
 
 		test('should add days to today when fromSelectedDate is false', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock();
 
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') return mockDaySelect;
-					if (selector === 'select.month') return mockMonthSelect;
-					if (selector === 'select.year') return mockYearSelect;
-				})
-			};
-
-			FormDate.addNbDaysToSelectedDate(mockFormGroup, 5, false);
+			FormDate.addNbDaysToSelectedDate(mock, 5, false);
 
 			const expectedDate = new Date();
 			expectedDate.setDate(expectedDate.getDate() + 5);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(expectedDate.getDate());
+			expect(mock._day.value).toBe(expectedDate.getDate());
 		});
 	});
 
-	describe('addNbMonthsToSelectedDate with jQuery mock', () => {
+	describe('addNbMonthsToSelectedDate', () => {
 		test('should subtract months from selected date', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock(15, 8, 2023);
 
-			let callCount = 0;
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') {
-						callCount++;
-						return callCount <= 1 ? { val: () => '15' } : mockDaySelect;
-					} else if (selector === 'select.month') {
-						callCount++;
-						return callCount <= 2 ? { val: () => '8' } : mockMonthSelect;
-					} else if (selector === 'select.year') {
-						callCount++;
-						return callCount <= 3 ? { val: () => '2023' } : mockYearSelect;
-					}
-				})
-			};
-
-			FormDate.addNbMonthsToSelectedDate(mockFormGroup, -2);
+			FormDate.addNbMonthsToSelectedDate(mock, -2);
 
 			const expectedDate = new Date(2023, 7, 15);
 			expectedDate.setDate(1);
 			expectedDate.setMonth(expectedDate.getMonth() + 2);
 
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(expectedDate.getMonth() + 1);
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(expectedDate.getMonth() + 1);
 		});
 	});
 
-	describe('addNbYearsToSelectedDate with jQuery mock', () => {
+	describe('addNbYearsToSelectedDate', () => {
 		test('should subtract years from selected date', () => {
-			const mockDaySelect = { val: jest.fn() };
-			const mockMonthSelect = { val: jest.fn() };
-			const mockYearSelect = { val: jest.fn() };
+			const mock = makeDateFormGroupMock(20, 3, 2023);
 
-			let callCount = 0;
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'select.day') {
-						callCount++;
-						return callCount <= 1 ? { val: () => '20' } : mockDaySelect;
-					} else if (selector === 'select.month') {
-						callCount++;
-						return callCount <= 2 ? { val: () => '3' } : mockMonthSelect;
-					} else if (selector === 'select.year') {
-						callCount++;
-						return callCount <= 3 ? { val: () => '2023' } : mockYearSelect;
-					}
-				})
-			};
+			FormDate.addNbYearsToSelectedDate(mock, -2);
 
-			FormDate.addNbYearsToSelectedDate(mockFormGroup, -2);
-
-			expect(mockDaySelect.val).toHaveBeenCalledWith(-1);
-			expect(mockMonthSelect.val).toHaveBeenCalledWith(-1);
-			expect(mockYearSelect.val).toHaveBeenCalledWith(2025);
+			expect(mock._day.value).toBe(-1);
+			expect(mock._month.value).toBe(-1);
+			expect(mock._year.value).toBe(2025);
 		});
 	});
 
-	describe('initForm with jQuery mock', () => {
-		let mockForm;
-		let capturedCallbacks;
-
+	describe('initForm', () => {
 		beforeEach(() => {
-			capturedCallbacks = {};
-
-			mockForm = {
-				find: jest.fn((selector) => {
-					// Return empty for most selectors initially
-					const result = {
-						length: 0,
-						change: jest.fn(function(callback) {
-							capturedCallbacks[selector + '_change'] = callback;
-							return this;
-						}),
-						click: jest.fn(function(callback) {
-							capturedCallbacks[selector + '_click'] = callback;
-							return this;
-						}),
-						after: jest.fn(),
-						append: jest.fn(),
-						closest: jest.fn(() => mockForm),
-						val: jest.fn(() => 'perso'),
-						data: jest.fn(() => null),
-						attr: jest.fn()
-					};
-					return result;
-				})
-			};
-
-			// Mock String.prototype.capitalize
 			if (!String.prototype.capitalize) {
 				String.prototype.capitalize = function() {
 					return this.charAt(0).toUpperCase() + this.slice(1);
 				};
 			}
-
-			});
-
+		});
 
 		test('should initialize without errors when no selects present', () => {
+			const form = document.createElement('form');
 			expect(() => {
-				FormDate.initForm(mockForm);
+				FormDate.initForm(form);
 			}).not.toThrow();
 		});
 
 		test('should fill period select when select.periode is present', () => {
-			const mockPeriodSelect = {
-				length: 1,
-				append: jest.fn(),
-				data: jest.fn(() => null),
-				val: jest.fn(() => 'ajd'),
-				change: jest.fn(function(callback) {
-					capturedCallbacks['periode_change'] = callback;
-					return this;
-				}),
-				closest: jest.fn(() => ({
-					next: jest.fn(() => ({
-						addClass: jest.fn(),
-						removeClass: jest.fn()
-					}))
-				}))
-			};
+			const form = document.createElement('form');
+			form.innerHTML = `
+				<div class="form-group">
+					<select class="periode"></select>
+				</div>
+				<div class="form-group hide"></div>
+			`;
+			document.body.appendChild(form);
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector === 'select.periode') {
-					return mockPeriodSelect;
-				}
-				if (selector === 'select.periodeCompare') {
-					return { length: 0 };
-				}
-				return { length: 0 };
-			});
+			FormDate.initForm(form);
 
-			FormDate.initForm(mockForm);
+			const periodeSelect = form.querySelector('select.periode');
+			expect(periodeSelect.children.length).toBeGreaterThan(0);
 
-			// Should append optgroups for all period categories
-			expect(mockPeriodSelect.append.mock.calls.length).toBeGreaterThan(0);
-			expect(mockPeriodSelect.change).toHaveBeenCalled();
+			document.body.removeChild(form);
 		});
 
 		test('should add quick select links for day/month/year selects', () => {
-			const mockYearSelect = {
-				length: 1,
-				after: jest.fn()
-			};
+			const form = document.createElement('form');
+			form.innerHTML = `
+				<select class="day"></select>
+				<select class="month"></select>
+				<select class="year"></select>
+			`;
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector === 'select.day' || selector === 'select.month') {
-					return { length: 1 };
-				}
-				if (selector === 'select.year') {
-					return mockYearSelect;
-				}
-				return { length: 0 };
-			});
+			FormDate.initForm(form);
 
-			FormDate.initForm(mockForm);
-
-			expect(mockYearSelect.after).toHaveBeenCalled();
-			const addedHtml = mockYearSelect.after.mock.calls[0][0];
-			expect(addedHtml).toContain('lien_form_today');
-			expect(addedHtml).toContain('lien_form_yesterday');
-			expect(addedHtml).toContain('lien_form_current_month');
+			expect(form.querySelector('a.lien_form_today')).not.toBeNull();
+			expect(form.querySelector('a.lien_form_yesterday')).not.toBeNull();
+			expect(form.querySelector('a.lien_form_current_month')).not.toBeNull();
 		});
 
 		test('should add click handlers for today link', () => {
-			const mockLink = {
-				length: 1,
-				click: jest.fn(function(callback) {
-					capturedCallbacks['today_click'] = callback;
-					return this;
-				})
-			};
+			const form = document.createElement('form');
+			form.innerHTML = `
+				<select class="day"></select>
+				<select class="month"></select>
+				<select class="year"></select>
+			`;
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector === 'a.lien_form_today') {
-					return mockLink;
-				}
-				return { length: 0 };
-			});
+			FormDate.initForm(form);
 
-			FormDate.initForm(mockForm);
-
-			expect(mockLink.click).toHaveBeenCalled();
+			const todayLink = form.querySelector('a.lien_form_today');
+			expect(todayLink).not.toBeNull();
 		});
 
-		test('should handle period comparison select', () => {
-			const mockPeriodSelect = {
-				length: 1,
-				append: jest.fn(),
-				data: jest.fn(() => null),
-				val: jest.fn(() => 'ajd'),
-				change: jest.fn(),
-				find: jest.fn(() => ({
-					attr: jest.fn(),
-					parent: jest.fn(() => ({
-						children: jest.fn(() => ({
-							attr: jest.fn()
-						}))
-					}))
-				})),
-				closest: jest.fn(() => ({
-					next: jest.fn(() => ({
-						addClass: jest.fn(),
-						removeClass: jest.fn()
-					}))
-				}))
-			};
+		test('should fill period comparison select when present', () => {
+			const form = document.createElement('form');
+			form.innerHTML = `
+				<div class="form-group">
+					<select class="periode"></select>
+				</div>
+				<div class="form-group hide"></div>
+				<div class="form-group">
+					<select class="periodeCompare"></select>
+				</div>
+				<div class="form-group hide"></div>
+			`;
+			document.body.appendChild(form);
 
-			const mockCompareSelect = {
-				length: 1,
-				append: jest.fn(),
-				data: jest.fn(() => null),
-				val: jest.fn(() => 'hier'),
-				change: jest.fn(),
-				find: jest.fn(() => ({
-					attr: jest.fn(),
-					parent: jest.fn(() => ({
-						children: jest.fn(() => ({
-							attr: jest.fn()
-						}))
-					}))
-				})),
-				closest: jest.fn(() => ({
-					next: jest.fn(() => ({
-						addClass: jest.fn(),
-						removeClass: jest.fn()
-					}))
-				}))
-			};
+			FormDate.initForm(form);
 
-			mockForm.find = jest.fn((selector) => {
-				if (selector === 'select.periode') {
-					return mockPeriodSelect;
-				}
-				if (selector === 'select.periodeCompare') {
-					return mockCompareSelect;
-				}
-				return { length: 0 };
-			});
+			expect(form.querySelector('select.periode').children.length).toBeGreaterThan(0);
+			expect(form.querySelector('select.periodeCompare').children.length).toBeGreaterThan(0);
 
-			FormDate.initForm(mockForm);
-
-			expect(mockPeriodSelect.append.mock.calls.length).toBeGreaterThan(0);
-			expect(mockCompareSelect.append.mock.calls.length).toBeGreaterThan(0);
+			document.body.removeChild(form);
 		});
 	});
 });
 
 describe('InputPeriod', () => {
-	let mockForm;
-	let capturedCallbacks;
-
 	beforeEach(() => {
-		capturedCallbacks = {};
-
-	});
-
-	afterEach(() => {
-		delete global.$;
+		document.body.innerHTML = '';
 	});
 
 	test('should be a class', () => {
@@ -893,72 +614,45 @@ describe('InputPeriod', () => {
 
 	describe('addLinks', () => {
 		test('should add period selection links after input-group parent', () => {
-			const mockParent = {
-				hasClass: jest.fn(() => true),
-				parent: jest.fn(function() {
-					return {
-						append: jest.fn()
-					};
-				})
-			};
+			document.body.innerHTML = `
+				<form>
+					<div class="input-group">
+						<input type="date" data-add_period_select_links="1" />
+					</div>
+				</form>
+			`;
+			const form = document.querySelector('form');
 
-			const mockInput = {
-				parent: jest.fn(() => mockParent)
-			};
+			InputPeriod.addLinks(form);
 
-			mockForm = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="date"][data-add_period_select_links]') {
-						return mockInput;
-					}
-					return { length: 0 };
-				})
-			};
-
-			// Mock $ for init call
-			global.$ = jest.fn();
-
-			InputPeriod.addLinks(mockForm);
-
-			expect(mockParent.hasClass).toHaveBeenCalledWith('input-group');
-			expect(mockParent.parent).toHaveBeenCalled();
+			expect(form.querySelector('.select_period_links')).not.toBeNull();
+			// Links should be outside the input-group (sibling of input-group)
+			const inputGroup = form.querySelector('.input-group');
+			expect(inputGroup.nextElementSibling).not.toBeNull();
+			expect(inputGroup.nextElementSibling.classList.contains('select_period_links')).toBe(true);
 		});
 
 		test('should add links directly to parent when not input-group', () => {
-			const mockParent = {
-				hasClass: jest.fn(() => false),
-				append: jest.fn()
-			};
+			document.body.innerHTML = `
+				<form>
+					<div>
+						<input type="date" data-add_period_select_links="1" />
+					</div>
+				</form>
+			`;
+			const form = document.querySelector('form');
 
-			const mockInput = {
-				parent: jest.fn(() => mockParent)
-			};
+			InputPeriod.addLinks(form);
 
-			mockForm = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="date"][data-add_period_select_links]') {
-						return mockInput;
-					}
-					return { length: 0 };
-				})
-			};
-
-			// Mock $ for init call
-			global.$ = jest.fn();
-
-			InputPeriod.addLinks(mockForm);
-
-			expect(mockParent.append).toHaveBeenCalled();
-			const addedHtml = mockParent.append.mock.calls[0][0];
-			expect(addedHtml).toContain('period_select_yesterday');
-			expect(addedHtml).toContain('period_select_current_week');
-			expect(addedHtml).toContain('period_select_last_month');
+			expect(form.querySelector('.select_period_links')).not.toBeNull();
+			expect(form.querySelector('a.period_select_yesterday')).not.toBeNull();
+			expect(form.querySelector('a.period_select_current_week')).not.toBeNull();
+			expect(form.querySelector('a.period_select_last_month')).not.toBeNull();
 		});
 	});
 
 	describe('init', () => {
 		test('should set up click handlers for all period links', () => {
-			const mockLinks = {};
 			const linkSelectors = [
 				'a.period_select_today',
 				'a.period_select_yesterday',
@@ -971,32 +665,25 @@ describe('InputPeriod', () => {
 				'a.period_select_last_year'
 			];
 
+			const mockLinks = {};
 			linkSelectors.forEach(selector => {
-				mockLinks[selector] = {
-					length: 1,
-					click: jest.fn(function(callback) {
-						capturedCallbacks[selector] = callback;
-						return this;
-					})
-				};
+				mockLinks[selector] = { addEventListener: jest.fn() };
 			});
 
-			mockForm = {
-				find: jest.fn((selector) => {
-					return mockLinks[selector] || { length: 0 };
-				})
+			const mockForm = {
+				querySelector: jest.fn((selector) => mockLinks[selector] || null)
 			};
 
 			InputPeriod.init(mockForm);
 
 			linkSelectors.forEach(selector => {
-				expect(mockLinks[selector].click).toHaveBeenCalled();
+				expect(mockLinks[selector].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
 			});
 		});
 
 		test('should handle missing links gracefully', () => {
-			mockForm = {
-				find: jest.fn(() => ({ length: 0 }))
+			const mockForm = {
+				querySelector: jest.fn(() => null)
 			};
 
 			expect(() => {
@@ -1005,403 +692,149 @@ describe('InputPeriod', () => {
 		});
 	});
 
+	function makeContainerWithPeriodInputs() {
+		document.body.innerHTML = `
+			<div id="outer">
+				<div id="inner">
+					<a href="#" id="link"></a>
+					<input type="date" name="start_date" />
+					<input type="date" name="end_date" />
+				</div>
+			</div>
+		`;
+		return document.getElementById('link');
+	}
+
 	describe('selectToday', () => {
 		test('should select today date in period inputs', () => {
-			const mockStartInput = { val: jest.fn() };
-			const mockEndInput = { val: jest.fn() };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectToday(link);
 
-			// Need to set length on mockStartInput and mockEndInput
-			mockStartInput.length = 1;
-			mockEndInput.length = 1;
-
-			InputPeriod.selectToday(mockLink);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			const today = new Date();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectPreviousDay', () => {
 		test('should select yesterday', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectPreviousDay(link, 1);
 
-			InputPeriod.selectPreviousDay(mockLink, 1);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectFollowingDay', () => {
 		test('should select tomorrow', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectFollowingDay(link, 1);
 
-			InputPeriod.selectFollowingDay(mockLink, 1);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectCurrentWeek', () => {
 		test('should select current week period', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectCurrentWeek(link);
 
-			InputPeriod.selectCurrentWeek(mockLink);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectPreviousWeek', () => {
 		test('should select previous week', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectPreviousWeek(link, 1);
 
-			InputPeriod.selectPreviousWeek(mockLink, 1);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectFollowingWeek', () => {
 		test('should select following week', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectFollowingWeek(link, 2);
 
-			InputPeriod.selectFollowingWeek(mockLink, 2);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectCurrentMonth', () => {
 		test('should select current month period', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectCurrentMonth(link);
 
-			InputPeriod.selectCurrentMonth(mockLink);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectPreviousMonth', () => {
 		test('should select previous month', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectPreviousMonth(link, 1);
 
-			InputPeriod.selectPreviousMonth(mockLink, 1);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectFollowingMonth', () => {
 		test('should select following month', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectFollowingMonth(link, 3);
 
-			InputPeriod.selectFollowingMonth(mockLink, 3);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectCurrentYear', () => {
 		test('should select current year period', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectCurrentYear(link);
 
-			InputPeriod.selectCurrentYear(mockLink);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectPreviousYear', () => {
 		test('should select previous year', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectPreviousYear(link, 1);
 
-			InputPeriod.selectPreviousYear(mockLink, 1);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
 	describe('selectFollowingYear', () => {
 		test('should select following year', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
+			const link = makeContainerWithPeriodInputs();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn((selector) => {
-							if (selector === 'input[type="date"]') {
-								return {
-									filter: jest.fn((filterSelector) => {
-										if (filterSelector.includes('start')) {
-											return mockStartInput;
-										}
-										return mockEndInput;
-									}),
-									length: 2
-								};
-							}
-							return { length: 0 };
-						})
-					}))
-				}))
-			};
+			InputPeriod.selectFollowingYear(link, 2);
 
-			InputPeriod.selectFollowingYear(mockLink, 2);
-
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 
@@ -1409,17 +842,10 @@ describe('InputPeriod', () => {
 		test('should return early when no start input found', () => {
 			const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn(() => ({
-							filter: jest.fn(() => ({ length: 0 }))
-						}))
-					}))
-				}))
-			};
+			document.body.innerHTML = `<div><div><a href="#" id="link"></a></div></div>`;
+			const link = document.getElementById('link');
 
-			InputPeriod.selectPeriod(mockLink, new Date(), new Date());
+			InputPeriod.selectPeriod(link, new Date(), new Date());
 
 			expect(consoleLogSpy).toHaveBeenCalledWith('no period input found');
 			consoleLogSpy.mockRestore();
@@ -1428,53 +854,32 @@ describe('InputPeriod', () => {
 		test('should return early when no end input found', () => {
 			const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn(() => ({
-							filter: jest.fn((filterSelector) => {
-								if (filterSelector.includes('start')) {
-									return { length: 1, val: jest.fn() };
-								}
-								return { length: 0 };
-							})
-						}))
-					}))
-				}))
-			};
+			document.body.innerHTML = `
+				<div>
+					<div>
+						<a href="#" id="link"></a>
+						<input type="date" name="start_date" />
+					</div>
+				</div>
+			`;
+			const link = document.getElementById('link');
 
-			InputPeriod.selectPeriod(mockLink, new Date(), new Date());
+			InputPeriod.selectPeriod(link, new Date(), new Date());
 
 			expect(consoleLogSpy).toHaveBeenCalledWith('no period input found');
 			consoleLogSpy.mockRestore();
 		});
 
 		test('should set values on both inputs when found', () => {
-			const mockStartInput = { val: jest.fn(), length: 1 };
-			const mockEndInput = { val: jest.fn(), length: 1 };
-
-			const mockLink = {
-				parent: jest.fn(() => ({
-					parent: jest.fn(() => ({
-						find: jest.fn(() => ({
-							filter: jest.fn((filterSelector) => {
-								if (filterSelector.includes('start')) {
-									return mockStartInput;
-								}
-								return mockEndInput;
-							})
-						}))
-					}))
-				}))
-			};
+			const link = makeContainerWithPeriodInputs();
 
 			const startDate = new Date(2023, 5, 1);
 			const endDate = new Date(2023, 5, 30);
 
-			InputPeriod.selectPeriod(mockLink, startDate, endDate);
+			InputPeriod.selectPeriod(link, startDate, endDate);
 
-			expect(mockStartInput.val).toHaveBeenCalled();
-			expect(mockEndInput.val).toHaveBeenCalled();
+			expect(document.querySelector('input[name="start_date"]').value).not.toBe('');
+			expect(document.querySelector('input[name="end_date"]').value).not.toBe('');
 		});
 	});
 });

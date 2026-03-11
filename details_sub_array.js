@@ -2,12 +2,21 @@ const { HTTPClient } = require('./http_client');
 
 class DetailsSubArray {
 
-	static initDetailsLink(table, callbackOnDetailsActionRequestSuccess, callbackOnDetailsActionRequestError, callbackOnDetailsActionRequestBeforeSend) {
+	static initDetailsLink(table, options = {}) {
+		const {
+			onSuccess,
+			onError,
+			onBeforeSend,
+			labelErrorOccurred = 'Une erreur s\'est produite.',
+			showDetailsLabel = 'Afficher les détails',
+			hideDetailsLabel = 'Masquer les détails',
+		} = options;
+
 		function getNbColumns(tr) {
 			return tr.closest('table').find('thead tr').children().length;
 		}
 		function displayErrorRow(tr) {
-			tr.after($('<tr class="text-error"><td colspan="'+getNbColumns(tr)+'">'+(typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  'Une erreur s’est produite.')+'</td></tr>'));
+			tr.after($('<tr class="text-error"><td colspan="'+getNbColumns(tr)+'">'+labelErrorOccurred+'</td></tr>'));
 		}
 		function displayDetailsRow(tr, content) {
 			var trContent = $(''
@@ -69,8 +78,8 @@ class DetailsSubArray {
 		function doDetailsActionRequest(link) {
 			displayLoading(link);
 
-			if (typeof callbackOnDetailsActionRequestBeforeSend != 'undefined' && callbackOnDetailsActionRequestBeforeSend != null) {
-				displayDetailsRow(link.closest('tr'), callbackOnDetailsActionRequestBeforeSend(link));
+			if (onBeforeSend != null) {
+				displayDetailsRow(link.closest('tr'), onBeforeSend(link));
 				hideLoading(link);
 				setHideDetailsLink(link);
 				return;
@@ -86,27 +95,27 @@ class DetailsSubArray {
 			HTTPClient.request('GET', link.data('url_details'), null,
 				(jsonObj) => {
 					if (jsonObj == null) {
-						if (typeof callbackOnDetailsActionRequestError != 'undefined' && callbackOnDetailsActionRequestError != null) {
-							callbackOnDetailsActionRequestError(link);
+						if (onError != null) {
+							onError(link);
 							return;
 						}
 						displayErrorRow(link.closest('tr'));
 						return;
 					}
 
-					if (typeof callbackOnDetailsActionRequestSuccess != 'undefined' && callbackOnDetailsActionRequestSuccess != null) {
-						displayDetailsRow(link.closest('tr'), callbackOnDetailsActionRequestSuccess(jsonObj, link));
+					if (onSuccess != null) {
+						displayDetailsRow(link.closest('tr'), onSuccess(jsonObj, link));
 					}
 
 					onComplete();
 				},
 				() => {
-					if (typeof callbackOnDetailsActionRequestError != 'undefined' && callbackOnDetailsActionRequestError != null) {
-						callbackOnDetailsActionRequestError(link);
+					if (onError != null) {
+						onError(link);
 						return;
 					}
 
-					link.closest('tr').after($('<tr class="error"><td colspan="6" class="center">'+(typeof labelErrorOccured != 'undefined' ? labelErrorOccured :  'Une erreur s’est produite.')+'</td></tr>'));
+					link.closest('tr').after($('<tr class="error"><td colspan="6" class="center">'+(labelErrorOccurred ??'Une erreur s’est produite.')+'</td></tr>'));
 
 					onComplete();
 					//window.location.replace(decodeURIComponent(urlRetour));

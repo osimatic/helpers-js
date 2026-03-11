@@ -41,16 +41,11 @@ describe('MultipleActionInTable', () => {
 			};
 		});
 
-		// Mock ROOT_PATH and DOSSIER_IMAGES
-		global.ROOT_PATH = '/';
-		global.DOSSIER_IMAGES = 'images/';
 	});
 
 	afterEach(() => {
 		jest.clearAllMocks();
 		delete global.$;
-		delete global.ROOT_PATH;
-		delete global.DOSSIER_IMAGES;
 	});
 
 	describe('getDivBtn', () => {
@@ -346,15 +341,11 @@ describe('MultipleActionInDivList', () => {
 			};
 		});
 
-		global.ROOT_PATH = '/';
-		global.DOSSIER_IMAGES = 'images/';
 	});
 
 	afterEach(() => {
 		jest.clearAllMocks();
 		delete global.$;
-		delete global.ROOT_PATH;
-		delete global.DOSSIER_IMAGES;
 	});
 
 	describe('getButtonsDiv', () => {

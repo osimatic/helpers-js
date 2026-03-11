@@ -8,11 +8,6 @@ describe('ImportFromCsv', () => {
 	let mockDivResult;
 
 	beforeEach(() => {
-		// Define global labels
-		global.errorMessageImportFailed = 'Import failed';
-		global.lineLabel = { format: (line) => `Line ${line}` };
-		global.selectDefaultOptionLabel = 'Select a column';
-
 		// Mock jQuery
 		global.$ = jest.fn((selector) => {
 			if (typeof selector === 'string') {
@@ -81,9 +76,56 @@ describe('ImportFromCsv', () => {
 
 	afterEach(() => {
 		delete global.$;
-		delete global.errorMessageImportFailed;
-		delete global.lineLabel;
-		delete global.selectDefaultOptionLabel;
+		ImportFromCsv._defaults = {};
+	});
+
+	describe('setDefault', () => {
+		test('should set default options', () => {
+			ImportFromCsv.setDefault({ errorMessageImportFailed: 'Custom error' });
+
+			expect(ImportFromCsv._defaults.errorMessageImportFailed).toBe('Custom error');
+		});
+
+		test('should merge with existing defaults', () => {
+			ImportFromCsv.setDefault({ errorMessageFileEmpty: 'Empty file' });
+			ImportFromCsv.setDefault({ errorMessageImportFailed: 'Import failed' });
+
+			expect(ImportFromCsv._defaults.errorMessageFileEmpty).toBe('Empty file');
+			expect(ImportFromCsv._defaults.errorMessageImportFailed).toBe('Import failed');
+		});
+
+		test('should use defaults in getErrorsHtmlOfImportData when no params passed', () => {
+			ImportFromCsv.setDefault({
+				errorMessageImportFailed: 'Default error',
+				lineLabel: 'Row {0}',
+			});
+
+			const html = ImportFromCsv.getErrorsHtmlOfImportData([{ line: 1, errors: ['Err'] }]);
+
+			expect(html).toContain('Default error');
+			expect(html).toContain('Row 1');
+		});
+
+		test('should use defaults in displayFormMatching when no selectDefaultOptionLabel passed', () => {
+			ImportFromCsv.setDefault({ selectDefaultOptionLabel: 'Pick a column' });
+
+			const mockSelectContent = {
+				addClass: jest.fn().mockReturnThis(),
+				empty: jest.fn().mockReturnThis(),
+				append: jest.fn().mockReturnThis()
+			};
+			mockFormMatching.find = jest.fn((selector) => {
+				if (selector === '.import_matching_select_content') return mockSelectContent;
+				return { addClass: jest.fn().mockReturnThis(), removeClass: jest.fn().mockReturnThis() };
+			});
+			mockFormMatching.removeClass = jest.fn().mockReturnThis();
+
+			ImportFromCsv.displayFormMatching(mockFormMatching, { col: 'Col' }, ['Col'], true);
+
+			// $ est appelé avec la string HTML contenant le label
+			const calls = global.$.mock.calls.map(([arg]) => arg).filter(a => typeof a === 'string');
+			expect(calls.some(s => s.includes('Pick a column'))).toBe(true);
+		});
 	});
 
 	describe('isImportErrors', () => {
@@ -176,7 +218,7 @@ describe('ImportFromCsv', () => {
 				{ line: 3, errors: ['Phone is required'] }
 			];
 
-			const html = ImportFromCsv.getErrorsHtmlOfImportData(json);
+			const html = ImportFromCsv.getErrorsHtmlOfImportData(json, null, 'Import failed', 'Line {0}');
 
 			expect(html).toContain('Import failed');
 			expect(html).toContain('<ul>');
@@ -201,7 +243,7 @@ describe('ImportFromCsv', () => {
 				return { addClass: jest.fn().mockReturnThis() };
 			});
 
-			ImportFromCsv.getErrorsHtmlOfImportData(json, mockDivResult);
+			ImportFromCsv.getErrorsHtmlOfImportData(json, mockDivResult, 'Import failed', 'Line {0}');
 
 			expect(mockTr.addClass).toHaveBeenCalledWith('danger');
 		});
@@ -209,7 +251,7 @@ describe('ImportFromCsv', () => {
 		test('should handle empty errors array', () => {
 			const json = [];
 
-			const html = ImportFromCsv.getErrorsHtmlOfImportData(json);
+			const html = ImportFromCsv.getErrorsHtmlOfImportData(json, null, 'Import failed', 'Line {0}');
 
 			expect(html).toContain('Import failed');
 			expect(html).toContain('<ul>');

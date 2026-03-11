@@ -1,7 +1,33 @@
+require('./string');
 
 class ImportFromCsv {
 
-	static initForm(div, importColumns, requestImportData, specificDescDiv, additionalFormField) {
+	static _defaults = {
+		errorMessageFileNotValid: 'Le fichier sélectionné n\'est pas un fichier CSV valide.',
+		errorMessageFileEmpty: 'Veuillez indiquer le fichier CSV à importer.',
+		errorMessageImportSelectColumns: 'Veuillez sélectionner les colonnes à importer.',
+		selectDefaultOptionLabel: 'Sélectionnez la colonne\u2026',
+		lineLabel: 'Ligne {0} :',
+		errorMessageImportFailed: 'L\'importation a échouée :',
+	};
+
+	static setDefault(options) {
+		ImportFromCsv._defaults = { ...ImportFromCsv._defaults, ...options };
+	}
+
+	static initForm(div, options = {}) {
+		const {
+			importColumns,
+			requestImportData,
+			specificDescDiv,
+			additionalFormField,
+			errorMessageFileNotValid,
+			errorMessageFileEmpty,
+			errorMessageImportSelectColumns,
+			selectDefaultOptionLabel,
+			lineLabel,
+			errorMessageImportFailed,
+		} = { ...ImportFromCsv._defaults, ...options };
 		div.empty().append($('.import_form_base').clone().removeClass('import_form_base hide'));
 
 		let formUpload = div.find('.form_upload');
@@ -53,7 +79,7 @@ class ImportFromCsv {
 						let header = hasHeader?results.meta.fields:results.data[0];
 
 						ImportFromCsv.displayData(divResult, parsedImportList, (hasHeader?header:null), formMatching);
-						ImportFromCsv.displayFormMatching(formMatching, importColumns, header, hasHeader);
+						ImportFromCsv.displayFormMatching(formMatching, importColumns, header, hasHeader, selectDefaultOptionLabel);
 
 						formUpload.addClass('hide');
 					}
@@ -101,7 +127,7 @@ class ImportFromCsv {
 						formMatching.find('div.errors').html(json['import_list']).removeClass('hide');
 					}
 					else {
-						formMatching.find('div.errors').html(ImportFromCsv.getErrorsHtmlOfImportData(json, divResult)).removeClass('hide');
+						formMatching.find('div.errors').html(ImportFromCsv.getErrorsHtmlOfImportData(json, divResult, errorMessageImportFailed, lineLabel)).removeClass('hide');
 					}
 					FormHelper.buttonLoader(formMatching.find('button[type="submit"]'), 'reset');
 				}
@@ -218,7 +244,9 @@ class ImportFromCsv {
 		});
 	}
 
-	static getErrorsHtmlOfImportData(json, divResult=null) {
+	static getErrorsHtmlOfImportData(json, divResult = null, errorMessageImportFailed = null, lineLabel = null) {
+		errorMessageImportFailed = errorMessageImportFailed ?? ImportFromCsv._defaults.errorMessageImportFailed;
+		lineLabel = lineLabel ?? ImportFromCsv._defaults.lineLabel;
 		let resultError = errorMessageImportFailed;
 		resultError += '<ul>';
 		$.each(json, function(idx, errorData) {
@@ -264,7 +292,8 @@ class ImportFromCsv {
 		return tabLink;
 	}
 
-	static displayFormMatching(formMatching, importColumns, header, hasHeader) {
+	static displayFormMatching(formMatching, importColumns, header, hasHeader, selectDefaultOptionLabel = null) {
+		selectDefaultOptionLabel = selectDefaultOptionLabel ?? ImportFromCsv._defaults.selectDefaultOptionLabel;
 		let options = '<option value="-1">'+selectDefaultOptionLabel+'</option>';
 		$.each(header, function (index, value) {
 			options += '<option value="'+(hasHeader?value:index)+'">' + value + '</option>';

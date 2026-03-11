@@ -16,11 +16,6 @@ describe('DetailsSubArray', () => {
 		// Clear all mocks
 		jest.clearAllMocks();
 
-		// Define global labels used by the code
-		global.showDetailsLabel = 'Show details';
-		global.hideDetailsLabel = 'Hide details';
-		global.labelErrorOccured = 'An error occurred';
-
 		// Create mock DOM structure
 		mockThead = {
 			find: jest.fn((selector) => {
@@ -112,9 +107,6 @@ describe('DetailsSubArray', () => {
 	afterEach(() => {
 		jest.restoreAllMocks();
 		delete global.$;
-		delete global.showDetailsLabel;
-		delete global.hideDetailsLabel;
-		delete global.labelErrorOccured;
 	});
 
 	describe('initDetailsLink', () => {
@@ -140,7 +132,7 @@ describe('DetailsSubArray', () => {
 		test('should handle callback before send', () => {
 			const beforeSendCallback = jest.fn(() => '<div>Custom content</div>');
 
-			DetailsSubArray.initDetailsLink(mockTable, null, null, beforeSendCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onBeforeSend: beforeSendCallback });
 
 			// Trigger the click
 			const clickHandler = mockLink.click.mock.calls[0][0];
@@ -155,7 +147,7 @@ describe('DetailsSubArray', () => {
 		test('should handle success callback', () => {
 			const successCallback = jest.fn((jsonObj, link) => '<div>Success</div>');
 
-			DetailsSubArray.initDetailsLink(mockTable, successCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onSuccess: successCallback });
 
 			// Verify the callback is passed through
 			expect(mockTable.find).toHaveBeenCalled();
@@ -164,7 +156,7 @@ describe('DetailsSubArray', () => {
 		test('should handle error callback', () => {
 			const errorCallback = jest.fn();
 
-			DetailsSubArray.initDetailsLink(mockTable, null, errorCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onError: errorCallback });
 
 			// Verify the callback is passed through
 			expect(mockTable.find).toHaveBeenCalled();
@@ -176,7 +168,7 @@ describe('DetailsSubArray', () => {
 			});
 
 			const successCallback = jest.fn(() => '<div>Details</div>');
-			DetailsSubArray.initDetailsLink(mockTable, successCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onSuccess: successCallback });
 
 			// Simulate click
 			const clickHandler = mockLink.click.mock.calls[0][0];
@@ -236,7 +228,7 @@ describe('DetailsSubArray', () => {
 				successCb(jsonResponse);
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable, successCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onSuccess: successCallback });
 
 			// Simulate click
 			const clickHandler = mockLink.click.mock.calls[0][0];
@@ -255,7 +247,7 @@ describe('DetailsSubArray', () => {
 				errorCb();
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable, null, errorCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onError: errorCallback });
 
 			// Simulate click
 			const clickHandler = mockLink.click.mock.calls[0][0];
@@ -274,7 +266,7 @@ describe('DetailsSubArray', () => {
 				successCb(null);
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable, null, errorCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onError: errorCallback });
 
 			// Simulate click
 			const clickHandler = mockLink.click.mock.calls[0][0];
@@ -289,7 +281,7 @@ describe('DetailsSubArray', () => {
 		test('should use before send callback instead of HTTP request', () => {
 			const beforeSendCallback = jest.fn(() => '<div>Immediate content</div>');
 
-			DetailsSubArray.initDetailsLink(mockTable, null, null, beforeSendCallback);
+			DetailsSubArray.initDetailsLink(mockTable, { onBeforeSend: beforeSendCallback });
 
 			// Simulate click
 			const clickHandler = mockLink.click.mock.calls[0][0];

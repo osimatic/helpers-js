@@ -4,7 +4,7 @@ class MultipleActionInTable {
 	// Ajoute les colonnes select (thead th + tbody td) dans le DOM.
 	// Idempotent : sans effet si les colonnes existent déjà.
 	// Doit être appelé AVANT l'initialisation DataTable.
-	static initCols(table, cellCssClass = 'select') {
+	static initCols(table, cellSelector = 'select') {
 		if (!table.hasClass('table-action_multiple')) {
 			return;
 		}
@@ -13,7 +13,7 @@ class MultipleActionInTable {
 		}
 
 		if (table.find('thead tr th[data-key="select"]').length === 0) {
-			table.find('thead tr').prepend($('<th class="' + cellCssClass + '" data-key="select"></th>'));
+			table.find('thead tr').prepend($('<th class="' + cellSelector + '" data-key="select"></th>'));
 		}
 		table.find('tbody tr:not(.no_items)').each(function(idx, tr) {
 			if ($(tr).find('td.select').length === 0) {
@@ -24,7 +24,9 @@ class MultipleActionInTable {
 
 	// Initialise les colonnes (via initCols) puis branche les event handlers.
 	// Peut être appelé après l'initialisation DataTable.
-	static init(table, cellCssClass = 'select') {
+	static init(table, options = {}) {
+		const { cellSelector = 'select', imgArrow = '' } = options;
+
 		if (!table.hasClass('table-action_multiple')) {
 			return;
 		}
@@ -34,10 +36,10 @@ class MultipleActionInTable {
 			return;
 		}
 
-		MultipleActionInTable.initCols(table, cellCssClass);
+		MultipleActionInTable.initCols(table, cellSelector);
 
 		if (!divBtn.hasClass('action_multiple_buttons_initialized')) {
-			divBtn.prepend($('<img src="'+ROOT_PATH+DOSSIER_IMAGES+'arrow_ltr.png" alt="" /> &nbsp;'));
+			divBtn.prepend($('<img src="'+imgArrow+'" alt="" /> &nbsp;'));
 			divBtn.append($('<br/><br/>'));
 			divBtn.addClass('action_multiple_buttons_initialized');
 		}
@@ -132,7 +134,9 @@ class MultipleActionInTable {
 
 class MultipleActionInDivList {
 // init checkbox
-	static init(contentDiv) {
+	static init(contentDiv, options = {}) {
+		const { imgArrow = '' } = options;
+
 		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
 		if (buttonsDiv == null) {
 			return;
@@ -146,7 +150,7 @@ class MultipleActionInDivList {
 		}
 
 		if (!buttonsDiv.data('action_multiple_buttons_initialized')) {
-			buttonsDiv.prepend($('<img src="'+ROOT_PATH+DOSSIER_IMAGES+'arrow_ltr.png" alt="" /> &nbsp;'));
+			buttonsDiv.prepend($('<img src="'+imgArrow+'" alt="" /> &nbsp;'));
 			buttonsDiv.append($('<br/><br/>'));
 			buttonsDiv.data('action_multiple_buttons_initialized', 1);
 		}

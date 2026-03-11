@@ -4,11 +4,11 @@ const { DateTime } = require('./date_time');
 class InputPeriod {
 
 	static addLinks(form) {
-		let divParent = form.find('input[type="date"][data-add_period_select_links]').parent();
-		if (divParent.hasClass('input-group')) {
-			divParent = divParent.parent();
+		let divParent = form.querySelector('input[type="date"][data-add_period_select_links]').parentElement;
+		if (divParent.classList.contains('input-group')) {
+			divParent = divParent.parentElement;
 		}
-		divParent.append(''
+		divParent.insertAdjacentHTML('beforeend', ''
 			+'<div class="select_period_links">'
 			+'<a href="#" class="period_select_yesterday">Hier</a> - '
 			+'<a href="#" class="period_select_current_week">Cette semaine</a> - '
@@ -22,35 +22,43 @@ class InputPeriod {
 	}
 
 	static init(form) {
-		let link;
-		//console.log(form.find('a.period_select_current_week'));
+		//console.log(form.querySelector('a.period_select_current_week'));
 
-		if ((link = form.find('a.period_select_today')).length) {
-			link.click(function() { InputPeriod.selectToday($(this)); return false; });
+		const linkToday = form.querySelector('a.period_select_today');
+		if (linkToday) {
+			linkToday.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectToday(linkToday); });
 		}
-		if ((link = form.find('a.period_select_yesterday')).length) {
-			link.click(function() { InputPeriod.selectPreviousDay($(this), 1); return false; });
+		const linkYesterday = form.querySelector('a.period_select_yesterday');
+		if (linkYesterday) {
+			linkYesterday.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectPreviousDay(linkYesterday, 1); });
 		}
-		if ((link = form.find('a.period_select_tomorrow')).length) {
-			link.click(function() { InputPeriod.selectFollowingDay($(this), 1); return false; });
+		const linkTomorrow = form.querySelector('a.period_select_tomorrow');
+		if (linkTomorrow) {
+			linkTomorrow.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectFollowingDay(linkTomorrow, 1); });
 		}
-		if ((link = form.find('a.period_select_current_week')).length) {
-			link.click(function() { InputPeriod.selectCurrentWeek($(this)); return false; });
+		const linkCurrentWeek = form.querySelector('a.period_select_current_week');
+		if (linkCurrentWeek) {
+			linkCurrentWeek.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectCurrentWeek(linkCurrentWeek); });
 		}
-		if ((link = form.find('a.period_select_last_week')).length) {
-			link.click(function() { InputPeriod.selectPreviousWeek($(this), 1); return false; });
+		const linkLastWeek = form.querySelector('a.period_select_last_week');
+		if (linkLastWeek) {
+			linkLastWeek.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectPreviousWeek(linkLastWeek, 1); });
 		}
-		if ((link = form.find('a.period_select_current_month')).length) {
-			link.click(function() { InputPeriod.selectCurrentMonth($(this)); return false; });
+		const linkCurrentMonth = form.querySelector('a.period_select_current_month');
+		if (linkCurrentMonth) {
+			linkCurrentMonth.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectCurrentMonth(linkCurrentMonth); });
 		}
-		if ((link = form.find('a.period_select_last_month')).length) {
-			link.click(function() { InputPeriod.selectPreviousMonth($(this), 1); return false; });
+		const linkLastMonth = form.querySelector('a.period_select_last_month');
+		if (linkLastMonth) {
+			linkLastMonth.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectPreviousMonth(linkLastMonth, 1); });
 		}
-		if ((link = form.find('a.period_select_current_year')).length) {
-			link.click(function() { InputPeriod.selectCurrentYear($(this)); return false; });
+		const linkCurrentYear = form.querySelector('a.period_select_current_year');
+		if (linkCurrentYear) {
+			linkCurrentYear.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectCurrentYear(linkCurrentYear); });
 		}
-		if ((link = form.find('a.period_select_last_year')).length) {
-			link.click(function() { InputPeriod.selectPreviousYear($(this), 1); return false; });
+		const linkLastYear = form.querySelector('a.period_select_last_year');
+		if (linkLastYear) {
+			linkLastYear.addEventListener('click', (e) => { e.preventDefault(); InputPeriod.selectPreviousYear(linkLastYear, 1); });
 		}
 	}
 
@@ -110,15 +118,16 @@ class InputPeriod {
 
 
 	static selectPeriod(link, startDate, endDate) {
-		let inputPeriodStart = link.parent().parent().find('input[type="date"]').filter('[name="date_start"], [name="start_date"], [name="start_period"], [name="period_start_date"]');
-		let inputPeriodEnd = link.parent().parent().find('input[type="date"]').filter('[name="date_end"], [name="end_date"], [name="end_period"], [name="period_end_date"]');
-		if (inputPeriodStart.length === 0 || inputPeriodEnd.length === 0) {
+		const container = link.parentElement.parentElement;
+		const inputPeriodStart = container.querySelector('input[type="date"][name="date_start"], input[type="date"][name="start_date"], input[type="date"][name="start_period"], input[type="date"][name="period_start_date"]');
+		const inputPeriodEnd = container.querySelector('input[type="date"][name="date_end"], input[type="date"][name="end_date"], input[type="date"][name="end_period"], input[type="date"][name="period_end_date"]');
+		if (!inputPeriodStart || !inputPeriodEnd) {
 			console.log('no period input found');
 			return;
 		}
 
-		inputPeriodStart.val(DateTime.getDateForInputDate(startDate));
-		inputPeriodEnd.val(DateTime.getDateForInputDate(endDate));
+		inputPeriodStart.value = DateTime.getDateForInputDate(startDate);
+		inputPeriodEnd.value = DateTime.getDateForInputDate(endDate);
 	}
 
 }
@@ -129,19 +138,19 @@ class FormDate {
 	static fillYearSelect(select, nbYearsBefore=5, nbYearsAfter=0) {
 		const currentDate = new Date();
 		for (let year=currentDate.getUTCFullYear()-nbYearsBefore; year<=(currentDate.getUTCFullYear()+nbYearsAfter); year++) {
-			select.append('<option value="'+year+'">'+year+'</option>');
+			select.insertAdjacentHTML('beforeend', '<option value="'+year+'">'+year+'</option>');
 		}
 	}
 
 	static fillMonthSelect(select, locale) {
 		for (let month=1; month<=12; month++) {
-			select.append('<option value="'+month+'">'+DateTime.getMonthNameByMonth(month, locale).capitalize()+'</option>');
+			select.insertAdjacentHTML('beforeend', '<option value="'+month+'">'+DateTime.getMonthNameByMonth(month, locale).capitalize()+'</option>');
 		}
 	}
 
 	static fillDayOfWeekSelect(select, locale) {
 		for (let dayOfWeek=1; dayOfWeek<=7; dayOfWeek++) {
-			select.append('<option value="'+dayOfWeek+'">'+DateTime.getDayNameByDayOfWeek(dayOfWeek, locale).capitalize()+'</option>');
+			select.insertAdjacentHTML('beforeend', '<option value="'+dayOfWeek+'">'+DateTime.getDayNameByDayOfWeek(dayOfWeek, locale).capitalize()+'</option>');
 		}
 	}
 
@@ -154,86 +163,85 @@ class FormDate {
 					html += '<option value="'+key+'">'+label+'</option>';
 				});
 				html += '</optgroup>';
-				select.append(html);
+				select.insertAdjacentHTML('beforeend', html);
 			});
-			if (select.data('default_value')) {
-				select.val(select.data('default_value'));
+			if (select.dataset.default_value) {
+				select.value = select.dataset.default_value;
 			}
 		}
 
 		function updatePeriodSelect(select) {
-			if (select.val() === 'perso') {
-				select.closest('.form-group').next().removeClass('hide');
+			if (select.value === 'perso') {
+				select.closest('.form-group').nextElementSibling.classList.remove('hide');
 			}
 			else {
-				select.closest('.form-group').next().addClass('hide');
+				select.closest('.form-group').nextElementSibling.classList.add('hide');
 			}
 		}
 
 		function updateForm(form) {
-			let periodSelect = form.find('select.periode');
-			if (periodSelect.length === 0) {
+			let periodSelect = form.querySelector('select.periode');
+			if (!periodSelect) {
 				return;
 			}
 
 			updatePeriodSelect(periodSelect);
 
-			let comparedPeriodSelect = form.find('select.periodeCompare');
-			if (comparedPeriodSelect.length === 0) {
+			let comparedPeriodSelect = form.querySelector('select.periodeCompare');
+			if (!comparedPeriodSelect) {
 				return;
 			}
 
 			let listValues = [];
 			let valueDefault = null;
 
-			comparedPeriodSelect.find('option').attr('disabled', false);
+			comparedPeriodSelect.querySelectorAll('option').forEach(o => o.disabled = false);
 
 			Object.entries(FormDate.getPeriodList()).forEach(([idx, tabListPeriode]) => {
 				if (idx != 0) {
 					let listKeyPeriode = Object.entries(tabListPeriode['list']).map(([key, value]) => key);
-					if (listKeyPeriode.indexOf(periodSelect.val()) !== -1) {
+					if (listKeyPeriode.indexOf(periodSelect.value) !== -1) {
 						listValues = listKeyPeriode;
 						valueDefault = listKeyPeriode[1];
 					}
 					else {
-						comparedPeriodSelect.find('option[value="' + listKeyPeriode[0] + '"]').parent().children().attr('disabled', true);
+						const optgroup = comparedPeriodSelect.querySelector('option[value="' + listKeyPeriode[0] + '"]')?.parentElement;
+						if (optgroup) { Array.from(optgroup.children).forEach(o => o.disabled = true); }
 					}
 				}
 			});
 
-			if (periodSelect.val() === 'perso') {
+			if (periodSelect.value === 'perso') {
 				valueDefault = 'perso';
 			}
-			else if (comparedPeriodSelect.val() !== 'perso' && listValues.indexOf(comparedPeriodSelect.val()) !== -1) {
-				valueDefault = comparedPeriodSelect.val();
+			else if (comparedPeriodSelect.value !== 'perso' && listValues.indexOf(comparedPeriodSelect.value) !== -1) {
+				valueDefault = comparedPeriodSelect.value;
 			}
-			comparedPeriodSelect.val(valueDefault);
+			comparedPeriodSelect.value = valueDefault;
 
 			updatePeriodSelect(comparedPeriodSelect);
 		}
 
 		// ---------- Choix période (new) ----------
 
-		if (form.find('select.periode').length > 0) {
-			fillPeriodSelect(form.find('select.periode'));
-			form.find('select.periode').change(function() {
-				updateForm($(this).closest('form'));
-			});
+		const periodeSelect = form.querySelector('select.periode');
+		if (periodeSelect) {
+			fillPeriodSelect(periodeSelect);
+			periodeSelect.addEventListener('change', () => { updateForm(form); });
 		}
 
-		if (form.find('select.periodeCompare').length > 0) {
-			fillPeriodSelect(form.find('select.periodeCompare'));
-			form.find('select.periodeCompare').change(function() {
-				updateForm($(this).closest('form'));
-			});
+		const periodeCompareSelect = form.querySelector('select.periodeCompare');
+		if (periodeCompareSelect) {
+			fillPeriodSelect(periodeCompareSelect);
+			periodeCompareSelect.addEventListener('change', () => { updateForm(form); });
 		}
 
 		updateForm(form);
 
 		// ---------- Choix période (old) ----------
 
-		if (form.find('select.day').length > 0 && form.find('select.month').length > 0 && form.find('select.year').length > 0) {
-			form.find('select.year').after(
+		if (form.querySelector('select.day') && form.querySelector('select.month') && form.querySelector('select.year')) {
+			form.querySelector('select.year').insertAdjacentHTML('afterend',
 				'<br/>'+
 				'<p class="select_date_fastly">'+
 				'	<a href="#" class="lien_form_today">Auj.</a> - '+
@@ -248,8 +256,8 @@ class FormDate {
 				'</p>'
 			);
 		}
-		else if (form.find('select.month').length > 0 && form.find('select.year').length > 0) {
-			form.find('select.year').after(
+		else if (form.querySelector('select.month') && form.querySelector('select.year')) {
+			form.querySelector('select.year').insertAdjacentHTML('afterend',
 				'<br/>'+
 				'<p class="select_date_fastly">'+
 				'	<a href="#" class="lien_form_current_month">Ce mois-ci</a> - '+
@@ -259,8 +267,8 @@ class FormDate {
 			);
 		}
 
-		if (form.find('select.dayCompare').length > 0 && form.find('select.monthCompare').length > 0 && form.find('select.yearCompare').length > 0) {
-			form.find('select.yearCompare').after(
+		if (form.querySelector('select.dayCompare') && form.querySelector('select.monthCompare') && form.querySelector('select.yearCompare')) {
+			form.querySelector('select.yearCompare').insertAdjacentHTML('afterend',
 				'<br/>'+
 				'<p class="select_date_fastly">'+
 				'	<a href="#" class="lien_form_yesterday">Hier</a> - '+
@@ -268,81 +276,59 @@ class FormDate {
 				'	<a href="#" class="lien_form_day_moins_8">J-8</a> - '+
 				'	<a href="#" class="lien_form_last_month">Le mois dernier</a> - '+
 				'	<a href="#" class="lien_form_month_moins_2">Mois M-2</a> - '+
-				'	<a href="#" class="lien_form_last_year">L’année dernière</a>'+
+				'	<a href="#" class="lien_form_last_year">L\'année dernière</a>'+
 				'</p>'
 			);
 		}
 
 		// Lien de sélection de date
 
-		if (form.find('a.lien_form_today').length > 0) {
-			form.find('a.lien_form_today').click(function() {
-				FormDate.setTodaySelected($(this).closest('.form-group'));
-				return false;
-			});
+		const lienToday = form.querySelector('a.lien_form_today');
+		if (lienToday) {
+			lienToday.addEventListener('click', (e) => { e.preventDefault(); FormDate.setTodaySelected(lienToday.closest('.form-group')); });
 		}
-		if (form.find('a.lien_form_yesterday').length > 0) {
-			form.find('a.lien_form_yesterday').click(function() {
-				FormDate.addNbDaysToToday($(this).closest('.form-group'), -1);
-				return false;
-			});
+		const lienYesterday = form.querySelector('a.lien_form_yesterday');
+		if (lienYesterday) {
+			lienYesterday.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbDaysToToday(lienYesterday.closest('.form-group'), -1); });
 		}
-		if (form.find('a.lien_form_day_moins_7').length > 0) {
-			form.find('a.lien_form_day_moins_7').click(function() {
-				FormDate.addNbDaysToToday($(this).closest('.form-group'), -7);
-				return false;
-			});
+		const lienDayMoins7 = form.querySelector('a.lien_form_day_moins_7');
+		if (lienDayMoins7) {
+			lienDayMoins7.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbDaysToToday(lienDayMoins7.closest('.form-group'), -7); });
 		}
-		if (form.find('a.lien_form_day_moins_8').length > 0) {
-			form.find('a.lien_form_day_moins_8').click(function() {
-				FormDate.addNbDaysToToday($(this).closest('.form-group'), -8);
-				return false;
-			});
+		const lienDayMoins8 = form.querySelector('a.lien_form_day_moins_8');
+		if (lienDayMoins8) {
+			lienDayMoins8.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbDaysToToday(lienDayMoins8.closest('.form-group'), -8); });
 		}
 
-		if (form.find('a.lien_form_current_month').length > 0) {
-			form.find('a.lien_form_current_month').click(function() {
-				FormDate.setCurrentMonthSelected($(this).closest('.form-group'));
-				return false;
-			});
+		const lienCurrentMonth = form.querySelector('a.lien_form_current_month');
+		if (lienCurrentMonth) {
+			lienCurrentMonth.addEventListener('click', (e) => { e.preventDefault(); FormDate.setCurrentMonthSelected(lienCurrentMonth.closest('.form-group')); });
 		}
-		if (form.find('a.lien_form_last_month').length > 0) {
-			form.find('a.lien_form_last_month').click(function() {
-				FormDate.addNbMonthsToToday($(this).closest('.form-group'), -1);
-				return false;
-			});
+		const lienLastMonth = form.querySelector('a.lien_form_last_month');
+		if (lienLastMonth) {
+			lienLastMonth.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbMonthsToToday(lienLastMonth.closest('.form-group'), -1); });
 		}
-		if (form.find('a.lien_form_month_moins_2').length > 0) {
-			form.find('a.lien_form_month_moins_2').click(function() {
-				FormDate.addNbMonthsToToday($(this).closest('.form-group'), -2);
-				return false;
-			});
+		const lienMonthMoins2 = form.querySelector('a.lien_form_month_moins_2');
+		if (lienMonthMoins2) {
+			lienMonthMoins2.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbMonthsToToday(lienMonthMoins2.closest('.form-group'), -2); });
 		}
 
-		if (form.find('a.lien_form_current_year').length > 0) {
-			form.find('a.lien_form_current_year').click(function() {
-				FormDate.setCurrentYearSelected($(this).closest('.form-group'));
-				return false;
-			});
+		const lienCurrentYear = form.querySelector('a.lien_form_current_year');
+		if (lienCurrentYear) {
+			lienCurrentYear.addEventListener('click', (e) => { e.preventDefault(); FormDate.setCurrentYearSelected(lienCurrentYear.closest('.form-group')); });
 		}
-		if (form.find('a.lien_form_last_year').length > 0) {
-			form.find('a.lien_form_last_year').click(function() {
-				FormDate.addNbYearsToToday($(this).closest('.form-group'), -1);
-				return false;
-			});
+		const lienLastYear = form.querySelector('a.lien_form_last_year');
+		if (lienLastYear) {
+			lienLastYear.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbYearsToToday(lienLastYear.closest('.form-group'), -1); });
 		}
 
-		if (form.find('a.lien_form_date_prev_day').length > 0) {
-			form.find('a.lien_form_date_prev_day').click(function() {
-				FormDate.addNbDaysToSelectedDate($(this).closest('.form-group'), -1);
-				return false;
-			});
+		const lienPrevDay = form.querySelector('a.lien_form_date_prev_day');
+		if (lienPrevDay) {
+			lienPrevDay.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbDaysToSelectedDate(lienPrevDay.closest('.form-group'), -1); });
 		}
-		if (form.find('a.lien_form_date_next_day').length > 0) {
-			form.find('a.lien_form_date_next_day').click(function() {
-				FormDate.addNbDaysToSelectedDate($(this).closest('.form-group'), 1);
-				return false;
-			});
+		const lienNextDay = form.querySelector('a.lien_form_date_next_day');
+		if (lienNextDay) {
+			lienNextDay.addEventListener('click', (e) => { e.preventDefault(); FormDate.addNbDaysToSelectedDate(lienNextDay.closest('.form-group'), 1); });
 		}
 
 		//if ($('form select[name=select_date_fastly]').length > 0) {
@@ -364,16 +350,16 @@ class FormDate {
 				perso: 						'Personnalisé',
 			}},
 			'1d': {label: 'Un jour', list: { // 1 jour
-				'ajd': 									'Aujourd’hui',
+				'ajd': 									'Aujourd\u2019hui',
 				'hier': 								'Hier',
 				'jourMoins2': 							'Avant-hier',
 				'jourMoins3': 							'J-3',
 				'jourMoins7': 							'J-7',
 				'jourMoins8': 							'J-8',
-				'same_day_last_year': 					'Même jour l’année dernière',
-				'same_day_least_2_years': 				'Même jour l’année A-2',
-				'same_day_as_yesterday_last_year': 		'Même jour qu’hier l’année dernière',
-				'same_day_as_yesterday_least_2_years': 	'Même jour qu’hier l’année A-2'
+				'same_day_last_year': 					'Même jour l\u2019année dernière',
+				'same_day_least_2_years': 				'Même jour l\u2019année A-2',
+				'same_day_as_yesterday_last_year': 		'Même jour qu\u2019hier l\u2019année dernière',
+				'same_day_as_yesterday_least_2_years': 	'Même jour qu\u2019hier l\u2019année A-2'
 			}},
 			'1w': {label: 'Une semaine', list: { // 1 semaine
 				'curr_week': 					'Cette semaine',
@@ -385,27 +371,27 @@ class FormDate {
 			'7d': {label: '7 jours', list: { // 7 jours
 				'last_7_days': 					'Les 7 derniers jours',
 				'last_7_days_before': 			'Les 7 jours avant',
-				'last_7_days_least_1_year': 	'Les mêmes 7 jours l’année dernière',
-				'last_7_days_least_2_years': 	'Les mêmes 7 jours l’année A-2',
+				'last_7_days_least_1_year': 	'Les mêmes 7 jours l\u2019année dernière',
+				'last_7_days_least_2_years': 	'Les mêmes 7 jours l\u2019année A-2',
 			}},
 			'14d': {label: '14 jours', list: { // 14 jours
 				'last_14_days': 				'Les 14 derniers jours',
 				'last_14_days_before': 			'Les 14 jours avant',
-				'last_14_days_least_1_year': 	'Les mêmes 14 jours l’année dernière',
-				'last_14_days_least_2_years': 	'Les mêmes 14 jours l’année A-2',
+				'last_14_days_least_1_year': 	'Les mêmes 14 jours l\u2019année dernière',
+				'last_14_days_least_2_years': 	'Les mêmes 14 jours l\u2019année A-2',
 			}},
 			// 30 jours
 			'30d': {label: '30 jours', list: {
 				'last_30_days': 				'Les 30 derniers jours',
 				'last_30_days_before': 			'Les 30 jours avant',
-				'last_30_days_least_1_year': 	'Les mêmes 30 jours l’année dernière',
-				'last_30_days_least_2_years': 	'Les mêmes 30 jours l’année A-2',
+				'last_30_days_least_1_year': 	'Les mêmes 30 jours l\u2019année dernière',
+				'last_30_days_least_2_years': 	'Les mêmes 30 jours l\u2019année A-2',
 			}},
 			'60d': {label: '60 jours', list: { // 60 jours
 				'last_60_days': 				'Les 60 derniers jours',
 				'last_60_days_before': 			'Les 60 jours avant',
-				'last_60_days_least_1_year': 	'Les mêmes 60 jours l’année dernière',
-				'last_60_days_least_2_years': 	'Les mêmes 60 jours l’année A-2',
+				'last_60_days_least_1_year': 	'Les mêmes 60 jours l\u2019année dernière',
+				'last_60_days_least_2_years': 	'Les mêmes 60 jours l\u2019année A-2',
 			}},
 			'1m': {label: 'Un mois', list: { // 1 mois
 				'curr_month': 					'Ce mois-ci',
@@ -415,36 +401,36 @@ class FormDate {
 				'monthMoins4': 					'Mois M-4',
 				'monthMoins5': 					'Mois M-5',
 				'monthMoins6': 					'Mois M-6',
-				'same_month_last_year': 		'Même mois l’année dernière',
-				'same_month_least_2_years': 	'Même mois l’année A-2',
+				'same_month_last_year': 		'Même mois l\u2019année dernière',
+				'same_month_least_2_years': 	'Même mois l\u2019année A-2',
 			}},
 			'3m': {label: '3 mois', list: { // 3 mois
 				'last_3_month': 				'Les 3 derniers mois',
 				'last_3_month_before': 			'Les 3 mois avant',
-				'last_3_month_least_1_year': 	'Les mêmes 3 mois l’année dernière',
-				'last_3_month_least_2_years': 	'Les mêmes 3 mois l’année A-2',
+				'last_3_month_least_1_year': 	'Les mêmes 3 mois l\u2019année dernière',
+				'last_3_month_least_2_years': 	'Les mêmes 3 mois l\u2019année A-2',
 			}},
 			'6m': {label: '6 mois', list: { // 6 mois
 				'last_6_month': 				'Les 6 derniers mois',
 				'last_6_month_before': 			'Les 6 mois avant',
-				'last_6_month_least_1_year': 	'Les mêmes 6 mois l’année dernière',
-				'last_6_month_least_2_years': 	'Les mêmes 6 mois l’année A-2',
+				'last_6_month_least_1_year': 	'Les mêmes 6 mois l\u2019année dernière',
+				'last_6_month_least_2_years': 	'Les mêmes 6 mois l\u2019année A-2',
 			}},
 			'12m': {label: '12 mois', list: { // 12 mois
 				'last_12_month': 				'Les 12 derniers mois',
 				'last_12_month_before': 		'Les 12 mois avant',
-				'last_12_month_least_1_year': 	'Les mêmes 12 mois l’année dernière',
-				'last_12_month_least_2_years': 	'Les mêmes 12 mois l’année A-2',
+				'last_12_month_least_1_year': 	'Les mêmes 12 mois l\u2019année dernière',
+				'last_12_month_least_2_years': 	'Les mêmes 12 mois l\u2019année A-2',
 			}},
 			'24m': {label: '24 mois', list: { // 24 mois
 				'last_24_month': 				'Les 24 derniers mois',
 				'last_24_month_before': 		'Les 24 mois avant',
-				'last_24_month_least_1_year': 	'Les mêmes 24 mois l’année dernière',
-				'last_24_month_least_2_years': 	'Les mêmes 24 mois l’année A-2',
+				'last_24_month_least_1_year': 	'Les mêmes 24 mois l\u2019année dernière',
+				'last_24_month_least_2_years': 	'Les mêmes 24 mois l\u2019année A-2',
 			}},
 			'1y': {label: 'Une année', list: { // 1 année
 				'curr_year': 					'Cette année',
-				'last_year': 					'L’année dernière',
+				'last_year': 					'L\u2019année dernière',
 				'yearMoins2': 					'Année A-2',
 				'yearMoins3': 					'Année A-3',
 				'yearMoins4': 					'Année A-4',
@@ -491,9 +477,9 @@ class FormDate {
 	}
 
 	static getSelectedDate(periodFormGroup) {
-		let day = periodFormGroup.find('select.day').val();
-		let month = periodFormGroup.find('select.month').val();
-		let year = periodFormGroup.find('select.year').val();
+		let day = periodFormGroup.querySelector('select.day')?.value;
+		let month = periodFormGroup.querySelector('select.month')?.value;
+		let year = periodFormGroup.querySelector('select.year')?.value;
 		if (null != day && null != month && null != year) {
 			return new Date(year, month - 1, day);
 		}
@@ -501,9 +487,12 @@ class FormDate {
 	}
 
 	static setSelectedDate(periodFormGroup, day, month, year) {
-		periodFormGroup.find('select.day').val(day);
-		periodFormGroup.find('select.month').val(month);
-		periodFormGroup.find('select.year').val(year);
+		const daySelect = periodFormGroup.querySelector('select.day');
+		const monthSelect = periodFormGroup.querySelector('select.month');
+		const yearSelect = periodFormGroup.querySelector('select.year');
+		if (daySelect) daySelect.value = day;
+		if (monthSelect) monthSelect.value = month;
+		if (yearSelect) yearSelect.value = year;
 	}
 
 

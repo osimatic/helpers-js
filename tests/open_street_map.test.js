@@ -1,4 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 const { OpenStreetMap } = require('../open_street_map');
+const L = require('leaflet');
 
 describe('OpenStreetMap', () => {
 	describe('getUrl', () => {
@@ -299,21 +303,17 @@ describe('OpenStreetMap', () => {
 				setZoom: jest.fn()
 			};
 
-			// Mock L.latLngBounds
-			global.L = {
-				latLngBounds: jest.fn((locations) => ({
-					_bounds: locations
-				}))
-			};
-
 			const locations = [[48.8566, 2.3522], [48.8606, 2.3376]];
+			const mockBounds = { _bounds: locations };
+			const latLngBoundsSpy = jest.spyOn(L, 'latLngBounds').mockReturnValue(mockBounds);
+
 			OpenStreetMap.centerMapToLocations(mockMap, locations);
 
 			expect(mockMap.invalidateSize).toHaveBeenCalledWith(false);
-			expect(global.L.latLngBounds).toHaveBeenCalledWith(locations);
+			expect(latLngBoundsSpy).toHaveBeenCalledWith(locations);
 			expect(mockMap.fitBounds).toHaveBeenCalled();
 
-			delete global.L;
+			latLngBoundsSpy.mockRestore();
 		});
 
 		test('should not do anything when map is null', () => {
@@ -346,18 +346,14 @@ describe('OpenStreetMap', () => {
 				setZoom: jest.fn()
 			};
 
-			global.L = {
-				latLngBounds: jest.fn((locations) => ({
-					_bounds: locations
-				}))
-			};
-
 			const locations = [[48.8566, 2.3522]];
+			const latLngBoundsSpy = jest.spyOn(L, 'latLngBounds').mockReturnValue({ _bounds: locations });
+
 			OpenStreetMap.centerMapToLocations(mockMap, locations, [20, 20], 18);
 
 			expect(mockMap.setZoom).toHaveBeenCalledWith(18);
 
-			delete global.L;
+			latLngBoundsSpy.mockRestore();
 		});
 
 		test('should use custom padding', () => {
@@ -368,13 +364,9 @@ describe('OpenStreetMap', () => {
 				setZoom: jest.fn()
 			};
 
-			global.L = {
-				latLngBounds: jest.fn((locations) => ({
-					_bounds: locations
-				}))
-			};
-
 			const locations = [[48.8566, 2.3522]];
+			const latLngBoundsSpy = jest.spyOn(L, 'latLngBounds').mockReturnValue({ _bounds: locations });
+
 			OpenStreetMap.centerMapToLocations(mockMap, locations, [50, 50]);
 
 			expect(mockMap.fitBounds).toHaveBeenCalledWith(
@@ -382,7 +374,7 @@ describe('OpenStreetMap', () => {
 				{ padding: [50, 50] }
 			);
 
-			delete global.L;
+			latLngBoundsSpy.mockRestore();
 		});
 	});
 });

@@ -1,4 +1,3 @@
-
 require('./string');
 
 class DateTimeFormatter {
