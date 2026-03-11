@@ -14,14 +14,18 @@ class FlashMessage {
 			modal.modal('hide');
 		}
 
-		$('div.snackbar').remove();
-		let snackbar = $('<div class="snackbar '+type+'" '+(null !== domId ? 'id="'+domId+'"' : '')+'></div>');
-		$('html body').append(snackbar);
-		snackbar.html(message);
-		snackbar.addClass('show');
+		document.querySelectorAll('div.snackbar').forEach(el => el.remove());
+		const snackbar = document.createElement('div');
+		snackbar.className = 'snackbar ' + type;
+		if (null !== domId) {
+			snackbar.id = domId;
+		}
+		snackbar.innerHTML = message;
+		snackbar.classList.add('show');
+		document.querySelector('body').appendChild(snackbar);
 
 		setTimeout(function () {
-			$('div.snackbar').remove();
+			document.querySelectorAll('div.snackbar').forEach(el => el.remove());
 			if (typeof onMessageHidden == 'function') {
 				onMessageHidden();
 			}

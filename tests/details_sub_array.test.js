@@ -2,14 +2,6 @@
  * @jest-environment jsdom
  */
 const { DetailsSubArray } = require('../details_sub_array');
-
-// Mock HTTPClient
-jest.mock('../http_client', () => ({
-	HTTPClient: {
-		request: jest.fn()
-	}
-}));
-
 const { HTTPClient } = require('../http_client');
 
 describe('DetailsSubArray', () => {
@@ -19,6 +11,8 @@ describe('DetailsSubArray', () => {
 	let mockThead;
 
 	beforeEach(() => {
+		jest.spyOn(HTTPClient, 'request').mockImplementation(() => {});
+
 		// Clear all mocks
 		jest.clearAllMocks();
 
@@ -26,9 +20,6 @@ describe('DetailsSubArray', () => {
 		global.showDetailsLabel = 'Show details';
 		global.hideDetailsLabel = 'Hide details';
 		global.labelErrorOccured = 'An error occurred';
-
-		// Make HTTPClient available globally
-		global.HTTPClient = HTTPClient;
 
 		// Create mock DOM structure
 		mockThead = {
@@ -119,11 +110,11 @@ describe('DetailsSubArray', () => {
 	});
 
 	afterEach(() => {
+		jest.restoreAllMocks();
 		delete global.$;
 		delete global.showDetailsLabel;
 		delete global.hideDetailsLabel;
 		delete global.labelErrorOccured;
-		delete global.HTTPClient;
 	});
 
 	describe('initDetailsLink', () => {

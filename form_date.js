@@ -1,4 +1,6 @@
-﻿// input period de type : Du <input type="date" name="start_date" /> au <input type="date" name="end_date" />
+const { DateTime } = require('./date_time');
+
+// input period de type : Du <input type="date" name="start_date" /> au <input type="date" name="end_date" />
 class InputPeriod {
 
 	static addLinks(form) {

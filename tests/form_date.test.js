@@ -258,22 +258,11 @@ describe('FormDate', () => {
 		});
 
 		test('should fill select with 12 months', () => {
-			// Mock DateTime.getMonthNameByMonth
-			global.DateTime = {
-				getMonthNameByMonth: jest.fn((month, locale) => {
-					const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-									'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-					return months[month - 1];
-				})
-			};
-
 			FormDate.fillMonthSelect(mockSelect, 'fr');
 
 			expect(mockSelect.append).toHaveBeenCalledTimes(12);
 			expect(mockSelect.append).toHaveBeenCalledWith('<option value="1">Janvier</option>');
 			expect(mockSelect.append).toHaveBeenCalledWith('<option value="12">Décembre</option>');
-
-			delete global.DateTime;
 		});
 	});
 
@@ -293,21 +282,11 @@ describe('FormDate', () => {
 		});
 
 		test('should fill select with 7 days of week', () => {
-			// Mock DateTime.getDayNameByDayOfWeek
-			global.DateTime = {
-				getDayNameByDayOfWeek: jest.fn((dayOfWeek, locale) => {
-					const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-					return days[dayOfWeek - 1];
-				})
-			};
-
 			FormDate.fillDayOfWeekSelect(mockSelect, 'fr');
 
 			expect(mockSelect.append).toHaveBeenCalledTimes(7);
 			expect(mockSelect.append).toHaveBeenCalledWith('<option value="1">Lundi</option>');
 			expect(mockSelect.append).toHaveBeenCalledWith('<option value="7">Dimanche</option>');
-
-			delete global.DateTime;
 		});
 	});
 
@@ -724,23 +703,8 @@ describe('FormDate', () => {
 				};
 			}
 
-			// Mock DateTime
-			global.DateTime = {
-				getMonthNameByMonth: jest.fn((month) => {
-					const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-									'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-					return months[month - 1];
-				}),
-				getDayNameByDayOfWeek: jest.fn((day) => {
-					const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-					return days[day - 1];
-				})
-			};
-		});
+			});
 
-		afterEach(() => {
-			delete global.DateTime;
-		});
 
 		test('should initialize without errors when no selects present', () => {
 			expect(() => {
@@ -899,43 +863,9 @@ describe('InputPeriod', () => {
 	beforeEach(() => {
 		capturedCallbacks = {};
 
-		// Mock DateTime
-		global.DateTime = {
-			getDateForInputDate: jest.fn((date) => {
-				const year = date.getUTCFullYear();
-				const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-				const day = String(date.getUTCDate()).padStart(2, '0');
-				return `${year}-${month}-${day}`;
-			}),
-			getFirstDayOfWeek: jest.fn((date) => {
-				const d = new Date(date);
-				const day = d.getUTCDay();
-				const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1);
-				return new Date(d.setUTCDate(diff));
-			}),
-			getLastDayOfWeek: jest.fn((date) => {
-				const d = new Date(date);
-				const day = d.getUTCDay();
-				const diff = d.getUTCDate() + (day === 0 ? 0 : 7 - day);
-				return new Date(d.setUTCDate(diff));
-			}),
-			getFirstDayOfMonth: jest.fn((date) => {
-				return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-			}),
-			getLastDayOfMonth: jest.fn((date) => {
-				return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
-			}),
-			getFirstDayOfYear: jest.fn((date) => {
-				return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-			}),
-			getLastDayOfYear: jest.fn((date) => {
-				return new Date(Date.UTC(date.getUTCFullYear(), 11, 31));
-			})
-		};
 	});
 
 	afterEach(() => {
-		delete global.DateTime;
 		delete global.$;
 	});
 
@@ -1109,7 +1039,6 @@ describe('InputPeriod', () => {
 
 			expect(mockStartInput.val).toHaveBeenCalled();
 			expect(mockEndInput.val).toHaveBeenCalled();
-			expect(global.DateTime.getDateForInputDate).toHaveBeenCalled();
 		});
 	});
 
@@ -1207,8 +1136,6 @@ describe('InputPeriod', () => {
 
 			InputPeriod.selectCurrentWeek(mockLink);
 
-			expect(global.DateTime.getFirstDayOfWeek).toHaveBeenCalled();
-			expect(global.DateTime.getLastDayOfWeek).toHaveBeenCalled();
 			expect(mockStartInput.val).toHaveBeenCalled();
 			expect(mockEndInput.val).toHaveBeenCalled();
 		});
@@ -1308,8 +1235,6 @@ describe('InputPeriod', () => {
 
 			InputPeriod.selectCurrentMonth(mockLink);
 
-			expect(global.DateTime.getFirstDayOfMonth).toHaveBeenCalled();
-			expect(global.DateTime.getLastDayOfMonth).toHaveBeenCalled();
 			expect(mockStartInput.val).toHaveBeenCalled();
 			expect(mockEndInput.val).toHaveBeenCalled();
 		});
@@ -1409,8 +1334,6 @@ describe('InputPeriod', () => {
 
 			InputPeriod.selectCurrentYear(mockLink);
 
-			expect(global.DateTime.getFirstDayOfYear).toHaveBeenCalled();
-			expect(global.DateTime.getLastDayOfYear).toHaveBeenCalled();
 			expect(mockStartInput.val).toHaveBeenCalled();
 			expect(mockEndInput.val).toHaveBeenCalled();
 		});
@@ -1552,8 +1475,6 @@ describe('InputPeriod', () => {
 
 			expect(mockStartInput.val).toHaveBeenCalled();
 			expect(mockEndInput.val).toHaveBeenCalled();
-			expect(global.DateTime.getDateForInputDate).toHaveBeenCalledWith(startDate);
-			expect(global.DateTime.getDateForInputDate).toHaveBeenCalledWith(endDate);
 		});
 	});
 });

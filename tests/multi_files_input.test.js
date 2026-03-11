@@ -1,10 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 const { MultiFilesInput } = require('../multi_files_input');
-const { Str } = require('../string'); // Importer pour que escapeHtml soit disponible
-
-// Mock global FlashMessage
-global.FlashMessage = {
-	displayError: jest.fn()
-};
+const { FlashMessage } = require('../flash_message');
 
 // Mock FileReader
 class MockFileReader {
@@ -41,15 +39,14 @@ describe('MultiFilesInput', () => {
 	let mockWrap;
 
 	beforeEach(() => {
+		jest.spyOn(FlashMessage, 'displayError');
+
 		// Reset counter for consistent IDs
 		mockRandomCounter = 0;
 		Math.random = jest.fn(() => {
 			mockRandomCounter++;
 			return 0.123456789 + mockRandomCounter * 0.001;
 		});
-
-		// Reset FlashMessage mock
-		global.FlashMessage.displayError.mockClear();
 
 		// Setup event handlers storage
 		eventHandlers = {
@@ -181,6 +178,7 @@ describe('MultiFilesInput', () => {
 	});
 
 	afterEach(() => {
+		jest.restoreAllMocks();
 		Math.random = originalMathRandom;
 		jest.clearAllTimers();
 	});
@@ -432,7 +430,7 @@ describe('MultiFilesInput', () => {
 
 			// Should only add 3 files (nbMaxFiles = 3)
 			expect(setFilesListSpy).toHaveBeenCalledTimes(3);
-			expect(global.FlashMessage.displayError).toHaveBeenCalledWith('Maximum 3 fichiers autorisés.');
+			expect(FlashMessage.displayError).toHaveBeenCalledWith('Maximum 3 fichiers autorisés.');
 		});
 
 		test('should reject file exceeding max size', () => {
@@ -448,7 +446,7 @@ describe('MultiFilesInput', () => {
 
 			eventHandlers.change(mockEvent);
 
-			expect(global.FlashMessage.displayError).toHaveBeenCalledWith('Le fichier large.txt dépasse la taille maximale.');
+			expect(FlashMessage.displayError).toHaveBeenCalledWith('Le fichier large.txt dépasse la taille maximale.');
 			expect(setFilesListSpy).not.toHaveBeenCalled();
 		});
 
@@ -503,7 +501,7 @@ describe('MultiFilesInput', () => {
 			expect(lastCall).toContain(mockFile1);
 			expect(lastCall).toContain(mockFile3);
 			expect(lastCall).not.toContain(mockFile2); // Le fichier trop gros n'est pas ajouté
-			expect(global.FlashMessage.displayError).toHaveBeenCalledWith('Le fichier large.txt dépasse la taille maximale.');
+			expect(FlashMessage.displayError).toHaveBeenCalledWith('Le fichier large.txt dépasse la taille maximale.');
 		});
 	});
 
@@ -870,7 +868,7 @@ describe('MultiFilesInput', () => {
 
 			// File at exact max size should be accepted
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
-			expect(global.FlashMessage.displayError).not.toHaveBeenCalled();
+			expect(FlashMessage.displayError).not.toHaveBeenCalled();
 		});
 
 		test('should handle file one byte over max size', () => {
@@ -886,7 +884,7 @@ describe('MultiFilesInput', () => {
 
 			eventHandlers.change(mockEvent);
 
-			expect(global.FlashMessage.displayError).toHaveBeenCalledWith('Le fichier oversize.txt dépasse la taille maximale.');
+			expect(FlashMessage.displayError).toHaveBeenCalledWith('Le fichier oversize.txt dépasse la taille maximale.');
 			expect(setFilesListSpy).not.toHaveBeenCalled();
 		});
 
@@ -948,7 +946,7 @@ describe('MultiFilesInput', () => {
 
 			eventHandlers.change(mockEvent);
 
-			expect(global.FlashMessage.displayError).toHaveBeenCalledWith('Maximum 0 fichiers autorisés.');
+			expect(FlashMessage.displayError).toHaveBeenCalledWith('Maximum 0 fichiers autorisés.');
 			expect(setFilesListSpy).not.toHaveBeenCalled();
 		});
 
@@ -971,7 +969,7 @@ describe('MultiFilesInput', () => {
 
 			expect(setFilesListSpy).toHaveBeenCalledTimes(1);
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile1]);
-			expect(global.FlashMessage.displayError).toHaveBeenCalledWith('Maximum 1 fichiers autorisés.');
+			expect(FlashMessage.displayError).toHaveBeenCalledWith('Maximum 1 fichiers autorisés.');
 		});
 
 		test('should handle file with null name', () => {

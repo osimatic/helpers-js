@@ -1,4 +1,5 @@
-const { Str } = require('./string');
+require('./string');
+const { FlashMessage } = require('./flash_message');
 
 class MultiFilesInput {
 	static init(fileInput, setFilesList, nbMaxFiles, maxFileSize) {

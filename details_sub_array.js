@@ -1,3 +1,5 @@
+const { HTTPClient } = require('./http_client');
+
 class DetailsSubArray {
 
 	static initDetailsLink(table, callbackOnDetailsActionRequestSuccess, callbackOnDetailsActionRequestError, callbackOnDetailsActionRequestBeforeSend) {
