@@ -1,3 +1,5 @@
+const L = require('leaflet');
+
 /**
  * https://leafletjs.com/
  * https://switch2osm.org/the-basics/

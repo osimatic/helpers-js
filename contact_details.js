@@ -1,4 +1,8 @@
 
+const libphonenumber = require('libphonenumber-js/max');
+const intlTelInputLib = require('intl-tel-input/intlTelInputWithUtils');
+const { Country } = require('./location');
+
 class PersonName {
 
 	static format(firstName, lastName) {
@@ -48,8 +52,6 @@ class Email {
 }
 
 class TelephoneNumber {
-	//this class works with libphonenumber-max.min.js
-
 	static setLocalCountryCode(countryCode) {
 		TelephoneNumber.localCountryCode = countryCode;
 	}
@@ -172,7 +174,7 @@ class TelephoneNumber {
 		TelephoneNumber.localCountryCode = typeof TelephoneNumber.localCountryCode != 'undefined' ? TelephoneNumber.localCountryCode : null;
 		TelephoneNumber.intlTelInputUtilsPath = typeof TelephoneNumber.intlTelInputUtilsPath != 'undefined' ? TelephoneNumber.intlTelInputUtilsPath : null;
 
-		return window.intlTelInput(input[0], {
+		return intlTelInputLib(input[0], {
 			initialCountry: null != TelephoneNumber.localCountryCode ? TelephoneNumber.localCountryCode.toLowerCase() : null, // depuis version 19.x, le code pays doit être en minuscule
 			placeholderNumberType: placeholderNumberType || 'FIXED_LINE_OR_MOBILE',
 			utilsScript: TelephoneNumber.intlTelInputUtilsPath
@@ -180,11 +182,11 @@ class TelephoneNumber {
 	}
 
 	static getIntlTelInputInstance(input) {
-		return window.intlTelInput.getInstance(input[0]);
+		return intlTelInputLib.getInstance(input[0]);
 	}
 
 	static getEnteredNumberInInternationalFormat(intlTelInput) {
-		return intlTelInput.getNumber(window.intlTelInput.utils.numberFormat.E164);
+		return intlTelInput.getNumber(intlTelInputLib.utils.numberFormat.E164);
 	}
 
 	static formatNumberFromIntlTelInput(intlTelInput) {

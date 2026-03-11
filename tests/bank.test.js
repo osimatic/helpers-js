@@ -108,50 +108,26 @@ describe('BankCard', () => {
 	});
 
 	describe('formatExpirationDate', () => {
-		// Mock SqlDateTime since it's imported from another module
-		beforeAll(() => {
-			global.SqlDateTime = {
-				getMonthName: jest.fn((date, locale) => {
-					// Mock implementation
-					const d = new Date(date);
-					const month = d.toLocaleString(locale, { month: 'long' });
-					return month.charAt(0).toUpperCase() + month.slice(1);
-				}),
-				getYear: jest.fn((date) => {
-					const d = new Date(date);
-					return d.getFullYear();
-				})
-			};
-		});
-
-		afterAll(() => {
-			delete global.SqlDateTime;
-		});
-
 		test('should format expiration date in French', () => {
-			const date = '2025-12-31';
-			const result = BankCard.formatExpirationDate(date, 'fr-FR');
+			const result = BankCard.formatExpirationDate('2025-12-31', 'fr-FR');
 			expect(result).toContain('2025');
-			expect(SqlDateTime.getMonthName).toHaveBeenCalledWith(date, 'fr-FR');
-			expect(SqlDateTime.getYear).toHaveBeenCalledWith(date);
+			expect(result).toContain('décembre');
 		});
 
 		test('should use default locale fr-FR', () => {
-			const date = '2025-06-15';
-			BankCard.formatExpirationDate(date);
-			expect(SqlDateTime.getMonthName).toHaveBeenCalledWith(date, 'fr-FR');
+			const result = BankCard.formatExpirationDate('2025-06-15');
+			expect(result).toContain('2025');
+			expect(result).toContain('juin');
 		});
 
 		test('should format expiration date in English', () => {
-			const date = '2025-03-20';
-			const result = BankCard.formatExpirationDate(date, 'en-US');
+			const result = BankCard.formatExpirationDate('2025-03-20', 'en-US');
 			expect(result).toContain('2025');
-			expect(SqlDateTime.getMonthName).toHaveBeenCalledWith(date, 'en-US');
+			expect(result).toContain('March');
 		});
 
 		test('should handle different date formats', () => {
-			const date = '2026-01-01';
-			const result = BankCard.formatExpirationDate(date);
+			const result = BankCard.formatExpirationDate('2026-01-01');
 			expect(result).toContain('2026');
 		});
 	});

@@ -1,6 +1,6 @@
 {
   "name": "@osimatic/helpers-js",
-  "version": "1.4.28",
+  "version": "1.5.2",
   "main": "main.js",
   "scripts": {
     "test": "jest",
@@ -13,7 +13,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "ilib": "^14.16.0"
+    "ilib": "^14.21",
+    "libphonenumber-js": "^1.12.39",
+    "ua-parser-js": "^2.0.9"
+  },
+  "peerDependencies": {
+    "intl-tel-input": ">=19.0",
+    "leaflet": ">=1.9"
   },
   "devDependencies": {
     "jest": "^30.2.0",

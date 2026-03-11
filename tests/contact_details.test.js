@@ -171,51 +171,6 @@ describe('Email', () => {
 });
 
 describe('TelephoneNumber', () => {
-	// Mock libphonenumber
-	beforeAll(() => {
-		global.libphonenumber = {
-			parsePhoneNumber: jest.fn((phoneNumber, countryCode) => {
-				// Simple mock implementation
-				if (phoneNumber === '+33612345678') {
-					return {
-						country: 'FR',
-						formatNational: () => '06 12 34 56 78',
-						formatInternational: () => '+33 6 12 34 56 78',
-						isValid: () => true,
-						getType: () => 'MOBILE'
-					};
-				}
-				if (phoneNumber === '+14155552671') {
-					return {
-						country: 'US',
-						formatNational: () => '(415) 555-2671',
-						formatInternational: () => '+1 415-555-2671',
-						isValid: () => true,
-						getType: () => 'FIXED_LINE_OR_MOBILE'
-					};
-				}
-				if (phoneNumber === 'invalid') {
-					throw new Error('Invalid phone number');
-				}
-				return null;
-			})
-		};
-
-		global.Country = {
-			getCountryName: jest.fn((code) => {
-				const countries = { FR: 'France', US: 'United States' };
-				return countries[code] || code;
-			}),
-			getFlagImg: jest.fn((code) => {
-				return `<img src="/flags/${code.toLowerCase()}.png" />`;
-			})
-		};
-	});
-
-	afterAll(() => {
-		delete global.libphonenumber;
-		delete global.Country;
-	});
 
 	describe('setLocalCountryCode', () => {
 		test('should set local country code', () => {
@@ -360,22 +315,21 @@ describe('TelephoneNumber', () => {
 		test('should return country name for phone number', () => {
 			const result = TelephoneNumber.getCountryName('+33612345678', 'FR');
 			expect(result).toBe('France');
-			expect(Country.getCountryName).toHaveBeenCalledWith('FR');
 		});
 	});
 
 	describe('getFlagImg', () => {
 		test('should return flag image for phone number', () => {
 			const result = TelephoneNumber.getFlagImg('+33612345678', 'FR');
-			expect(result).toContain('<img src="/flags/fr.png"');
-			expect(Country.getFlagImg).toHaveBeenCalledWith('FR');
+			expect(result).toContain('fr.png');
+			expect(result).toContain('<img');
 		});
 	});
 
 	describe('formatNationalWithFlagImg', () => {
 		test('should format phone number with flag image', () => {
 			const result = TelephoneNumber.formatNationalWithFlagImg('+33612345678', 'FR');
-			expect(result).toContain('<img src="/flags/fr.png"');
+			expect(result).toContain('fr.png');
 			expect(result).toContain('06 12 34 56 78');
 		});
 	});
@@ -383,9 +337,40 @@ describe('TelephoneNumber', () => {
 	describe('formatNationalWithFlagImgAndTelLink', () => {
 		test('should format phone number with flag and tel link', () => {
 			const result = TelephoneNumber.formatNationalWithFlagImgAndTelLink('+33612345678', 'FR');
-			expect(result).toContain('<img src="/flags/fr.png"');
+			expect(result).toContain('fr.png');
 			expect(result).toContain('<a href="tel:+33612345678">');
 			expect(result).toContain('06 12 34 56 78');
+		});
+	});
+
+	describe('getEnteredNumberInInternationalFormat', () => {
+		test('should return number in E164 format', () => {
+			const iti = { getNumber: jest.fn(() => '+33612345678') };
+			const result = TelephoneNumber.getEnteredNumberInInternationalFormat(iti);
+			expect(result).toBe('+33612345678');
+		});
+	});
+
+	describe('formatNumberFromIntlTelInput', () => {
+		test('should return number as-is when it starts with +', () => {
+			const iti = { getNumber: jest.fn(() => '+33612345678') };
+			const result = TelephoneNumber.formatNumberFromIntlTelInput(iti);
+			expect(result).toBe('+33612345678');
+		});
+
+		test('should prepend + and dial code when number has no +', () => {
+			const iti = {
+				getNumber: jest.fn(() => '0612345678'),
+				getSelectedCountryData: jest.fn(() => ({ dialCode: '33' })),
+			};
+			const result = TelephoneNumber.formatNumberFromIntlTelInput(iti);
+			expect(result).toBe('+330612345678');
+		});
+
+		test('should return empty string when number is empty', () => {
+			const iti = { getNumber: jest.fn(() => '') };
+			const result = TelephoneNumber.formatNumberFromIntlTelInput(iti);
+			expect(result).toBe('');
 		});
 	});
 });

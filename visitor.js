@@ -1,3 +1,5 @@
+const { UAParser } = require('ua-parser-js');
+
 class Browser {
 	static isOpera() {
 		return (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
@@ -36,10 +38,6 @@ class UserAgent {
 	}
 
 	static getData(userAgent) {
-		if (typeof UAParser == 'undefined') {
-			return null;
-		}
-
 		const parsedData = UAParser(userAgent);
 
 		let os = null;

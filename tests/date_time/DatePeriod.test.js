@@ -81,13 +81,6 @@ describe('DatePeriod', () => {
 	});
 
 	describe('getPeriodLabels', () => {
-		beforeAll(() => {
-			// Mock capitalize sur String
-			String.prototype.capitalize = function() {
-				return this.charAt(0).toUpperCase() + this.slice(1);
-			};
-		});
-
 		test('should return empty array for empty data', () => {
 			expect(DatePeriod.getPeriodLabels([], 'day')).toEqual([]);
 			expect(DatePeriod.getPeriodLabels(null, 'day')).toEqual([]);

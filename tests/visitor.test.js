@@ -244,114 +244,31 @@ describe('UserAgent', () => {
 	});
 
 	describe('getData', () => {
-		test('should return null when UAParser is undefined', () => {
-			expect(UserAgent.getData('some user agent')).toBeNull();
-		});
-
-		test('should parse user agent when UAParser is defined', () => {
-			global.UAParser = jest.fn(() => ({
-				os: { name: 'Windows', version: '10' },
-				browser: { name: 'Chrome', major: '91' },
-				device: { type: 'desktop', vendor: 'Dell', model: 'Inspiron' }
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
-			expect(result).toEqual({
-				os: 'Windows 10',
-				browser: 'Chrome 91',
-				device: 'desktop Dell Inspiron'
-			});
-
-			delete global.UAParser;
+		test('should parse Windows Chrome user agent', () => {
+			const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+			const result = UserAgent.getData(ua);
+			expect(result.os).toBe('Windows 10');
+			expect(result.browser).toBe('Chrome 91');
+			expect(result.device).toBeNull();
 		});
 
 		test('should handle os without version', () => {
-			global.UAParser = jest.fn(() => ({
-				os: { name: 'Linux' },
-				browser: { name: 'Firefox', major: '89' },
-				device: {}
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
+			const ua = 'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0';
+			const result = UserAgent.getData(ua);
 			expect(result.os).toBe('Linux');
-
-			delete global.UAParser;
 		});
 
-		test('should handle browser with version instead of major', () => {
-			global.UAParser = jest.fn(() => ({
-				os: { name: 'Windows', version: '10' },
-				browser: { name: 'Safari', version: '14.1.2' },
-				device: {}
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
-			expect(result.browser).toBe('Safari 14.1.2');
-
-			delete global.UAParser;
+		test('should handle mobile device', () => {
+			const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1';
+			const result = UserAgent.getData(ua);
+			expect(result.device).toContain('mobile');
+			expect(result.device).toContain('Apple');
+			expect(result.device).toContain('iPhone');
 		});
 
-		test('should handle device with only type', () => {
-			global.UAParser = jest.fn(() => ({
-				os: { name: 'iOS', version: '14' },
-				browser: { name: 'Safari', major: '14' },
-				device: { type: 'mobile' }
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
-			expect(result.device).toBe('mobile');
-
-			delete global.UAParser;
-		});
-
-		test('should return null for empty os', () => {
-			global.UAParser = jest.fn(() => ({
-				os: { name: '' },
-				browser: { name: 'Chrome', major: '91' },
-				device: {}
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
-			expect(result.os).toBeNull();
-
-			delete global.UAParser;
-		});
-
-		test('should return null for empty browser', () => {
-			global.UAParser = jest.fn(() => ({
-				os: { name: 'Windows', version: '10' },
-				browser: { name: '' },
-				device: {}
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
-			expect(result.browser).toBeNull();
-
-			delete global.UAParser;
-		});
-
-		test('should return null when all undefined', () => {
-			global.UAParser = jest.fn(() => ({
-				os: {},
-				browser: {},
-				device: {}
-			}));
-
-			const result = UserAgent.getData('Mozilla/5.0...');
-
-			expect(result).toEqual({
-				os: null,
-				browser: null,
-				device: null
-			});
-
-			delete global.UAParser;
+		test('should return all null for empty user agent', () => {
+			const result = UserAgent.getData('');
+			expect(result).toEqual({ os: null, browser: null, device: null });
 		});
 	});
 

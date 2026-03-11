@@ -1,4 +1,6 @@
 
+require('./string');
+
 class DateTimeFormatter {
 	static getDateDigitalFormatter(locale, timeZone) {
 		this.dateDigitalFormatter = this.dateDigitalFormatter || {};

@@ -1,4 +1,7 @@
 
+const Address = require('ilib/lib/Address');
+const AddressFmt = require('ilib/lib/AddressFmt');
+
 class Country {
 	static setFlagsPath(flagsPath) {
 		Country.flagsPath = flagsPath;
@@ -355,9 +358,6 @@ class PostalAddress {
 		if (addressDataForPluging['locality'] == null && !empty(addressData['stateDistrict'])) {
 			addressDataForPluging['locality'] = addressData['stateDistrict'];
 		}
-
-		//var Address = require("ilib/js/lib/Address");
-		//var AddressFmt = require("ilib/lib/AddressFmt");
 
 		let af = new AddressFmt();
 		let formattedAddress = af.format(new Address(addressDataForPluging));
