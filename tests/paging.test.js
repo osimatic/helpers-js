@@ -3,6 +3,7 @@
  */
 
 const { Pagination, Navigation } = require('../paging');
+const { UrlAndQueryString } = require('../network');
 
 describe('Pagination', () => {
 	let mockDiv, mockTable, mockSelect, mockItems, mockUl, mockLi;
@@ -147,44 +148,24 @@ describe('Pagination', () => {
 			}
 		});
 
-		// Mock global labelDisplayAll
-		global.labelDisplayAll = 'Display all';
 	});
 
 	afterEach(() => {
 		jest.clearAllMocks();
 		delete global.$;
-		delete global.labelDisplayAll;
 	});
 
 	describe('paginateCards', () => {
 		test('should call paginate with correct parameters', () => {
 			const spyPaginate = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
 
-			Pagination.paginateCards(mockDiv, 10, false);
+			Pagination.paginateCards(mockDiv, 10);
 
 			expect(spyPaginate).toHaveBeenCalledWith(
 				mockDiv,
 				expect.anything(),
 				10,
-				undefined,
-				false
-			);
-
-			spyPaginate.mockRestore();
-		});
-
-		test('should call paginate with double pagination', () => {
-			const spyPaginate = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
-
-			Pagination.paginateCards(mockDiv, 20, true);
-
-			expect(spyPaginate).toHaveBeenCalledWith(
-				mockDiv,
-				expect.anything(),
-				20,
-				undefined,
-				true
+				null
 			);
 
 			spyPaginate.mockRestore();
@@ -195,7 +176,7 @@ describe('Pagination', () => {
 		test('should call paginate with table rows', () => {
 			const spyPaginate = jest.spyOn(Pagination, 'paginate').mockImplementation(() => {});
 
-			Pagination.paginateTable(mockTable, mockSelect, false);
+			Pagination.paginateTable(mockTable, mockSelect);
 
 			expect(mockTable.find).toHaveBeenCalledWith('tbody tr:not(.hide)');
 			expect(mockTable.data).toHaveBeenCalledWith('max_rows');
@@ -207,13 +188,13 @@ describe('Pagination', () => {
 
 	describe('paginate', () => {
 		test('should return early if div is undefined', () => {
-			Pagination.paginate(undefined, mockItems, 10, undefined, false);
+			Pagination.paginate(undefined, mockItems, 10);
 			// Should not throw
 		});
 
 		test('should return early if div has no length', () => {
 			const emptyDiv = { length: 0 };
-			Pagination.paginate(emptyDiv, mockItems, 10, undefined, false);
+			Pagination.paginate(emptyDiv, mockItems, 10);
 			// Should not throw
 		});
 
@@ -221,7 +202,7 @@ describe('Pagination', () => {
 			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
 			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
 
-			Pagination.paginate(mockDiv, mockItems, 10, mockSelect, false);
+			Pagination.paginate(mockDiv, mockItems, 10, mockSelect);
 
 			expect(mockSelect.children).toHaveBeenCalled();
 			expect(mockSelect.append).toHaveBeenCalled();
@@ -235,7 +216,7 @@ describe('Pagination', () => {
 			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
 			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
 
-			Pagination.paginate(mockDiv, mockItems, 10, mockSelect, false);
+			Pagination.paginate(mockDiv, mockItems, 10, mockSelect);
 
 			expect(mockSelect.val).toHaveBeenCalled();
 
@@ -243,28 +224,15 @@ describe('Pagination', () => {
 			spyInitPaginationItems.mockRestore();
 		});
 
-		test('should initialize double pagination when requested', () => {
+		test('should always initialize both top and bottom pagination', () => {
 			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
 			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
 
-			Pagination.paginate(mockDiv, mockItems, 10, undefined, true);
+			Pagination.paginate(mockDiv, mockItems, 10);
 
 			expect(spyInitPaginationDiv).toHaveBeenCalledTimes(2);
-			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, mockUl, true, true); // top
-			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, mockUl, false, true); // bottom
-
-			spyInitPaginationDiv.mockRestore();
-			spyInitPaginationItems.mockRestore();
-		});
-
-		test('should initialize single pagination when not requested', () => {
-			const spyInitPaginationDiv = jest.spyOn(Pagination, 'initPaginationDiv').mockImplementation(() => {});
-			const spyInitPaginationItems = jest.spyOn(Pagination, 'initPaginationItems').mockImplementation(() => {});
-
-			Pagination.paginate(mockDiv, mockItems, 10, undefined, false);
-
-			expect(spyInitPaginationDiv).toHaveBeenCalledTimes(1);
-			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, mockUl, false, false); // bottom
+			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, true);  // top
+			expect(spyInitPaginationDiv).toHaveBeenCalledWith(mockDiv, false); // bottom
 
 			spyInitPaginationDiv.mockRestore();
 			spyInitPaginationItems.mockRestore();
@@ -272,10 +240,8 @@ describe('Pagination', () => {
 	});
 
 	describe('initPaginationDiv', () => {
-		test('should create new pagination div when not present', () => {
-			const emptyUl = { length: 0 };
-
-			Pagination.initPaginationDiv(mockDiv, emptyUl, false, true);
+		test('should create a new pagination ul', () => {
+			Pagination.initPaginationDiv(mockDiv, false);
 
 			expect(global.$).toHaveBeenCalledWith('<ul class="pagination"></ul>');
 		});
@@ -292,7 +258,7 @@ describe('Pagination', () => {
 				return { length: 0 };
 			});
 
-			Pagination.initPaginationDiv(mockDiv, { length: 0 }, false, true);
+			Pagination.initPaginationDiv(mockDiv, false);
 
 			expect(paginationLinks.append).toHaveBeenCalled();
 		});
@@ -309,7 +275,7 @@ describe('Pagination', () => {
 				return { length: 0 };
 			});
 
-			Pagination.initPaginationDiv(mockDiv, { length: 0 }, true, true);
+			Pagination.initPaginationDiv(mockDiv, true);
 
 			expect(paginationLinks.prepend).toHaveBeenCalled();
 		});
@@ -317,7 +283,7 @@ describe('Pagination', () => {
 		test('should place pagination after div when pagination_links not present and onTop is false', () => {
 			mockDiv.find = jest.fn(() => ({ length: 0 }));
 
-			Pagination.initPaginationDiv(mockDiv, { length: 0 }, false, true);
+			Pagination.initPaginationDiv(mockDiv, false);
 
 			expect(mockDiv.after).toHaveBeenCalled();
 		});
@@ -325,7 +291,7 @@ describe('Pagination', () => {
 		test('should place pagination before div when pagination_links not present and onTop is true', () => {
 			mockDiv.find = jest.fn(() => ({ length: 0 }));
 
-			Pagination.initPaginationDiv(mockDiv, { length: 0 }, true, true);
+			Pagination.initPaginationDiv(mockDiv, true);
 
 			expect(mockDiv.before).toHaveBeenCalled();
 		});
@@ -335,7 +301,7 @@ describe('Pagination', () => {
 		test('should show items up to maxItems', () => {
 			const $Spy = jest.spyOn(global, '$');
 
-			Pagination.initPaginationItems(mockItems, 3, false);
+			Pagination.initPaginationItems(mockItems, 3);
 
 			// Verify that $ was called with items (items.each iterates over them)
 			expect(mockItems.each).toHaveBeenCalled();
@@ -346,21 +312,21 @@ describe('Pagination', () => {
 		});
 
 		test('should show all items when maxItems is 0', () => {
-			Pagination.initPaginationItems(mockItems, 0, false);
+			Pagination.initPaginationItems(mockItems, 0);
 
 			// With maxItems = 0, all items should be shown
 			expect(mockItems.each).toHaveBeenCalled();
 		});
 
 		test('should hide pagination when maxItems is 0', () => {
-			Pagination.initPaginationItems(mockItems, 0, false);
+			Pagination.initPaginationItems(mockItems, 0);
 
 			// When maxItems is 0 or totalItems < maxItems, pagination is hidden
 			expect(mockUl.each).toHaveBeenCalled();
 		});
 
 		test('should hide pagination when totalItems < maxItems', () => {
-			Pagination.initPaginationItems(mockItems, 10, false);
+			Pagination.initPaginationItems(mockItems, 10);
 
 			// 5 items < 10 maxItems, so pagination should be hidden
 			expect(mockUl.each).toHaveBeenCalled();
@@ -510,7 +476,6 @@ describe('Navigation', () => {
 		jest.clearAllMocks();
 		delete global.$;
 		delete global.bootstrap;
-		delete global.UrlAndQueryString;
 	});
 
 	describe('activateTab', () => {
@@ -577,16 +542,18 @@ describe('Navigation', () => {
 	});
 
 	describe('addTabInHistory', () => {
+		let setParamOfUrlSpy;
 		beforeEach(() => {
-			global.UrlAndQueryString = {
-				setParamOfUrl: jest.fn((key, value, url) => `${url}&${key}=${value}`)
-			};
+			setParamOfUrlSpy = jest.spyOn(UrlAndQueryString, 'setParamOfUrl').mockImplementation((key, value, url) => `${url}&${key}=${value}`);
+		});
+		afterEach(() => {
+			setParamOfUrlSpy.mockRestore();
 		});
 
 		test('should call UrlAndQueryString.setParamOfUrl with correct parameters', () => {
 			Navigation.addTabInHistory('tab1', 'tab', true);
 
-			expect(global.UrlAndQueryString.setParamOfUrl).toHaveBeenCalledWith(
+			expect(setParamOfUrlSpy).toHaveBeenCalledWith(
 				'tab',
 				'tab1',
 				expect.any(String)
@@ -596,7 +563,7 @@ describe('Navigation', () => {
 		test('should use default queryStringKey if not provided', () => {
 			Navigation.addTabInHistory('tab1');
 
-			expect(global.UrlAndQueryString.setParamOfUrl).toHaveBeenCalledWith(
+			expect(setParamOfUrlSpy).toHaveBeenCalledWith(
 				'tab',
 				'tab1',
 				expect.any(String)

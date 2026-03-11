@@ -3,358 +3,272 @@
  */
 const { SelectAll } = require('../select_all');
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function setupFormGroup({ nbCheckboxes = 3, nbChecked = 0 } = {}) {
+	const checkboxes = Array.from({ length: nbCheckboxes }, (_, i) => {
+		const checked = i < nbChecked ? ' checked' : '';
+		return `<input type="checkbox" name="item[]" value="${i + 1}"${checked}>`;
+	}).join('');
+
+	document.body.innerHTML = `
+		<div class="form-group">
+			<a class="check_all" href="#">Tout sélectionner</a>
+			${checkboxes}
+		</div>`;
+
+	return document.querySelector('.form-group');
+}
+
+function setupTable({ nbRows = 2, nbChecked = 0 } = {}) {
+	const rows = Array.from({ length: nbRows }, (_, i) => {
+		const checked = i < nbChecked ? ' checked' : '';
+		return `<tr><td><input type="checkbox" value="${i + 1}"${checked}></td></tr>`;
+	}).join('');
+
+	document.body.innerHTML = `
+		<table>
+			<thead><tr><th><input type="checkbox" class="check_all"></th></tr></thead>
+			<tbody>${rows}</tbody>
+		</table>`;
+
+	return document.querySelector('table');
+}
+
+function setupDivWithCheckAll({ nbItems = 3, nbChecked = 0 } = {}) {
+	const items = Array.from({ length: nbItems }, (_, i) => {
+		const checked = i < nbChecked ? ' checked' : '';
+		return `<div class="form-check"><input type="checkbox" value="${i + 1}"${checked}></div>`;
+	}).join('');
+
+	document.body.innerHTML = `
+		<div class="checkbox_with_check_all">
+			<input type="checkbox" class="check_all">
+			${items}
+		</div>`;
+
+	return document.querySelector('.checkbox_with_check_all');
+}
+
+// ─── tests ───────────────────────────────────────────────────────────────────
+
+afterEach(() => {
+	document.body.innerHTML = '';
+});
+
 describe('SelectAll', () => {
-	let mockFormGroup;
-	let mockTable;
-	let mockDiv;
-
-	beforeEach(() => {
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			// Handle string selectors
-			if (typeof selector === 'string') {
-				return {
-					find: jest.fn(() => ({
-						length: 0,
-						find: jest.fn(() => ({ length: 0 })),
-						text: jest.fn(),
-						prop: jest.fn(),
-						off: jest.fn().mockReturnThis(),
-						click: jest.fn().mockReturnThis(),
-						change: jest.fn().mockReturnThis(),
-						each: jest.fn(),
-						get: jest.fn(() => [])
-					})),
-					closest: jest.fn(() => mockFormGroup || mockDiv),
-					off: jest.fn().mockReturnThis(),
-					click: jest.fn().mockReturnThis(),
-					change: jest.fn().mockReturnThis(),
-					on: jest.fn()
-				};
-			}
-
-			// Handle element wrapping (when passed an element)
-			if (selector && typeof selector === 'object') {
-				return {
-					find: jest.fn(() => ({
-						length: 0,
-						find: jest.fn(() => ({ length: 0 })),
-						text: jest.fn(),
-						prop: jest.fn(),
-						off: jest.fn().mockReturnThis(),
-						click: jest.fn().mockReturnThis(),
-						change: jest.fn().mockReturnThis()
-					})),
-					closest: jest.fn(() => mockFormGroup || mockDiv),
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis(),
-					off: jest.fn().mockReturnThis(),
-					click: jest.fn().mockReturnThis(),
-					on: jest.fn()
-				};
-			}
-
-			return {
-				find: jest.fn(() => ({ length: 0 })),
-				closest: jest.fn(() => mockFormGroup)
-			};
-		});
-	});
-
-	afterEach(() => {
-		jest.clearAllMocks();
-		delete global.$;
-	});
 
 	describe('updateFormGroup', () => {
-		test('should set text to "Tout désélectionner" when all checkboxes are checked', () => {
-			const mockLink = { text: jest.fn() };
-			mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 3 }; // 3 total checkboxes
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 3 }; // 3 checked
-					}
-					if (selector === 'a.check_all') {
-						return mockLink;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateFormGroup(mockFormGroup);
-
-			expect(mockLink.text).toHaveBeenCalledWith('Tout désélectionner');
+		test('should set link text to "Tout désélectionner" when all checkboxes are checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 3 });
+			SelectAll.updateFormGroup(formGroup);
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout désélectionner');
 		});
 
-		test('should set text to "Tout sélectionner" when not all checkboxes are checked', () => {
-			const mockLink = { text: jest.fn() };
-			mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 3 }; // 3 total checkboxes
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 1 }; // Only 1 checked
-					}
-					if (selector === 'a.check_all') {
-						return mockLink;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateFormGroup(mockFormGroup);
-
-			expect(mockLink.text).toHaveBeenCalledWith('Tout sélectionner');
+		test('should set link text to "Tout sélectionner" when partially checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 1 });
+			SelectAll.updateFormGroup(formGroup);
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout sélectionner');
 		});
 
-		test('should set text to "Tout sélectionner" when no checkboxes are checked', () => {
-			const mockLink = { text: jest.fn() };
-			mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 3 }; // 3 total checkboxes
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 0 }; // None checked
-					}
-					if (selector === 'a.check_all') {
-						return mockLink;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateFormGroup(mockFormGroup);
-
-			expect(mockLink.text).toHaveBeenCalledWith('Tout sélectionner');
-		});
-	});
-
-	describe('updateTable', () => {
-		test('should check the select-all checkbox when all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = { prop: jest.fn() };
-			mockTable = {
-				find: jest.fn((selector) => {
-					if (selector === 'tbody input[type="checkbox"]') {
-						return { length: 5 }; // 5 total checkboxes
-					}
-					if (selector === 'tbody input[type="checkbox"]:checked') {
-						return { length: 5 }; // 5 checked
-					}
-					if (selector === 'thead input.check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateTable(mockTable);
-
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', true);
+		test('should set link text to "Tout sélectionner" when none checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 0 });
+			SelectAll.updateFormGroup(formGroup);
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout sélectionner');
 		});
 
-		test('should uncheck the select-all checkbox when not all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = { prop: jest.fn() };
-			mockTable = {
-				find: jest.fn((selector) => {
-					if (selector === 'tbody input[type="checkbox"]') {
-						return { length: 5 }; // 5 total checkboxes
-					}
-					if (selector === 'tbody input[type="checkbox"]:checked') {
-						return { length: 3 }; // Only 3 checked
-					}
-					if (selector === 'thead input.check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateTable(mockTable);
-
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', false);
-		});
-
-		test('should uncheck the select-all checkbox when no checkboxes are checked', () => {
-			const mockCheckboxSelectAll = { prop: jest.fn() };
-			mockTable = {
-				find: jest.fn((selector) => {
-					if (selector === 'tbody input[type="checkbox"]') {
-						return { length: 5 }; // 5 total checkboxes
-					}
-					if (selector === 'tbody input[type="checkbox"]:checked') {
-						return { length: 0 }; // None checked
-					}
-					if (selector === 'thead input.check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateTable(mockTable);
-
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', false);
-		});
-	});
-
-	describe('updateDiv', () => {
-		test('should check the select-all checkbox when all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = { prop: jest.fn() };
-			const mockCheckboxContainer = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 4 }; // 4 total checkboxes
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 4 }; // 4 checked
-					}
-					return { length: 0 };
-				})
-			};
-			mockDiv = {
-				find: jest.fn((selector) => {
-					if (selector === 'div.checkbox, div.form-check') {
-						return mockCheckboxContainer;
-					}
-					if (selector === 'input.check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateDiv(mockDiv);
-
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', true);
-		});
-
-		test('should uncheck the select-all checkbox when not all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = { prop: jest.fn() };
-			const mockCheckboxContainer = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 4 }; // 4 total checkboxes
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 2 }; // Only 2 checked
-					}
-					return { length: 0 };
-				})
-			};
-			mockDiv = {
-				find: jest.fn((selector) => {
-					if (selector === 'div.checkbox, div.form-check') {
-						return mockCheckboxContainer;
-					}
-					if (selector === 'input.check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateDiv(mockDiv);
-
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', false);
-		});
-
-		test('should uncheck the select-all checkbox when no checkboxes are checked', () => {
-			const mockCheckboxSelectAll = { prop: jest.fn() };
-			const mockCheckboxContainer = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 4 }; // 4 total checkboxes
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 0 }; // None checked
-					}
-					return { length: 0 };
-				})
-			};
-			mockDiv = {
-				find: jest.fn((selector) => {
-					if (selector === 'div.checkbox, div.form-check') {
-						return mockCheckboxContainer;
-					}
-					if (selector === 'input.check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				})
-			};
-
-			SelectAll.updateDiv(mockDiv);
-
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', false);
+		test('should do nothing when no a.check_all found', () => {
+			document.body.innerHTML = `<div class="form-group"><input type="checkbox"></div>`;
+			const formGroup = document.querySelector('.form-group');
+			expect(() => SelectAll.updateFormGroup(formGroup)).not.toThrow();
 		});
 	});
 
 	describe('initLinkInFormGroup', () => {
-		test('should initialize without errors', () => {
-			const mockLinkText = { text: jest.fn() };
-			const mockFormGroup = {
-				find: jest.fn((selector) => {
-					if (selector === 'input[type="checkbox"]:not(.check_all)') {
-						return { length: 2 };
-					}
-					if (selector === 'input[type="checkbox"]:not(.check_all):checked') {
-						return { length: 1 };
-					}
-					if (selector === 'a.check_all') {
-						return mockLinkText;
-					}
-					if (selector === 'input[type="checkbox"]') {
-						return {
-							change: jest.fn()
-						};
-					}
-					return { length: 0 };
-				})
-			};
+		test('should show "Tout sélectionner" initially when none checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 0 });
+			SelectAll.initLinkInFormGroup(formGroup.querySelector('a.check_all'));
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout sélectionner');
+		});
 
-			const mockLink = {
-				off: jest.fn().mockReturnThis(),
-				click: jest.fn().mockReturnThis(),
-				closest: jest.fn(() => mockFormGroup)
-			};
+		test('should show "Tout désélectionner" initially when all checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 3 });
+			SelectAll.initLinkInFormGroup(formGroup.querySelector('a.check_all'));
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout désélectionner');
+		});
 
-			expect(() => {
-				SelectAll.initLinkInFormGroup(mockLink);
-			}).not.toThrow();
+		test('clicking link should check all checkboxes when none checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 0 });
+			SelectAll.initLinkInFormGroup(formGroup.querySelector('a.check_all'));
+			formGroup.querySelector('a.check_all').click();
+			const checkboxes = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+		});
 
-			expect(mockLink.off).toHaveBeenCalledWith('click');
-			expect(mockLinkText.text).toHaveBeenCalledWith('Tout sélectionner');
+		test('clicking link should uncheck all when all are checked', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 3 });
+			SelectAll.initLinkInFormGroup(formGroup.querySelector('a.check_all'));
+			formGroup.querySelector('a.check_all').click();
+			const checkboxes = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(false));
+		});
+
+		test('clicking link updates the link text', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 3, nbChecked: 0 });
+			SelectAll.initLinkInFormGroup(formGroup.querySelector('a.check_all'));
+			formGroup.querySelector('a.check_all').click();
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout désélectionner');
+		});
+
+		test('changing a checkbox updates the link text', () => {
+			const formGroup = setupFormGroup({ nbCheckboxes: 2, nbChecked: 0 });
+			SelectAll.initLinkInFormGroup(formGroup.querySelector('a.check_all'));
+			const checkboxes = formGroup.querySelectorAll('input[type="checkbox"]');
+			checkboxes.forEach(cb => {
+				cb.checked = true;
+				cb.dispatchEvent(new Event('change'));
+			});
+			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout désélectionner');
+		});
+	});
+
+	describe('updateTable', () => {
+		test('should check select-all when all checkboxes are checked', () => {
+			const table = setupTable({ nbRows: 3, nbChecked: 3 });
+			SelectAll.updateTable(table);
+			expect(table.querySelector('thead input.check_all').checked).toBe(true);
+		});
+
+		test('should uncheck select-all when partially checked', () => {
+			const table = setupTable({ nbRows: 3, nbChecked: 2 });
+			SelectAll.updateTable(table);
+			expect(table.querySelector('thead input.check_all').checked).toBe(false);
+		});
+
+		test('should uncheck select-all when none checked', () => {
+			const table = setupTable({ nbRows: 3, nbChecked: 0 });
+			SelectAll.updateTable(table);
+			expect(table.querySelector('thead input.check_all').checked).toBe(false);
+		});
+
+		test('should do nothing when no check_all input in thead', () => {
+			document.body.innerHTML = `
+				<table>
+					<thead><tr><th></th></tr></thead>
+					<tbody><tr><td><input type="checkbox"></td></tr></tbody>
+				</table>`;
+			expect(() => SelectAll.updateTable(document.querySelector('table'))).not.toThrow();
 		});
 	});
 
 	describe('initInTable', () => {
 		test('should return early when no check_all input found', () => {
-			mockTable = {
-				find: jest.fn(() => ({ length: 0 }))
-			};
+			document.body.innerHTML = `
+				<table>
+					<thead><tr><th></th></tr></thead>
+					<tbody><tr><td><input type="checkbox"></td></tr></tbody>
+				</table>`;
+			expect(() => SelectAll.initInTable(document.querySelector('table'))).not.toThrow();
+		});
 
-			expect(() => {
-				SelectAll.initInTable(mockTable);
-			}).not.toThrow();
+		test('clicking check-all should check all row checkboxes', () => {
+			const table = setupTable({ nbRows: 2, nbChecked: 0 });
+			SelectAll.initInTable(table);
+			table.querySelector('thead input.check_all').click();
+			const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+		});
+
+		test('clicking check-all should uncheck all when all are checked', () => {
+			const table = setupTable({ nbRows: 2, nbChecked: 2 });
+			SelectAll.initInTable(table);
+			table.querySelector('thead input.check_all').click();
+			const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(false));
+		});
+
+		test('changing a row checkbox updates check-all state', () => {
+			const table = setupTable({ nbRows: 2, nbChecked: 0 });
+			SelectAll.initInTable(table);
+			const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
+			checkboxes.forEach(cb => {
+				cb.checked = true;
+				cb.dispatchEvent(new Event('change'));
+			});
+			expect(table.querySelector('thead input.check_all').checked).toBe(true);
+		});
+	});
+
+	describe('updateDiv', () => {
+		test('should check select-all when all checkboxes are checked', () => {
+			const div = setupDivWithCheckAll({ nbItems: 3, nbChecked: 3 });
+			SelectAll.updateDiv(div);
+			expect(div.querySelector('input.check_all').checked).toBe(true);
+		});
+
+		test('should uncheck select-all when partially checked', () => {
+			const div = setupDivWithCheckAll({ nbItems: 3, nbChecked: 2 });
+			SelectAll.updateDiv(div);
+			expect(div.querySelector('input.check_all').checked).toBe(false);
+		});
+
+		test('should uncheck select-all when none checked', () => {
+			const div = setupDivWithCheckAll({ nbItems: 3, nbChecked: 0 });
+			SelectAll.updateDiv(div);
+			expect(div.querySelector('input.check_all').checked).toBe(false);
+		});
+
+		test('should do nothing when no check_all input found', () => {
+			document.body.innerHTML = `<div class="checkbox_with_check_all"><div class="form-check"><input type="checkbox"></div></div>`;
+			expect(() => SelectAll.updateDiv(document.querySelector('.checkbox_with_check_all'))).not.toThrow();
 		});
 	});
 
 	describe('initDiv', () => {
-		test('should initialize without errors when no checkboxes found', () => {
-			const mockContentDiv = {
-				find: jest.fn(() => ({
-					each: jest.fn()
-				}))
-			};
+		test('should do nothing when no check_all inputs found', () => {
+			document.body.innerHTML = `<div id="content"><div class="form-check"><input type="checkbox"></div></div>`;
+			expect(() => SelectAll.initDiv(document.getElementById('content'))).not.toThrow();
+		});
 
-			expect(() => {
-				SelectAll.initDiv(mockContentDiv);
-			}).not.toThrow();
+		test('clicking check-all should check all items', () => {
+			const div = setupDivWithCheckAll({ nbItems: 2, nbChecked: 0 });
+			document.body.innerHTML = `<div id="content">${div.outerHTML}</div>`;
+			const contentDiv = document.getElementById('content');
+			SelectAll.initDiv(contentDiv);
+			contentDiv.querySelector('input.check_all').click();
+			const checkboxes = contentDiv.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+		});
+
+		test('clicking check-all should uncheck all when all are checked', () => {
+			const div = setupDivWithCheckAll({ nbItems: 2, nbChecked: 2 });
+			document.body.innerHTML = `<div id="content">${div.outerHTML}</div>`;
+			const contentDiv = document.getElementById('content');
+			SelectAll.initDiv(contentDiv);
+			contentDiv.querySelector('input.check_all').click();
+			const checkboxes = contentDiv.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(false));
+		});
+
+		test('changing an item checkbox updates check-all state', () => {
+			const div = setupDivWithCheckAll({ nbItems: 2, nbChecked: 0 });
+			document.body.innerHTML = `<div id="content">${div.outerHTML}</div>`;
+			const contentDiv = document.getElementById('content');
+			SelectAll.initDiv(contentDiv);
+			const checkboxes = contentDiv.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+			checkboxes.forEach(cb => {
+				cb.checked = true;
+				cb.dispatchEvent(new Event('change'));
+			});
+			expect(contentDiv.querySelector('input.check_all').checked).toBe(true);
+		});
+
+		test('should set initial check-all state based on checked items', () => {
+			const div = setupDivWithCheckAll({ nbItems: 2, nbChecked: 2 });
+			document.body.innerHTML = `<div id="content">${div.outerHTML}</div>`;
+			const contentDiv = document.getElementById('content');
+			SelectAll.initDiv(contentDiv);
+			expect(contentDiv.querySelector('input.check_all').checked).toBe(true);
 		});
 	});
 });

@@ -1,64 +1,59 @@
 // Fonction commune de pagination
 //Bootstrap class pagination https://getbootstrap.com/docs/3.3/components/#pagination
 
+const { UrlAndQueryString } = require('./network');
+
 class Pagination {
-	static paginateCards(div, nbItemsPerPage, doublePagination) {
-		Pagination.paginate(div, div.find('.pagination_item'), nbItemsPerPage, undefined, doublePagination);
+	static paginateCards(div, nbItemsPerPage) {
+		Pagination.paginate(div, div.find('.pagination_item'), nbItemsPerPage, null);
 	}
 
-	static paginateTable(table, select, doublePagination) {
-		Pagination.paginate(table, table.find('tbody tr:not(.hide)'), parseInt(table.data('max_rows')), select, doublePagination);
+	static paginateTable(table, select=null) {
+		Pagination.paginate(table, table.find('tbody tr:not(.hide)'), parseInt(table.data('max_rows')), select);
 	}
 
-	static paginate(div, items, nbItemsPerPage, select, doublePagination) {
+	static paginate(div, items, nbItemsPerPage, select=null, labelDisplayAll=null) {
 		let maxItems = nbItemsPerPage;
 
 		if (typeof div == 'undefined' || !div.length) {
 			return;
 		}
 
-		if (typeof select != 'undefined' && select.length) {
+		if (null !== select && select.length) {
 			if (!select.children().length) {
-				select.append('<option value="0">'+labelDisplayAll+'</option>');
+				select.append('<option value="0">'+(labelDisplayAll ?? 'Afficher tout')+'</option>');
 				let nbRowsList = select.data('nb_rows_list') ? select.data('nb_rows_list').split(',') : [5, 10, 25, 50];
 				$.each(nbRowsList, function(idx, nbRows) {
 					select.append('<option value="'+nbRows+'">'+nbRows+'</option>');
 				});
 
 				if (select.data('default_nb_rows')) {
-					select.val(select.data('default_nb_rows'))
+					select.val(select.data('default_nb_rows'));
 				}
 			}
 
 			maxItems = parseInt(select.val());
 
-			select.change(() => Pagination.paginate(div, items, nbItemsPerPage, select, doublePagination));
+			select.change(() => Pagination.paginate(div, items, nbItemsPerPage, select));
 		}
 
-		const ulPagination = $('ul.pagination');
-		if (doublePagination) {
-			ulPagination.each((index, ul) => $(ul).remove());
-			Pagination.initPaginationDiv(div, ulPagination, true, true); //top
-			Pagination.initPaginationDiv(div, ulPagination, false, true); //bottom
+		$('ul.pagination').each((index, ul) => $(ul).remove());
+		Pagination.initPaginationDiv(div, true);  // top
+		Pagination.initPaginationDiv(div, false); // bottom
+
+		Pagination.initPaginationItems(items, maxItems);
+	}
+
+	static initPaginationDiv(div, onTop) {
+		const ulDiv = $('<ul class="pagination"></ul>');
+		if (div.find('.pagination_links').length) {
+			(onTop ? div.find('.pagination_links').prepend(ulDiv) : div.find('.pagination_links').append(ulDiv));
 		} else {
-			Pagination.initPaginationDiv(div, ulPagination, false, false); //bottom
-		}
-
-		Pagination.initPaginationItems(items, maxItems, doublePagination);
-	}
-
-	static initPaginationDiv(div, ulDiv, onTop, doublePagination) {
-		if (!ulDiv.length || doublePagination) {
-			ulDiv = $('<ul class="pagination"></ul>');
-			if (div.find('.pagination_links').length) {
-				(onTop ? div.find('.pagination_links').prepend(ulDiv) : div.find('.pagination_links').append(ulDiv))
-			} else {
-				(onTop ? div.before(ulDiv) : div.after(ulDiv));
-			}
+			(onTop ? div.before(ulDiv) : div.after(ulDiv));
 		}
 	}
 
-	static initPaginationItems(items, maxItems, doublePagination) {
+	static initPaginationItems(items, maxItems) {
 		const paginationUl = $('ul.pagination');
 
 		let totalItems = items.length;
@@ -94,11 +89,7 @@ class Pagination {
 			let pageNum = $(this).data('page');
 			let trIndex = 0;
 
-			if (doublePagination) {
-				$('li[data-page="' + pageNum + '"]').each((index, li) => $(li).addClass('active'));
-			} else {
-				$(this).addClass('active');
-			}
+			$('li[data-page="' + pageNum + '"]').each((index, li) => $(li).addClass('active'));
 
 			items.each(function () {
 				trIndex++;

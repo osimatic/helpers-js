@@ -4,220 +4,103 @@
 const { DetailsSubArray } = require('../details_sub_array');
 const { HTTPClient } = require('../http_client');
 
-describe('DetailsSubArray', () => {
-	let mockTable;
-	let mockLink;
-	let mockTr;
-	let mockThead;
+function setupTable(nbLinks = 1) {
+	document.body.innerHTML = `
+		<table>
+			<thead>
+				<tr>
+					<th>Col1</th><th>Col2</th><th>Col3</th><th>Col4</th><th>Col5</th>
+				</tr>
+			</thead>
+			<tbody>
+				${Array.from({ length: nbLinks }, (_, i) => `
+				<tr id="tr${i}">
+					<td><a class="details_link hide" data-url_details="http://example.com/details/${i}">Details</a></td>
+				</tr>`).join('')}
+			</tbody>
+		</table>
+	`;
+	return document.querySelector('table');
+}
 
+describe('DetailsSubArray', () => {
 	beforeEach(() => {
 		jest.spyOn(HTTPClient, 'request').mockImplementation(() => {});
-
-		// Clear all mocks
-		jest.clearAllMocks();
-
-		// Create mock DOM structure
-		mockThead = {
-			find: jest.fn((selector) => {
-				if (selector === 'thead tr') {
-					return {
-						children: jest.fn(() => ({ length: 5 }))
-					};
-				}
-				return {
-					children: jest.fn(() => ({ length: 5 }))
-				};
-			})
-		};
-
-		mockTr = {
-			closest: jest.fn((selector) => {
-				if (selector === 'table') {
-					return {
-						find: jest.fn((sel) => {
-							if (sel === 'thead tr') {
-								return {
-									children: jest.fn(() => ({ length: 5 }))
-								};
-							}
-							return mockThead;
-						})
-					};
-				}
-				return mockTr;
-			}),
-			after: jest.fn(),
-			addClass: jest.fn().mockReturnThis(),
-			next: jest.fn(() => ({
-				hasClass: jest.fn(() => false),
-				remove: jest.fn()
-			}))
-		};
-
-		mockLink = {
-			data: jest.fn((key) => {
-				if (key === 'url_details') return 'http://example.com/details';
-				return null;
-			}),
-			closest: jest.fn(() => mockTr),
-			prop: jest.fn().mockReturnThis(),
-			attr: jest.fn().mockReturnThis(),
-			html: jest.fn().mockReturnThis(),
-			click: jest.fn().mockReturnThis(),
-			stop: jest.fn().mockReturnThis(),
-			off: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis()
-		};
-
-		mockTable = {
-			find: jest.fn(() => ({
-				each: jest.fn((callback) => {
-					// Simulate one link found
-					callback(0, mockLink);
-				})
-			}))
-		};
-
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string') {
-				if (selector.includes('<tr')) {
-					return {
-						find: jest.fn().mockReturnThis(),
-						append: jest.fn().mockReturnThis(),
-						after: jest.fn().mockReturnThis()
-					};
-				}
-				if (selector.includes('<span')) {
-					return selector; // Return the HTML string for glyphicon
-				}
-				if (selector.includes('<i')) {
-					return selector; // Return the HTML string for fa icons
-				}
-				return {
-					length: 0,
-					remove: jest.fn()
-				};
-			}
-			// Wrap element
-			return selector;
-		});
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
-		delete global.$;
+		document.body.innerHTML = '';
 	});
 
 	describe('initDetailsLink', () => {
-		test('should initialize details links', () => {
-			DetailsSubArray.initDetailsLink(mockTable);
+		test('should initialize details links and remove hide class', () => {
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			expect(mockTable.find).toHaveBeenCalledWith('a.details_link');
-			expect(mockLink.removeClass).toHaveBeenCalledWith('hide');
-		});
-
-		test('should set up click handlers on links', () => {
-			DetailsSubArray.initDetailsLink(mockTable);
-
-			expect(mockLink.click).toHaveBeenCalled();
+			const link = table.querySelector('a.details_link');
+			expect(link.classList.contains('hide')).toBe(false);
 		});
 
 		test('should show plus button initially', () => {
-			DetailsSubArray.initDetailsLink(mockTable);
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			expect(mockLink.html).toHaveBeenCalled();
+			const link = table.querySelector('a.details_link');
+			expect(link.innerHTML).toContain('glyphicon-plus');
 		});
 
-		test('should handle callback before send', () => {
-			const beforeSendCallback = jest.fn(() => '<div>Custom content</div>');
+		test('should set showDetailsLabel as title initially', () => {
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { showDetailsLabel: 'Show details' });
 
-			DetailsSubArray.initDetailsLink(mockTable, { onBeforeSend: beforeSendCallback });
-
-			// Trigger the click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
-
-			// beforeSendCallback should be called when clicking
-			// (This tests that the callback is properly wired up)
-		});
-
-		test('should handle success callback', () => {
-			const successCallback = jest.fn((jsonObj, link) => '<div>Success</div>');
-
-			DetailsSubArray.initDetailsLink(mockTable, { onSuccess: successCallback });
-
-			// Verify the callback is passed through
-			expect(mockTable.find).toHaveBeenCalled();
-		});
-
-		test('should handle error callback', () => {
-			const errorCallback = jest.fn();
-
-			DetailsSubArray.initDetailsLink(mockTable, { onError: errorCallback });
-
-			// Verify the callback is passed through
-			expect(mockTable.find).toHaveBeenCalled();
+			const link = table.querySelector('a.details_link');
+			expect(link.title).toBe('Show details');
 		});
 
 		test('should make HTTP request when link is clicked', () => {
-			HTTPClient.request.mockImplementation((method, url, data, successCb, errorCb) => {
-				successCb({ data: 'test' });
-			});
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			const successCallback = jest.fn(() => '<div>Details</div>');
-			DetailsSubArray.initDetailsLink(mockTable, { onSuccess: successCallback });
+			const link = table.querySelector('a.details_link');
+			link.click();
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
-
-			// HTTPClient.request should be called
 			expect(HTTPClient.request).toHaveBeenCalledWith(
 				'GET',
-				'http://example.com/details',
+				'http://example.com/details/0',
 				null,
 				expect.any(Function),
 				expect.any(Function)
 			);
 		});
 
-		test('should handle HTTP request success with null response', () => {
-			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
-				successCb(null);
+		test('should disable link while loading', () => {
+			HTTPClient.request.mockImplementation(() => {
+				// Don't call callbacks — simulate loading state
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable);
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			link.click();
 
-			// Should display error row
-			expect(mockTr.after).toHaveBeenCalled();
+			expect(link.disabled).toBe(true);
 		});
 
-		test('should handle HTTP request error', () => {
-			HTTPClient.request.mockImplementation((method, url, data, successCb, errorCb) => {
-				errorCb();
-			});
+		test('should show loading row while request is pending', () => {
+			HTTPClient.request.mockImplementation(() => {});
 
-			DetailsSubArray.initDetailsLink(mockTable);
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
 
-			// Should display error row
-			expect(mockTr.after).toHaveBeenCalled();
+			const loadingRow = tr.nextElementSibling;
+			expect(loadingRow).not.toBeNull();
+			expect(loadingRow.classList.contains('waiting_icon')).toBe(true);
 		});
 
 		test('should call success callback with JSON response', () => {
@@ -228,35 +111,110 @@ describe('DetailsSubArray', () => {
 				successCb(jsonResponse);
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable, { onSuccess: successCallback });
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onSuccess: successCallback });
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			link.click();
 
-			// Success callback should be called with JSON response
-			expect(successCallback).toHaveBeenCalledWith(jsonResponse, mockLink);
+			expect(successCallback).toHaveBeenCalledWith(jsonResponse, link);
 		});
 
-		test('should call error callback on HTTP error', () => {
-			const errorCallback = jest.fn();
+		test('should show details row after successful request', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb({ data: 'test' });
+			});
 
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onSuccess: jest.fn(() => '<div class="content">Details</div>') });
+
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
+
+			const detailsRow = tr.nextElementSibling;
+			expect(detailsRow).not.toBeNull();
+			expect(detailsRow.classList.contains('participants')).toBe(true);
+		});
+
+		test('should show minus button after successful request', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb({ data: 'test' });
+			});
+
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onSuccess: jest.fn(() => '') });
+
+			const link = table.querySelector('a.details_link');
+			link.click();
+
+			expect(link.innerHTML).toContain('glyphicon-minus');
+		});
+
+		test('should set hideDetailsLabel as title after loading', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb({ data: 'test' });
+			});
+
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, {
+				onSuccess: jest.fn(() => ''),
+				hideDetailsLabel: 'Hide details',
+			});
+
+			const link = table.querySelector('a.details_link');
+			link.click();
+
+			expect(link.title).toBe('Hide details');
+		});
+
+		test('should hide details row when clicking minus button', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb({ data: 'test' });
+			});
+
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onSuccess: jest.fn(() => '<div>Details</div>') });
+
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click(); // open
+			expect(tr.nextElementSibling?.classList.contains('participants')).toBe(true);
+
+			link.click(); // close
+			expect(tr.nextElementSibling?.classList.contains('participants')).toBeFalsy();
+		});
+
+		test('should display error row when response is null with no error callback', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb(null);
+			});
+
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
+
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
+
+			expect(tr.nextElementSibling).not.toBeNull();
+			expect(tr.nextElementSibling.classList.contains('text-error')).toBe(true);
+		});
+
+		test('should display error row when HTTP request fails with no error callback', () => {
 			HTTPClient.request.mockImplementation((method, url, data, successCb, errorCb) => {
 				errorCb();
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable, { onError: errorCallback });
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
 
-			// Error callback should be called
-			expect(errorCallback).toHaveBeenCalledWith(mockLink);
+			expect(tr.nextElementSibling).not.toBeNull();
+			expect(tr.nextElementSibling.classList.contains('error')).toBe(true);
 		});
 
 		test('should call error callback when response is null', () => {
@@ -266,85 +224,99 @@ describe('DetailsSubArray', () => {
 				successCb(null);
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable, { onError: errorCallback });
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onError: errorCallback });
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			link.click();
 
-			// Error callback should be called
-			expect(errorCallback).toHaveBeenCalledWith(mockLink);
+			expect(errorCallback).toHaveBeenCalledWith(link);
+		});
+
+		test('should call error callback on HTTP error', () => {
+			const errorCallback = jest.fn();
+
+			HTTPClient.request.mockImplementation((method, url, data, successCb, errorCb) => {
+				errorCb();
+			});
+
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onError: errorCallback });
+
+			const link = table.querySelector('a.details_link');
+			link.click();
+
+			expect(errorCallback).toHaveBeenCalledWith(link);
 		});
 
 		test('should use before send callback instead of HTTP request', () => {
 			const beforeSendCallback = jest.fn(() => '<div>Immediate content</div>');
 
-			DetailsSubArray.initDetailsLink(mockTable, { onBeforeSend: beforeSendCallback });
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onBeforeSend: beforeSendCallback });
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			link.click();
 
-			// Before send callback should be called
-			expect(beforeSendCallback).toHaveBeenCalledWith(mockLink);
-
-			// HTTP request should NOT be made
+			expect(beforeSendCallback).toHaveBeenCalledWith(link);
 			expect(HTTPClient.request).not.toHaveBeenCalled();
 		});
 
-		test('should handle multiple links', () => {
-			const mockLink2 = { ...mockLink };
+		test('should show details row when using before send callback', () => {
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { onBeforeSend: jest.fn(() => '<div>Immediate</div>') });
 
-			mockTable.find = jest.fn(() => ({
-				each: jest.fn((callback) => {
-					callback(0, mockLink);
-					callback(1, mockLink2);
-				})
-			}));
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
 
-			DetailsSubArray.initDetailsLink(mockTable);
-
-			// Both links should be initialized
-			expect(mockLink.removeClass).toHaveBeenCalled();
+			const detailsRow = tr.nextElementSibling;
+			expect(detailsRow).not.toBeNull();
+			expect(detailsRow.classList.contains('participants')).toBe(true);
 		});
 
-		test('should disable link while loading', () => {
-			HTTPClient.request.mockImplementation(() => {
-				// Don't call callbacks, simulate loading state
+		test('should handle multiple links independently', () => {
+			const table = setupTable(2);
+			DetailsSubArray.initDetailsLink(table);
+
+			const links = table.querySelectorAll('a.details_link');
+			expect(links.length).toBe(2);
+			links.forEach(link => {
+				expect(link.innerHTML).toContain('glyphicon-plus');
+				expect(link.classList.contains('hide')).toBe(false);
 			});
-
-			DetailsSubArray.initDetailsLink(mockTable);
-
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
-
-			// Link should be disabled during loading
-			expect(mockLink.attr).toHaveBeenCalledWith('disabled', true);
 		});
 
-		test('should show loading icon', () => {
-			HTTPClient.request.mockImplementation(() => {
-				// Loading state
+		test('should use colspan matching number of columns', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb(null);
 			});
 
-			DetailsSubArray.initDetailsLink(mockTable);
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table);
 
-			// Simulate click
-			const clickHandler = mockLink.click.mock.calls[0][0];
-			if (clickHandler) {
-				clickHandler.call(mockLink);
-			}
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
 
-			// Should display loading icon
-			expect(mockLink.html).toHaveBeenCalled();
-			expect(mockTr.after).toHaveBeenCalled();
+			const errorRow = tr.nextElementSibling;
+			expect(errorRow.querySelector('td').getAttribute('colspan')).toBe('5');
+		});
+
+		test('should use custom error label', () => {
+			HTTPClient.request.mockImplementation((method, url, data, successCb) => {
+				successCb(null);
+			});
+
+			const table = setupTable();
+			DetailsSubArray.initDetailsLink(table, { labelErrorOccurred: 'Custom error' });
+
+			const link = table.querySelector('a.details_link');
+			const tr = link.closest('tr');
+			link.click();
+
+			const errorRow = tr.nextElementSibling;
+			expect(errorRow.textContent).toContain('Custom error');
 		});
 	});
 });

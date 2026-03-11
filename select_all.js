@@ -3,118 +3,113 @@ class SelectAll {
 	// Dans un form-group
 
 	static initLinkInFormGroup(link) {
-		link.off('click').click(function() {
-			let formGroup = $(this).closest('.form-group');
-			let allCheckbox = formGroup.find('input[type="checkbox"]:not(.check_all)');
-			let allCheckboxWithCheckAll = formGroup.find('input[type="checkbox"]');
-			let allCheckboxChecked = formGroup.find('input[type="checkbox"]:not(.check_all):checked');
-			if (allCheckbox.length === allCheckboxChecked.length) {
-				allCheckboxWithCheckAll.prop('checked', false);
-			}
-			else {
-				allCheckboxWithCheckAll.prop('checked', true);
-			}
+		const linkClone = link.cloneNode(true);
+		link.parentElement.replaceChild(linkClone, link);
+		linkClone.addEventListener('click', function(e) {
+			e.preventDefault();
+			const formGroup = this.closest('.form-group');
+			const allCheckbox = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+			const allCheckboxChecked = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all):checked');
+			const allCheckboxWithCheckAll = formGroup.querySelectorAll('input[type="checkbox"]');
+			const newState = allCheckbox.length !== allCheckboxChecked.length;
+			allCheckboxWithCheckAll.forEach(cb => { cb.checked = newState; });
 			SelectAll.updateFormGroup(formGroup);
-			return false;
 		});
 
-		link.closest('.form-group').find('input[type="checkbox"]').change(function() {
-			SelectAll.updateFormGroup($(this).closest('.form-group'));
+		const formGroup = linkClone.closest('.form-group');
+		formGroup.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+			cb.addEventListener('change', () => {
+				SelectAll.updateFormGroup(cb.closest('.form-group'));
+			});
 		});
-		SelectAll.updateFormGroup(link.closest('.form-group'));
+		SelectAll.updateFormGroup(formGroup);
 	}
 
 	static updateFormGroup(formGroup) {
-		let allCheckbox = formGroup.find('input[type="checkbox"]:not(.check_all)');
-		let allCheckboxChecked = formGroup.find('input[type="checkbox"]:not(.check_all):checked');
-		let lienSelectAll = formGroup.find('a.check_all');
-		// console.log(formGroup);
-		// console.log('SelectAll.updateFormGroup', allCheckbox.length, allCheckboxChecked.length);
+		const allCheckbox = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+		const allCheckboxChecked = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all):checked');
+		const lienSelectAll = formGroup.querySelector('a.check_all');
+		if (!lienSelectAll) {
+			return;
+		}
 		if (allCheckboxChecked.length > 0 && allCheckbox.length === allCheckboxChecked.length) {
-			lienSelectAll.text('Tout désélectionner');
+			lienSelectAll.textContent = 'Tout désélectionner';
 		}
 		else {
-			lienSelectAll.text('Tout sélectionner');
+			lienSelectAll.textContent = 'Tout sélectionner';
 		}
 	}
 
 	// Dans tableau
 
 	static initInTable(table) {
-		let inputCheckAll = table.find('tr input.check_all');
-		if (inputCheckAll.length === 0) {
+		const inputCheckAll = table.querySelector('tr input.check_all');
+		if (!inputCheckAll) {
 			return;
 		}
-		inputCheckAll.off('click').click(function() {
-			let allCheckbox = table.find('tbody input[type="checkbox"]');
-			let allCheckboxChecked = table.find('tbody input[type="checkbox"]:checked');
-			if (allCheckbox.length === allCheckboxChecked.length) {
-				allCheckbox.prop('checked', false);
-			}
-			else {
-				allCheckbox.prop('checked', true);
-			}
+		const checkAllClone = inputCheckAll.cloneNode(true);
+		inputCheckAll.parentElement.replaceChild(checkAllClone, inputCheckAll);
+		checkAllClone.addEventListener('click', function() {
+			const allCheckbox = table.querySelectorAll('tbody input[type="checkbox"]');
+			const allCheckboxChecked = table.querySelectorAll('tbody input[type="checkbox"]:checked');
+			const newState = allCheckbox.length !== allCheckboxChecked.length;
+			allCheckbox.forEach(cb => { cb.checked = newState; });
 			SelectAll.updateTable(table);
 		});
 
-		table.find('tbody input[type="checkbox"]').off('change').change(function() {
-			SelectAll.updateTable(table);
+		table.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => {
+			cb.addEventListener('change', () => {
+				SelectAll.updateTable(table);
+			});
 		});
 		SelectAll.updateTable(table);
 	}
 
 	static updateTable(table) {
-		let allCheckbox = table.find('tbody input[type="checkbox"]');
-		let allCheckboxChecked = table.find('tbody input[type="checkbox"]:checked');
-		let checkboxSelectAll = table.find('thead input.check_all');
-		if (allCheckboxChecked.length > 0 && allCheckbox.length === allCheckboxChecked.length) {
-			checkboxSelectAll.prop('checked', true);
+		const allCheckbox = table.querySelectorAll('tbody input[type="checkbox"]');
+		const allCheckboxChecked = table.querySelectorAll('tbody input[type="checkbox"]:checked');
+		const checkboxSelectAll = table.querySelector('thead input.check_all');
+		if (!checkboxSelectAll) {
+			return;
 		}
-		else {
-			checkboxSelectAll.prop('checked', false);
-		}
+		checkboxSelectAll.checked = allCheckboxChecked.length > 0 && allCheckbox.length === allCheckboxChecked.length;
 	}
 
 	// Dans un div
 
 	static initDiv(contentDiv) {
-		contentDiv.find('input.check_all').each(function(idx, inputCheckAll) {
-			let div = $(inputCheckAll).closest('div.checkbox_with_check_all');
+		contentDiv.querySelectorAll('input.check_all').forEach(inputCheckAll => {
+			const div = inputCheckAll.closest('div.checkbox_with_check_all');
 
-			$(inputCheckAll).off('click').click(function() {
-				let div = $(this).closest('div.checkbox_with_check_all');
-				let allCheckbox = div.find('input[type="checkbox"]:not(.check_all)');
-				let allCheckboxChecked = div.find('input[type="checkbox"]:not(.check_all):checked');
-				if (allCheckbox.length === allCheckboxChecked.length) {
-					allCheckbox.prop('checked', false);
-				}
-				else {
-					allCheckbox.prop('checked', true);
-				}
-				SelectAll.updateDiv(div);
-				//SelectAll.updateFormGroup(rootDiv.closest('.form-group'));
+			const clone = inputCheckAll.cloneNode(true);
+			inputCheckAll.parentElement.replaceChild(clone, inputCheckAll);
+			clone.addEventListener('click', function() {
+				const d = this.closest('div.checkbox_with_check_all');
+				const allCheckbox = d.querySelectorAll('input[type="checkbox"]:not(.check_all)');
+				const allCheckboxChecked = d.querySelectorAll('input[type="checkbox"]:not(.check_all):checked');
+				const newState = allCheckbox.length !== allCheckboxChecked.length;
+				allCheckbox.forEach(cb => { cb.checked = newState; });
+				SelectAll.updateDiv(d);
 			});
 
-			div.find('div.checkbox, div.form-check').find('input[type="checkbox"]').change(function() {
-				SelectAll.updateDiv($(this).closest('div.checkbox_with_check_all'));
+			div.querySelectorAll('div.checkbox input[type="checkbox"], div.form-check input[type="checkbox"]').forEach(cb => {
+				cb.addEventListener('change', () => {
+					SelectAll.updateDiv(cb.closest('div.checkbox_with_check_all'));
+				});
 			});
 			SelectAll.updateDiv(div);
 		});
 	}
 
 	static updateDiv(div) {
-		// console.log('SelectAll.updateDiv');
-		// console.log(checkbox);
 		// 22/11/2021 : rajout :not(.check_all) sinon si toutes les cases sont coché, la case select all n'est pas coché à l'initialisation
-		let allCheckbox = div.find('div.checkbox, div.form-check').find('input[type="checkbox"]:not(.check_all)');
-		let allCheckboxChecked = div.find('div.checkbox, div.form-check').find('input[type="checkbox"]:not(.check_all):checked');
-		let checkboxSelectAll = div.find('input.check_all');
-		if (allCheckboxChecked.length > 0 && allCheckbox.length === allCheckboxChecked.length) {
-			checkboxSelectAll.prop('checked', true);
+		const allCheckbox = div.querySelectorAll('div.checkbox input[type="checkbox"]:not(.check_all), div.form-check input[type="checkbox"]:not(.check_all)');
+		const allCheckboxChecked = div.querySelectorAll('div.checkbox input[type="checkbox"]:not(.check_all):checked, div.form-check input[type="checkbox"]:not(.check_all):checked');
+		const checkboxSelectAll = div.querySelector('input.check_all');
+		if (!checkboxSelectAll) {
+			return;
 		}
-		else {
-			checkboxSelectAll.prop('checked', false);
-		}
+		checkboxSelectAll.checked = allCheckboxChecked.length > 0 && allCheckbox.length === allCheckboxChecked.length;
 	}
 }
 

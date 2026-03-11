@@ -9,7 +9,7 @@ class MockFileReader {
 	constructor() {
 		this.readAsDataURL = jest.fn(function(file) {
 			setTimeout(() => {
-				if (file.type.startsWith('image/')) {
+				if (file.type && file.type.startsWith('image/')) {
 					this.result = 'data:image/png;base64,iVBORw0KGgoAAAANS';
 				}
 				if (this.onload) {
@@ -22,366 +22,220 @@ class MockFileReader {
 
 global.FileReader = MockFileReader;
 
-// Mock Math.random for consistent IDs
 let mockRandomCounter = 0;
 const originalMathRandom = Math.random;
+const MB = 1024 * 1024;
 
 describe('MultiFilesInput', () => {
-	let mockFileInput;
-	let mockFormGroup;
-	let mockDropzone;
-	let mockFilesPreview;
-	let mockParent;
 	let setFilesListSpy;
-	let eventHandlers;
-	let mockPreviewThumb;
-	let mockBtnClose;
-	let mockWrap;
+
+	function setupDOM(nbMaxFiles = 5, maxFileSize = MB) {
+		document.body.innerHTML = `
+			<div class="form-group">
+				<input type="file" id="fileInput" />
+			</div>
+		`;
+		const fileInput = document.getElementById('fileInput');
+		const formGroup = document.querySelector('.form-group');
+		setFilesListSpy = jest.fn();
+		MultiFilesInput.init(fileInput, setFilesListSpy, nbMaxFiles, maxFileSize);
+		return {
+			fileInput,
+			formGroup,
+			get dropzone() { return formGroup.querySelector('.multi_files_input_dropzone'); },
+			get filesPreview() { return formGroup.querySelector('.multi_files_input_files_preview'); },
+			get activeInput() { return formGroup.querySelector('input[type="file"]'); },
+		};
+	}
+
+	function triggerChange(activeInput, files) {
+		Object.defineProperty(activeInput, 'files', { value: files, configurable: true });
+		activeInput.dispatchEvent(new Event('change'));
+	}
+
+	function makeMockFile(name, size, type = 'text/plain') {
+		const f = new File(['x'], name, { type });
+		Object.defineProperty(f, 'size', { value: size });
+		Object.defineProperty(f, 'name', { value: name });
+		Object.defineProperty(f, 'type', { value: type });
+		return f;
+	}
 
 	beforeEach(() => {
 		jest.spyOn(FlashMessage, 'displayError');
-
-		// Reset counter for consistent IDs
 		mockRandomCounter = 0;
 		Math.random = jest.fn(() => {
 			mockRandomCounter++;
 			return 0.123456789 + mockRandomCounter * 0.001;
 		});
-
-		// Setup event handlers storage
-		eventHandlers = {
-			click: null,
-			dragover: null,
-			dragleave: null,
-			drop: null,
-			change: null
-		};
-
-		// Setup preview mocks that will be reused
-		mockPreviewThumb = {
-			html: jest.fn().mockReturnThis()
-		};
-
-		mockBtnClose = {
-			off: jest.fn().mockReturnThis(),
-			on: jest.fn().mockReturnThis(),
-			closest: jest.fn(() => ({
-				index: jest.fn(() => 0),
-				remove: jest.fn()
-			}))
-		};
-
-		mockWrap = {
-			find: jest.fn((selector) => {
-				if (selector === '.preview-thumb') {
-					return mockPreviewThumb;
-				}
-				if (selector === '.btn-close') {
-					return mockBtnClose;
-				}
-				return {};
-			}),
-			closest: jest.fn(() => ({
-				index: jest.fn(() => 0),
-				remove: jest.fn()
-			}))
-		};
-
-		// Mock jQuery elements
-		mockFilesPreview = {
-			append: jest.fn().mockReturnThis(),
-			empty: jest.fn().mockReturnThis(),
-			addClass: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis(),
-			length: 1
-		};
-
-		mockDropzone = {
-			off: jest.fn().mockReturnThis(),
-			on: jest.fn(function(event, handler) {
-				eventHandlers[event] = handler;
-				return this;
-			}),
-			addClass: jest.fn().mockReturnThis(),
-			removeClass: jest.fn().mockReturnThis(),
-			length: 0
-		};
-
-		mockParent = {
-			find: jest.fn((selector) => {
-				if (selector === '.multi_files_input_dropzone') {
-					return mockDropzone;
-				}
-				if (selector === '.multi_files_input_files_preview') {
-					return mockFilesPreview;
-				}
-				return { length: 0 };
-			})
-		};
-
-		mockFormGroup = {
-			find: jest.fn((selector) => {
-				if (selector === '.multi_files_input_dropzone') {
-					return { length: 0 };
-				}
-				if (selector === '.multi_files_input_files_preview') {
-					return { length: 0 };
-				}
-				return { length: 0 };
-			}),
-			append: jest.fn()
-		};
-
-		mockFileInput = {
-			closest: jest.fn(() => mockFormGroup),
-			after: jest.fn(),
-			parent: jest.fn(() => mockParent),
-			addClass: jest.fn().mockReturnThis(),
-			off: jest.fn().mockReturnThis(),
-			on: jest.fn(function(event, handler) {
-				eventHandlers[event] = handler;
-				return this;
-			}),
-			trigger: jest.fn(),
-			val: jest.fn().mockReturnThis()
-		};
-
-		// Mock jQuery $ function globally for all tests
-		global.$ = jest.fn((selector) => {
-			// Handle string selectors (element creation)
-			if (typeof selector === 'string') {
-				if (selector.includes('data-file-id')) {
-					return mockWrap;
-				}
-				// Return a generic jQuery-like object for other selectors
-				return {
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis()
-				};
-			}
-			// Handle object selectors (wrapping existing elements like $(this))
-			if (selector && typeof selector === 'object') {
-				// If it's an element being wrapped, return jQuery-like object
-				return {
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis(),
-					closest: jest.fn(() => ({
-						index: jest.fn(() => 0),
-						remove: jest.fn()
-					}))
-				};
-			}
-			return {};
-		});
-
-		setFilesListSpy = jest.fn();
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
 		Math.random = originalMathRandom;
 		jest.clearAllTimers();
+		document.body.innerHTML = '';
 	});
 
 	describe('init', () => {
 		test('should create dropzone when it does not exist', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			expect(mockFileInput.after).toHaveBeenCalledWith(expect.stringContaining('multi_files_input_dropzone'));
-			expect(mockFileInput.after).toHaveBeenCalledWith(expect.stringContaining('Glissez-déposez vos fichiers ici'));
+			const { formGroup } = setupDOM();
+			const dropzone = formGroup.querySelector('.multi_files_input_dropzone');
+			expect(dropzone).not.toBeNull();
+			expect(dropzone.textContent).toContain('Glissez-déposez vos fichiers ici');
 		});
 
 		test('should not create dropzone when it already exists', () => {
-			mockFormGroup.find = jest.fn((selector) => {
-				if (selector === '.multi_files_input_dropzone') {
-					return { length: 1 };
-				}
-				return { length: 0 };
-			});
-
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			expect(mockFileInput.after).not.toHaveBeenCalled();
+			document.body.innerHTML = `
+				<div class="form-group">
+					<input type="file" id="fileInput" />
+					<div class="multi_files_input_dropzone"></div>
+				</div>
+			`;
+			const fileInput = document.getElementById('fileInput');
+			const formGroup = document.querySelector('.form-group');
+			MultiFilesInput.init(fileInput, jest.fn(), 5, MB);
+			expect(formGroup.querySelectorAll('.multi_files_input_dropzone')).toHaveLength(1);
 		});
 
 		test('should create files preview container when it does not exist', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			expect(mockFormGroup.append).toHaveBeenCalledWith(expect.stringContaining('multi_files_input_files_preview'));
+			const { formGroup } = setupDOM();
+			expect(formGroup.querySelector('.multi_files_input_files_preview')).not.toBeNull();
 		});
 
 		test('should not create preview container when it already exists', () => {
-			mockFormGroup.find = jest.fn((selector) => {
-				if (selector === '.multi_files_input_files_preview') {
-					return { length: 1 };
-				}
-				return { length: 0 };
-			});
-
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			// Should only be called once for checking dropzone
-			expect(mockFormGroup.find).toHaveBeenCalledTimes(2);
+			document.body.innerHTML = `
+				<div class="form-group">
+					<input type="file" id="fileInput" />
+					<div class="multi_files_input_files_preview"></div>
+				</div>
+			`;
+			const fileInput = document.getElementById('fileInput');
+			const formGroup = document.querySelector('.form-group');
+			MultiFilesInput.init(fileInput, jest.fn(), 5, MB);
+			expect(formGroup.querySelectorAll('.multi_files_input_files_preview')).toHaveLength(1);
 		});
 
 		test('should hide file input element', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			expect(mockFileInput.addClass).toHaveBeenCalledWith('hide');
+			const { activeInput } = setupDOM();
+			expect(activeInput.classList.contains('hide')).toBe(true);
 		});
 
 		test('should empty files preview container on init', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
+			const { formGroup } = setupDOM();
+			const filesPreview = formGroup.querySelector('.multi_files_input_files_preview');
+			filesPreview.innerHTML = '<div>old content</div>';
 
-			expect(mockFilesPreview.empty).toHaveBeenCalled();
+			// Re-init
+			const activeInput = formGroup.querySelector('input[type="file"]');
+			MultiFilesInput.init(activeInput, jest.fn(), 5, MB);
+
+			expect(formGroup.querySelector('.multi_files_input_files_preview').innerHTML).toBe('');
 		});
 
 		test('should setup click handler on dropzone', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
+			document.body.innerHTML = `
+				<div class="form-group">
+					<input type="file" id="fileInput" />
+				</div>
+			`;
+			const fileInput = document.getElementById('fileInput');
+			const formGroup = document.querySelector('.form-group');
+			const clickSpy = jest.spyOn(fileInput, 'click');
 
-			expect(mockDropzone.off).toHaveBeenCalledWith('click');
-			expect(mockDropzone.on).toHaveBeenCalledWith('click', expect.any(Function));
+			MultiFilesInput.init(fileInput, jest.fn(), 5, MB);
+
+			const dropzone = formGroup.querySelector('.multi_files_input_dropzone');
+			dropzone.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+			expect(clickSpy).toHaveBeenCalled();
 		});
 
 		test('should setup dragover handler on dropzone', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			expect(mockDropzone.off).toHaveBeenCalledWith('dragover');
-			expect(mockDropzone.on).toHaveBeenCalledWith('dragover', expect.any(Function));
+			const { dropzone } = setupDOM();
+			dropzone.dispatchEvent(new Event('dragover', { cancelable: true }));
+			expect(dropzone.classList.contains('border-primary')).toBe(true);
 		});
 
 		test('should setup dragleave handler on dropzone', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-
-			expect(mockDropzone.off).toHaveBeenCalledWith('dragleave');
-			expect(mockDropzone.on).toHaveBeenCalledWith('dragleave', expect.any(Function));
+			const { dropzone } = setupDOM();
+			dropzone.classList.add('border-primary');
+			dropzone.dispatchEvent(new Event('dragleave', { cancelable: true }));
+			expect(dropzone.classList.contains('border-primary')).toBe(false);
 		});
 
 		test('should setup drop handler on dropzone', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
+			const { dropzone } = setupDOM();
+			const mockFile = makeMockFile('test.txt', 500);
 
-			expect(mockDropzone.off).toHaveBeenCalledWith('drop');
-			expect(mockDropzone.on).toHaveBeenCalledWith('drop', expect.any(Function));
+			const dropEvent = new Event('drop', { cancelable: true });
+			Object.defineProperty(dropEvent, 'dataTransfer', { value: { files: [mockFile] } });
+			dropzone.dispatchEvent(dropEvent);
+
+			expect(setFilesListSpy).toHaveBeenCalled();
 		});
 
 		test('should setup change handler on file input', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
+			const { activeInput } = setupDOM();
+			const mockFile = makeMockFile('test.txt', 500);
 
-			expect(mockFileInput.off).toHaveBeenCalledWith('change');
-			expect(mockFileInput.on).toHaveBeenCalledWith('change', expect.any(Function));
+			triggerChange(activeInput, [mockFile]);
+
+			expect(setFilesListSpy).toHaveBeenCalled();
 		});
 	});
 
 	describe('dropzone interactions', () => {
-		beforeEach(() => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 5, 1024 * 1024);
-		});
-
 		test('should trigger file input click when dropzone is clicked', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				stopPropagation: jest.fn()
-			};
+			document.body.innerHTML = `
+				<div class="form-group">
+					<input type="file" id="fileInput" />
+				</div>
+			`;
+			const fileInput = document.getElementById('fileInput');
+			const formGroup = document.querySelector('.form-group');
+			const clickSpy = jest.spyOn(fileInput, 'click');
 
-			eventHandlers.click.call(mockDropzone, mockEvent);
+			MultiFilesInput.init(fileInput, jest.fn(), 5, MB);
 
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
-			expect(mockEvent.stopPropagation).toHaveBeenCalled();
-			expect(mockFileInput.trigger).toHaveBeenCalledWith('click');
+			const dropzone = formGroup.querySelector('.multi_files_input_dropzone');
+			dropzone.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+			expect(clickSpy).toHaveBeenCalled();
 		});
 
 		test('should add border-primary class on dragover', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				stopPropagation: jest.fn()
-			};
-
-			// Use a proper jQuery-like context
-			const contextWithAddClass = {
-				addClass: jest.fn().mockReturnThis()
-			};
-
-			// Create a bound function that uses $ to return contextWithAddClass
-			const handler = eventHandlers.dragover;
-			const mockJQuery = jest.fn(() => contextWithAddClass);
-			global.$ = mockJQuery;
-
-			handler.call(contextWithAddClass, mockEvent);
-
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
-			expect(mockEvent.stopPropagation).toHaveBeenCalled();
-			expect(contextWithAddClass.addClass).toHaveBeenCalledWith('border-primary');
+			const { dropzone } = setupDOM();
+			dropzone.dispatchEvent(new Event('dragover', { cancelable: true }));
+			expect(dropzone.classList.contains('border-primary')).toBe(true);
 		});
 
 		test('should remove border-primary class on dragleave', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				stopPropagation: jest.fn()
-			};
-
-			const contextWithRemoveClass = {
-				removeClass: jest.fn().mockReturnThis()
-			};
-
-			const handler = eventHandlers.dragleave;
-			const mockJQuery = jest.fn(() => contextWithRemoveClass);
-			global.$ = mockJQuery;
-
-			handler.call(contextWithRemoveClass, mockEvent);
-
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
-			expect(mockEvent.stopPropagation).toHaveBeenCalled();
-			expect(contextWithRemoveClass.removeClass).toHaveBeenCalledWith('border-primary');
+			const { dropzone } = setupDOM();
+			dropzone.classList.add('border-primary');
+			dropzone.dispatchEvent(new Event('dragleave', { cancelable: true }));
+			expect(dropzone.classList.contains('border-primary')).toBe(false);
 		});
 
 		test('should handle file drop', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
+			const { dropzone } = setupDOM();
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				stopPropagation: jest.fn(),
-				originalEvent: {
-					dataTransfer: {
-						files: [mockFile]
-					}
-				}
-			};
+			const dropEvent = new Event('drop', { cancelable: true });
+			Object.defineProperty(dropEvent, 'dataTransfer', { value: { files: [mockFile] } });
+			dropzone.dispatchEvent(dropEvent);
 
-			const contextElement = { id: 'dropzone-element' };
-			const handler = eventHandlers.drop;
-
-			// Réinitialiser le spy $
-			global.$.mockClear();
-
-			handler.call(contextElement, mockEvent);
-
-			expect(mockEvent.preventDefault).toHaveBeenCalled();
-			expect(mockEvent.stopPropagation).toHaveBeenCalled();
-			// Vérifie que $(this) a été appelé pour envelopper l'élément
-			expect(global.$).toHaveBeenCalledWith(contextElement);
-			// Le fichier devrait être ajouté à la liste
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
 		});
 
 		test('should handle drop with no files', () => {
-			const mockEvent = {
-				preventDefault: jest.fn(),
-				stopPropagation: jest.fn(),
-				originalEvent: {}
-			};
+			const { dropzone } = setupDOM();
 
-			const contextWithRemoveClass = {
-				removeClass: jest.fn().mockReturnThis()
-			};
+			const dropEvent = new Event('drop', { cancelable: true });
+			Object.defineProperty(dropEvent, 'dataTransfer', { value: {} });
 
-			const handler = eventHandlers.drop;
-			const mockJQuery = jest.fn(() => contextWithRemoveClass);
-			global.$ = mockJQuery;
-
-			// Should not throw error
 			expect(() => {
-				handler.call(contextWithRemoveClass, mockEvent);
+				dropzone.dispatchEvent(dropEvent);
 			}).not.toThrow();
 
 			expect(setFilesListSpy).not.toHaveBeenCalled();
@@ -389,625 +243,341 @@ describe('MultiFilesInput', () => {
 	});
 
 	describe('file handling', () => {
-		beforeEach(() => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 3, 1024 * 1024);
-		});
-
 		test('should add valid file to files list', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
+			const { activeInput } = setupDOM(3, MB);
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, [mockFile]);
 
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
-			expect(mockFileInput.val).toHaveBeenCalledWith('');
 		});
 
 		test('should not exceed maximum number of files', () => {
-			const mockFile1 = new File(['content1'], 'test1.txt', { type: 'text/plain' });
-			const mockFile2 = new File(['content2'], 'test2.txt', { type: 'text/plain' });
-			const mockFile3 = new File(['content3'], 'test3.txt', { type: 'text/plain' });
-			const mockFile4 = new File(['content4'], 'test4.txt', { type: 'text/plain' });
+			const { activeInput } = setupDOM(3, MB);
+			const files = [
+				makeMockFile('test1.txt', 500),
+				makeMockFile('test2.txt', 500),
+				makeMockFile('test3.txt', 500),
+				makeMockFile('test4.txt', 500),
+			];
 
-			Object.defineProperty(mockFile1, 'size', { value: 500 });
-			Object.defineProperty(mockFile2, 'size', { value: 500 });
-			Object.defineProperty(mockFile3, 'size', { value: 500 });
-			Object.defineProperty(mockFile4, 'size', { value: 500 });
+			triggerChange(activeInput, files);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile1, mockFile2, mockFile3, mockFile4]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
-
-			// Should only add 3 files (nbMaxFiles = 3)
 			expect(setFilesListSpy).toHaveBeenCalledTimes(3);
 			expect(FlashMessage.displayError).toHaveBeenCalledWith('Maximum 3 fichiers autorisés.');
 		});
 
 		test('should reject file exceeding max size', () => {
-			const mockFile = new File(['content'], 'large.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 2 * 1024 * 1024 }); // 2MB
-			Object.defineProperty(mockFile, 'name', { value: 'large.txt' });
+			const { activeInput } = setupDOM(3, MB);
+			const mockFile = makeMockFile('large.txt', 2 * MB);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, [mockFile]);
 
 			expect(FlashMessage.displayError).toHaveBeenCalledWith('Le fichier large.txt dépasse la taille maximale.');
 			expect(setFilesListSpy).not.toHaveBeenCalled();
 		});
 
 		test('should handle multiple valid files', () => {
-			const mockFile1 = new File(['content1'], 'test1.txt', { type: 'text/plain' });
-			const mockFile2 = new File(['content2'], 'test2.txt', { type: 'text/plain' });
+			const { activeInput } = setupDOM(3, MB);
+			const f1 = makeMockFile('test1.txt', 500);
+			const f2 = makeMockFile('test2.txt', 600);
 
-			Object.defineProperty(mockFile1, 'size', { value: 500 });
-			Object.defineProperty(mockFile2, 'size', { value: 600 });
+			triggerChange(activeInput, [f1, f2]);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile1, mockFile2]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
-
-			// setFilesList est appelé avec la même référence d'array (comportement voulu)
-			expect(setFilesListSpy).toHaveBeenCalledTimes(2);
-			// À chaque appel, l'array contient tous les fichiers ajoutés jusqu'à présent
-			const call1 = setFilesListSpy.mock.calls[0][0];
-			const call2 = setFilesListSpy.mock.calls[1][0];
-			expect(call1).toEqual(call2); // Même référence, contient les 2 fichiers
-			expect(call2).toHaveLength(2);
-			expect(call2).toContain(mockFile1);
-			expect(call2).toContain(mockFile2);
-		});
-
-		test('should skip oversized file and continue with valid files', () => {
-			const mockFile1 = new File(['content1'], 'small.txt', { type: 'text/plain' });
-			const mockFile2 = new File(['content2'], 'large.txt', { type: 'text/plain' });
-			const mockFile3 = new File(['content3'], 'small2.txt', { type: 'text/plain' });
-
-			Object.defineProperty(mockFile1, 'size', { value: 500 });
-			Object.defineProperty(mockFile2, 'size', { value: 2 * 1024 * 1024 });
-			Object.defineProperty(mockFile2, 'name', { value: 'large.txt' });
-			Object.defineProperty(mockFile3, 'size', { value: 600 });
-
-			const mockEvent = {
-				target: {
-					files: [mockFile1, mockFile2, mockFile3]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
-
-			// setFilesList est appelé avec la même référence d'array (comportement voulu)
 			expect(setFilesListSpy).toHaveBeenCalledTimes(2);
 			const lastCall = setFilesListSpy.mock.calls[1][0];
 			expect(lastCall).toHaveLength(2);
-			expect(lastCall).toContain(mockFile1);
-			expect(lastCall).toContain(mockFile3);
-			expect(lastCall).not.toContain(mockFile2); // Le fichier trop gros n'est pas ajouté
+			expect(lastCall).toContain(f1);
+			expect(lastCall).toContain(f2);
+		});
+
+		test('should skip oversized file and continue with valid files', () => {
+			const { activeInput } = setupDOM(3, MB);
+			const f1 = makeMockFile('small.txt', 500);
+			const f2 = makeMockFile('large.txt', 2 * MB);
+			const f3 = makeMockFile('small2.txt', 600);
+
+			triggerChange(activeInput, [f1, f2, f3]);
+
+			expect(setFilesListSpy).toHaveBeenCalledTimes(2);
+			const lastCall = setFilesListSpy.mock.calls[1][0];
+			expect(lastCall).toHaveLength(2);
+			expect(lastCall).toContain(f1);
+			expect(lastCall).toContain(f3);
+			expect(lastCall).not.toContain(f2);
 			expect(FlashMessage.displayError).toHaveBeenCalledWith('Le fichier large.txt dépasse la taille maximale.');
 		});
 	});
 
 	describe('file preview rendering', () => {
-		beforeEach(() => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 3, 1024 * 1024);
-		});
-
 		test('should render preview for non-image file', () => {
-			const mockFile = new File(['content'], 'document.pdf', { type: 'application/pdf' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'document.pdf' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('document.pdf', 500, 'application/pdf');
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			expect(mockFilesPreview.append).toHaveBeenCalledWith(mockWrap);
-			expect(mockFilesPreview.removeClass).toHaveBeenCalledWith('hide');
-			expect(mockPreviewThumb.html).toHaveBeenCalledWith('<i class="fas fa-file fa-2x text-muted"></i>');
+			expect(filesPreview.querySelector('[data-file-id]')).not.toBeNull();
+			expect(filesPreview.classList.contains('hide')).toBe(false);
+			expect(filesPreview.querySelector('.preview-thumb').innerHTML).toContain('fas fa-file');
 		});
 
 		test('should render preview with image thumbnail for image file', (done) => {
-			const mockFile = new File(['content'], 'photo.png', { type: 'image/png' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'photo.png' });
-			Object.defineProperty(mockFile, 'type', { value: 'image/png' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('photo.png', 500, 'image/png');
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Wait for FileReader to process
 			setTimeout(() => {
-				expect(mockPreviewThumb.html).toHaveBeenCalledWith(
-					expect.stringContaining('<img src="data:image/png;base64,')
-				);
+				expect(filesPreview.querySelector('.preview-thumb').innerHTML).toContain('<img src="data:image/png;base64,');
 				done();
 			}, 10);
 		});
 
 		test('should generate unique file ID', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Check that $ was called with a string containing data-file-id
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('data-file-id="f_'));
+			const wrap = filesPreview.querySelector('[data-file-id]');
+			expect(wrap).not.toBeNull();
+			expect(wrap.dataset.fileId).toMatch(/^f_/);
 		});
 
 		test('should setup close button handler', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			expect(mockBtnClose.off).toHaveBeenCalledWith('click');
-			expect(mockBtnClose.on).toHaveBeenCalledWith('click', expect.any(Function));
+			expect(filesPreview.querySelector('.btn-close')).not.toBeNull();
 		});
 	});
 
 	describe('file removal', () => {
-		let mockClosest;
-		let removeButtonHandler;
-
-		beforeEach(() => {
-			mockClosest = {
-				index: jest.fn(() => 0),
-				remove: jest.fn()
-			};
-
-			// Reconfigure mockBtnClose to capture the remove handler
-			mockBtnClose.on = jest.fn(function(event, handler) {
-				if (event === 'click') {
-					removeButtonHandler = handler;
-				}
-				return this;
-			});
-			mockBtnClose.closest = jest.fn(() => mockClosest);
-
-			// Reconfigure mockWrap.closest to return our mockClosest
-			mockWrap.closest = jest.fn(() => mockClosest);
-
-			// Update global.$ to return proper closest
-			global.$ = jest.fn((selector) => {
-				if (typeof selector === 'string') {
-					if (selector.includes('data-file-id')) {
-						return mockWrap;
-					}
-					return {
-						addClass: jest.fn().mockReturnThis(),
-						removeClass: jest.fn().mockReturnThis()
-					};
-				}
-				if (selector === mockBtnClose) {
-					return {
-						closest: jest.fn(() => mockClosest)
-					};
-				}
-				return {};
-			});
-
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 3, 1024 * 1024);
-		});
-
 		test('should remove file from list when close button clicked', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'test.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			// Add file
-			eventHandlers.change(mockEvent);
+			const btnClose = filesPreview.querySelector('.btn-close');
+			btnClose.dispatchEvent(new Event('click'));
 
-			// Click remove button
-			removeButtonHandler.call(mockBtnClose);
-
-			// Should call setFilesList with empty array
 			expect(setFilesListSpy).toHaveBeenLastCalledWith([]);
-			expect(mockClosest.remove).toHaveBeenCalled();
+			expect(filesPreview.querySelector('[data-file-id]')).toBeNull();
 		});
 
 		test('should hide preview container when last file is removed', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'test.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
+			const btnClose = filesPreview.querySelector('.btn-close');
+			btnClose.dispatchEvent(new Event('click'));
 
-			// Reset mock calls
-			mockFilesPreview.addClass.mockClear();
-
-			// Click remove button
-			removeButtonHandler.call(mockBtnClose);
-
-			expect(mockFilesPreview.addClass).toHaveBeenCalledWith('hide');
+			expect(filesPreview.classList.contains('hide')).toBe(true);
 		});
 
 		test('should not hide preview container when files remain', () => {
-			const mockFile1 = new File(['content1'], 'test1.txt', { type: 'text/plain' });
-			const mockFile2 = new File(['content2'], 'test2.txt', { type: 'text/plain' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const f1 = makeMockFile('test1.txt', 500);
+			const f2 = makeMockFile('test2.txt', 600);
 
-			Object.defineProperty(mockFile1, 'size', { value: 500 });
-			Object.defineProperty(mockFile1, 'name', { value: 'test1.txt' });
-			Object.defineProperty(mockFile2, 'size', { value: 600 });
-			Object.defineProperty(mockFile2, 'name', { value: 'test2.txt' });
-
-			const mockEvent = {
-				target: {
-					files: [mockFile1, mockFile2]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
-
-			// Reset mock calls
-			mockFilesPreview.addClass.mockClear();
+			triggerChange(activeInput, [f1, f2]);
 			setFilesListSpy.mockClear();
 
-			// Click remove button for first file
-			removeButtonHandler.call(mockBtnClose);
+			// Remove first file
+			const btnClose = filesPreview.querySelectorAll('.btn-close')[0];
+			btnClose.dispatchEvent(new Event('click'));
 
-			// Should still have one file
-			expect(setFilesListSpy).toHaveBeenLastCalledWith([mockFile2]);
-			expect(mockFilesPreview.addClass).not.toHaveBeenCalledWith('hide');
+			expect(setFilesListSpy).toHaveBeenLastCalledWith([f2]);
+			expect(filesPreview.classList.contains('hide')).toBe(false);
 		});
 
 		test('should remove file by name and size reference', () => {
-			const mockFile1 = new File(['content1'], 'test.txt', { type: 'text/plain' });
-			const mockFile2 = new File(['content2'], 'test.txt', { type: 'text/plain' }); // Same name
-			const mockFile3 = new File(['content3'], 'other.txt', { type: 'text/plain' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const f1 = makeMockFile('test.txt', 500);
+			const f2 = makeMockFile('test.txt', 600); // same name, different size
+			const f3 = makeMockFile('other.txt', 700);
 
-			Object.defineProperty(mockFile1, 'size', { value: 500 });
-			Object.defineProperty(mockFile1, 'name', { value: 'test.txt' });
-			Object.defineProperty(mockFile2, 'size', { value: 600 }); // Different size
-			Object.defineProperty(mockFile2, 'name', { value: 'test.txt' });
-			Object.defineProperty(mockFile3, 'size', { value: 700 });
-			Object.defineProperty(mockFile3, 'name', { value: 'other.txt' });
-
-			const mockEvent = {
-				target: {
-					files: [mockFile1, mockFile2, mockFile3]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
-
-			// The files list should now contain all 3 files
-			// When we remove, it should match by name AND size
+			triggerChange(activeInput, [f1, f2, f3]);
 			setFilesListSpy.mockClear();
 
-			removeButtonHandler.call(mockBtnClose);
+			// Remove the first wrap (corresponds to f1)
+			const btnClose = filesPreview.querySelectorAll('.btn-close')[0];
+			btnClose.dispatchEvent(new Event('click'));
 
-			// Should remove only the file with matching name and size
-			// Since mockClosest.index returns 0, it will try to remove mockFile1
 			const lastCall = setFilesListSpy.mock.calls[setFilesListSpy.mock.calls.length - 1];
-			expect(lastCall[0].length).toBe(2); // Should have 2 files remaining
+			expect(lastCall[0]).toHaveLength(2);
 		});
 	});
 
 	describe('XSS protection', () => {
-		beforeEach(() => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 3, 1024 * 1024);
-		});
-
 		test('should escape HTML tags in filename', () => {
-			const mockFile = new File(['content'], '<script>alert("xss")</script>.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: '<script>alert("xss")</script>.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('<script>alert("xss")</script>.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Vérifie que les balises HTML sont échappées
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('&lt;script&gt;'));
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('&lt;&#x2F;script&gt;'));
-			expect(global.$).not.toHaveBeenCalledWith(expect.stringContaining('<script>'));
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv.innerHTML).toContain('&lt;script&gt;');
+			expect(nameDiv.innerHTML).not.toContain('<script>');
 		});
 
 		test('should escape quotes in filename', () => {
-			const mockFile = new File(['content'], 'file"with\'quotes.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'file"with\'quotes.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('file"with\'quotes.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Vérifie que les guillemets sont échappés
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('&quot;'));
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('&#39;'));
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv.textContent).toContain('"');
+			expect(nameDiv.textContent).toContain("'");
 		});
 
 		test('should escape ampersand in filename', () => {
-			const mockFile = new File(['content'], 'file&name.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'file&name.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('file&name.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Vérifie que & est échappé en &amp;
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('file&amp;name.txt'));
-			expect(global.$).not.toHaveBeenCalledWith(expect.stringMatching(/file&name\.txt/));
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv.innerHTML).toContain('&amp;');
+			expect(nameDiv.innerHTML).not.toMatch(/file&name\.txt/);
 		});
 
 		test('should handle filename with all dangerous characters', () => {
-			const mockFile = new File(['content'], '<>"&\'/test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: '<>"&\'/test.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('<>"&\'/test.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Vérifie que tous les caractères dangereux sont échappés
-			const calls = global.$.mock.calls;
-			const htmlCall = calls.find(call => typeof call[0] === 'string' && call[0].includes('data-file-id'));
-			expect(htmlCall).toBeDefined();
-			expect(htmlCall[0]).toContain('&lt;');
-			expect(htmlCall[0]).toContain('&gt;');
-			expect(htmlCall[0]).toContain('&quot;');
-			expect(htmlCall[0]).toContain('&amp;');
-			expect(htmlCall[0]).toContain('&#39;');
-			expect(htmlCall[0]).toContain('&#x2F;');
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv.innerHTML).toContain('&lt;');
+			expect(nameDiv.innerHTML).toContain('&gt;');
+			expect(nameDiv.textContent).toContain('"');
+			expect(nameDiv.innerHTML).toContain('&amp;');
+			expect(nameDiv.textContent).toContain("'");
+			expect(nameDiv.textContent).toContain('/');
 		});
 	});
 
 	describe('edge cases', () => {
-		beforeEach(() => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 3, 1024 * 1024);
-		});
-
 		test('should handle empty file selection', () => {
-			const mockEvent = {
-				target: {
-					files: []
-				}
-			};
+			const { activeInput } = setupDOM(3, MB);
 
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, []);
 
 			expect(setFilesListSpy).not.toHaveBeenCalled();
-			expect(mockFileInput.val).toHaveBeenCalledWith('');
 		});
 
 		test('should handle file with zero size', () => {
-			const mockFile = new File([''], 'empty.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 0 });
+			const { activeInput } = setupDOM(3, MB);
+			const mockFile = makeMockFile('empty.txt', 0);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// File with size 0 should still be accepted
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
 		});
 
 		test('should handle file at exact max size', () => {
-			const mockFile = new File(['content'], 'exact.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 }); // Exactly 1MB
+			const { activeInput } = setupDOM(3, MB);
+			const mockFile = makeMockFile('exact.txt', MB);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// File at exact max size should be accepted
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
 			expect(FlashMessage.displayError).not.toHaveBeenCalled();
 		});
 
 		test('should handle file one byte over max size', () => {
-			const mockFile = new File(['content'], 'oversize.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 + 1 }); // 1MB + 1 byte
-			Object.defineProperty(mockFile, 'name', { value: 'oversize.txt' });
+			const { activeInput } = setupDOM(3, MB);
+			const mockFile = makeMockFile('oversize.txt', MB + 1);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, [mockFile]);
 
 			expect(FlashMessage.displayError).toHaveBeenCalledWith('Le fichier oversize.txt dépasse la taille maximale.');
 			expect(setFilesListSpy).not.toHaveBeenCalled();
 		});
 
 		test('should handle special characters in filename', () => {
-			const mockFile = new File(['content'], 'file with spaces & special#chars.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: 'file with spaces & special#chars.txt' });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile('file with spaces & special#chars.txt', 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, [mockFile]);
 
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
-			// Vérifie que le caractère & est échappé en &amp; pour éviter les failles XSS
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('file with spaces &amp; special#chars.txt'));
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv.innerHTML).toContain('&amp;');
 		});
 
 		test('should handle various image types', () => {
 			const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 
-			imageTypes.forEach((type, index) => {
-				// Réinitialiser pour chaque test d'image
-				if (index > 0) {
-					MultiFilesInput.init(mockFileInput, setFilesListSpy, 3, 1024 * 1024);
-				}
-				setFilesListSpy.mockClear();
+			imageTypes.forEach((type) => {
+				document.body.innerHTML = `
+					<div class="form-group">
+						<input type="file" id="fileInput" />
+					</div>
+				`;
+				const fileInput = document.getElementById('fileInput');
+				const formGroup = document.querySelector('.form-group');
+				const spy = jest.fn();
+				MultiFilesInput.init(fileInput, spy, 3, MB);
+				const activeInput = formGroup.querySelector('input[type="file"]');
 
-				const mockFile = new File(['content'], `photo.${type.split('/')[1]}`, { type });
-				Object.defineProperty(mockFile, 'size', { value: 500 });
-				Object.defineProperty(mockFile, 'type', { value: type });
+				const mockFile = makeMockFile(`photo.${type.split('/')[1]}`, 500, type);
+				triggerChange(activeInput, [mockFile]);
 
-				const mockEvent = {
-					target: {
-						files: [mockFile]
-					}
-				};
-
-				eventHandlers.change(mockEvent);
-
-				expect(setFilesListSpy).toHaveBeenCalled();
+				expect(spy).toHaveBeenCalled();
+				spy.mockClear();
 			});
 		});
 
 		test('should handle max files limit of 0', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 0, 1024 * 1024);
+			const { activeInput } = setupDOM(0, MB);
+			const mockFile = makeMockFile('test.txt', 500);
 
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, [mockFile]);
 
 			expect(FlashMessage.displayError).toHaveBeenCalledWith('Maximum 0 fichiers autorisés.');
 			expect(setFilesListSpy).not.toHaveBeenCalled();
 		});
 
 		test('should handle max files limit of 1', () => {
-			MultiFilesInput.init(mockFileInput, setFilesListSpy, 1, 1024 * 1024);
+			const { activeInput } = setupDOM(1, MB);
+			const f1 = makeMockFile('test1.txt', 500);
+			const f2 = makeMockFile('test2.txt', 600);
 
-			const mockFile1 = new File(['content1'], 'test1.txt', { type: 'text/plain' });
-			const mockFile2 = new File(['content2'], 'test2.txt', { type: 'text/plain' });
-
-			Object.defineProperty(mockFile1, 'size', { value: 500 });
-			Object.defineProperty(mockFile2, 'size', { value: 600 });
-
-			const mockEvent = {
-				target: {
-					files: [mockFile1, mockFile2]
-				}
-			};
-
-			eventHandlers.change(mockEvent);
+			triggerChange(activeInput, [f1, f2]);
 
 			expect(setFilesListSpy).toHaveBeenCalledTimes(1);
-			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile1]);
+			expect(setFilesListSpy).toHaveBeenCalledWith([f1]);
 			expect(FlashMessage.displayError).toHaveBeenCalledWith('Maximum 1 fichiers autorisés.');
 		});
 
 		test('should handle file with null name', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: null });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile(null, 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Le fichier devrait être ajouté même avec un nom null
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
-			// Vérifie que le nom est traité comme une chaîne vide
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('max-width:160px;"></div>'));
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv).not.toBeNull();
 		});
 
 		test('should handle file with undefined name', () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-			Object.defineProperty(mockFile, 'size', { value: 500 });
-			Object.defineProperty(mockFile, 'name', { value: undefined });
+			const { activeInput, filesPreview } = setupDOM(3, MB);
+			const mockFile = makeMockFile(undefined, 500);
 
-			const mockEvent = {
-				target: {
-					files: [mockFile]
-				}
-			};
+			triggerChange(activeInput, [mockFile]);
 
-			eventHandlers.change(mockEvent);
-
-			// Le fichier devrait être ajouté même avec un nom undefined
 			expect(setFilesListSpy).toHaveBeenCalledWith([mockFile]);
-			// Vérifie que le nom est traité comme une chaîne vide
-			expect(global.$).toHaveBeenCalledWith(expect.stringContaining('max-width:160px;"></div>'));
+			const nameDiv = filesPreview.querySelector('.small.text-truncate');
+			expect(nameDiv).not.toBeNull();
 		});
 	});
 });

@@ -3,466 +3,488 @@
  */
 const { MultipleActionInTable, MultipleActionInDivList } = require('../multiple_action_in_table');
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function setupTable({ nbRows = 1, withButtonsDiv = true, nested = false, tableClass = 'table-action_multiple' } = {}) {
+	const rows = Array.from({ length: nbRows }, (_, i) => `
+		<tr data-action_multiple_input_name="ids[]" data-action_multiple_item_id="${i + 1}">
+			<td>Item ${i + 1}</td>
+		</tr>`).join('');
+
+	const buttonsDiv = withButtonsDiv
+		? `<div class="action_multiple_buttons hide"><button>Action</button></div>`
+		: '';
+
+	if (nested) {
+		// table.parentElement.parentElement.parentElement.nextElementSibling = buttons div
+		document.body.innerHTML = `
+			<div>
+				<div>
+					<div>
+						<div>
+							<div><table class="${tableClass}">
+								<thead><tr><th>Name</th></tr></thead>
+								<tbody>${rows}</tbody>
+							</table></div>
+						</div>
+					</div>
+				</div>
+				${buttonsDiv}
+			</div>`;
+	} else {
+		// table.parentElement.nextElementSibling = buttons div
+		document.body.innerHTML = `
+			<div>
+				<div>
+					<table class="${tableClass}">
+						<thead><tr><th>Name</th></tr></thead>
+						<tbody>${rows}</tbody>
+					</table>
+				</div>
+				${buttonsDiv}
+			</div>`;
+	}
+
+	return document.querySelector('table');
+}
+
+function setupDivList({ nbItems = 1, withButtonsDiv = true } = {}) {
+	const items = Array.from({ length: nbItems }, (_, i) => `
+		<div class="multiple_action" data-action_multiple_input_name="ids[]" data-action_multiple_item_id="${i + 1}">
+			Item ${i + 1}
+		</div>`).join('');
+
+	const buttonsDiv = withButtonsDiv
+		? `<div class="action_multiple_buttons"><button>Action</button></div>`
+		: '';
+
+	document.body.innerHTML = `
+		<div id="content">
+			${items}
+		</div>
+		${buttonsDiv}`;
+
+	return document.getElementById('content');
+}
+
+// ─── MultipleActionInTable ───────────────────────────────────────────────────
+
 describe('MultipleActionInTable', () => {
-	let mockTable;
-
-	beforeEach(() => {
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string') {
-				if (selector.includes('<th') || selector.includes('<td') || selector.includes('<p>') || selector.includes('<img') || selector.includes('<span') || selector.includes('<div')) {
-					// Creating new element
-					return {
-						addClass: jest.fn().mockReturnThis(),
-						removeClass: jest.fn().mockReturnThis(),
-						hasClass: jest.fn(() => false),
-						find: jest.fn(() => ({ length: 0 })),
-						prepend: jest.fn().mockReturnThis(),
-						append: jest.fn().mockReturnThis(),
-						after: jest.fn().mockReturnThis(),
-						remove: jest.fn().mockReturnThis()
-					};
-				}
-				return {
-					find: jest.fn(() => ({ length: 0 })),
-					hasClass: jest.fn(() => false),
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis()
-				};
-			}
-			// Handle element wrapping
-			return {
-				find: jest.fn(() => ({ length: 0 })),
-				hasClass: jest.fn(() => false),
-				closest: jest.fn(() => mockTable),
-				addClass: jest.fn().mockReturnThis(),
-				removeClass: jest.fn().mockReturnThis(),
-				data: jest.fn()
-			};
-		});
-
-	});
-
 	afterEach(() => {
-		jest.clearAllMocks();
-		delete global.$;
+		document.body.innerHTML = '';
 	});
 
 	describe('getDivBtn', () => {
-		test('should return button div when found as next sibling', () => {
-			const mockButtonDiv = {
-				hasClass: jest.fn((className) => className === 'action_multiple_buttons')
-			};
-			mockTable = {
-				parent: jest.fn(() => ({
-					next: jest.fn(() => mockButtonDiv)
-				}))
-			};
-
-			const result = MultipleActionInTable.getDivBtn(mockTable);
-
-			expect(result).toBe(mockButtonDiv);
-			expect(mockButtonDiv.hasClass).toHaveBeenCalledWith('action_multiple_buttons');
+		test('should return button div when found as direct next sibling', () => {
+			const table = setupTable();
+			const result = MultipleActionInTable.getDivBtn(table);
+			expect(result).not.toBeNull();
+			expect(result.classList.contains('action_multiple_buttons')).toBe(true);
 		});
 
 		test('should return button div when found in nested structure', () => {
-			const mockButtonDiv = {
-				hasClass: jest.fn((className) => className === 'action_multiple_buttons')
-			};
-			const notButtonDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockTable = {
-				parent: jest.fn(() => ({
-					next: jest.fn(() => notButtonDiv),
-					parent: jest.fn(() => ({
-						parent: jest.fn(() => ({
-							parent: jest.fn(() => ({
-								next: jest.fn(() => mockButtonDiv)
-							}))
-						}))
-					}))
-				}))
-			};
-
-			const result = MultipleActionInTable.getDivBtn(mockTable);
-
-			expect(result).toBe(mockButtonDiv);
+			const table = setupTable({ nested: true });
+			const result = MultipleActionInTable.getDivBtn(table);
+			expect(result).not.toBeNull();
+			expect(result.classList.contains('action_multiple_buttons')).toBe(true);
 		});
 
 		test('should return null when button div not found', () => {
-			const notButtonDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockTable = {
-				parent: jest.fn(() => ({
-					next: jest.fn(() => notButtonDiv),
-					parent: jest.fn(() => ({
-						parent: jest.fn(() => ({
-							parent: jest.fn(() => ({
-								next: jest.fn(() => notButtonDiv)
-							}))
-						}))
-					}))
-				}))
-			};
-
-			const result = MultipleActionInTable.getDivBtn(mockTable);
-
+			const table = setupTable({ withButtonsDiv: false });
+			const result = MultipleActionInTable.getDivBtn(table);
 			expect(result).toBeNull();
 		});
 	});
 
+	describe('initCols', () => {
+		test('should do nothing if table lacks table-action_multiple class', () => {
+			const table = setupTable({ tableClass: 'other-class' });
+			MultipleActionInTable.initCols(table);
+			expect(table.querySelector('th[data-key="select"]')).toBeNull();
+		});
+
+		test('should do nothing if no buttons div found', () => {
+			const table = setupTable({ withButtonsDiv: false, tableClass: 'table-action_multiple' });
+			MultipleActionInTable.initCols(table);
+			expect(table.querySelector('th[data-key="select"]')).toBeNull();
+		});
+
+		test('should add select th to thead', () => {
+			const table = setupTable();
+			MultipleActionInTable.initCols(table);
+			const th = table.querySelector('thead tr th[data-key="select"]');
+			expect(th).not.toBeNull();
+		});
+
+		test('should add checkbox td to each tbody row', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.initCols(table);
+			const tds = table.querySelectorAll('tbody tr td.select');
+			expect(tds.length).toBe(2);
+		});
+
+		test('should set correct name and value on checkboxes', () => {
+			const table = setupTable({ nbRows: 1 });
+			MultipleActionInTable.initCols(table);
+			const cb = table.querySelector('input.action_multiple_checkbox');
+			expect(cb.name).toBe('ids[]');
+			expect(cb.value).toBe('1');
+		});
+
+		test('should be idempotent (no duplicate cols on second call)', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.initCols(table);
+			MultipleActionInTable.initCols(table);
+			expect(table.querySelectorAll('th[data-key="select"]').length).toBe(1);
+			expect(table.querySelectorAll('tbody tr td.select').length).toBe(2);
+		});
+
+		test('should skip rows with no_items class', () => {
+			document.body.innerHTML = `
+				<div>
+					<div>
+						<table class="table-action_multiple">
+							<thead><tr><th>Name</th></tr></thead>
+							<tbody>
+								<tr class="no_items"><td colspan="1">No items</td></tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="action_multiple_buttons hide"></div>
+				</div>`;
+			const table = document.querySelector('table');
+			MultipleActionInTable.initCols(table);
+			expect(table.querySelector('tbody tr.no_items td.select')).toBeNull();
+		});
+	});
+
+	describe('init', () => {
+		test('should do nothing if table lacks table-action_multiple class', () => {
+			const table = setupTable({ tableClass: 'other' });
+			MultipleActionInTable.init(table);
+			expect(table.querySelector('input.action_multiple_check_all')).toBeNull();
+		});
+
+		test('should do nothing if no buttons div found', () => {
+			const table = setupTable({ withButtonsDiv: false });
+			MultipleActionInTable.init(table);
+			expect(table.querySelector('input.action_multiple_check_all')).toBeNull();
+		});
+
+		test('should add check-all input to first th', () => {
+			const table = setupTable();
+			MultipleActionInTable.init(table);
+			expect(table.querySelector('thead tr th input.action_multiple_check_all')).not.toBeNull();
+		});
+
+		test('should add arrow image to buttons div once', () => {
+			const table = setupTable();
+			MultipleActionInTable.init(table);
+			const divBtn = MultipleActionInTable.getDivBtn(table);
+			expect(divBtn.querySelector('img')).not.toBeNull();
+		});
+
+		test('should not add arrow image twice when called again', () => {
+			const table = setupTable();
+			MultipleActionInTable.init(table);
+			MultipleActionInTable.init(table);
+			const divBtn = MultipleActionInTable.getDivBtn(table);
+			expect(divBtn.querySelectorAll('img').length).toBe(1);
+		});
+
+		test('check-all toggles all checkboxes to checked when none checked', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.init(table);
+
+			const checkAll = table.querySelector('input.action_multiple_check_all');
+			checkAll.click();
+
+			const checkboxes = table.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+		});
+
+		test('check-all unchecks all when all are checked', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.init(table);
+
+			const checkboxes = table.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => { cb.checked = true; });
+
+			const checkAll = table.querySelector('input.action_multiple_check_all');
+			checkAll.click();
+
+			checkboxes.forEach(cb => expect(cb.checked).toBe(false));
+		});
+
+		test('checking a row checkbox updates check-all state', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.init(table);
+
+			const checkboxes = table.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => {
+				cb.checked = true;
+				cb.dispatchEvent(new Event('change'));
+			});
+
+			const checkAll = table.querySelector('input.action_multiple_check_all');
+			expect(checkAll.checked).toBe(true);
+		});
+	});
+
 	describe('updateCheckbox', () => {
-		test('should hide select-all checkbox when no checkboxes exist', () => {
-			const mockCheckboxSelectAll = {
-				addClass: jest.fn(),
-				removeClass: jest.fn()
-			};
-			const mockButtonDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockTable = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox') {
-						return { length: 0 };
-					}
-					if (selector === 'input.action_multiple_checkbox:checked') {
-						return { length: 0 };
-					}
-					if (selector === 'thead tr th input.action_multiple_check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				}),
-				parent: jest.fn(() => ({
-					next: jest.fn(() => mockButtonDiv),
-					parent: jest.fn(() => ({
-						parent: jest.fn(() => ({
-							parent: jest.fn(() => ({
-								next: jest.fn(() => mockButtonDiv)
-							}))
-						}))
-					}))
-				}))
-			};
-
-			MultipleActionInTable.updateCheckbox(mockTable);
-
-			expect(mockCheckboxSelectAll.addClass).toHaveBeenCalledWith('hide');
+		test('should hide check-all when no checkboxes exist', () => {
+			document.body.innerHTML = `
+				<div>
+					<div>
+						<table class="table-action_multiple">
+							<thead><tr><th><input type="checkbox" class="action_multiple_check_all" /></th></tr></thead>
+							<tbody></tbody>
+						</table>
+					</div>
+					<div class="action_multiple_buttons hide"></div>
+				</div>`;
+			const table = document.querySelector('table');
+			MultipleActionInTable.updateCheckbox(table);
+			const checkAll = table.querySelector('input.action_multiple_check_all');
+			expect(checkAll.classList.contains('hide')).toBe(true);
 		});
 
-		test('should check select-all checkbox when all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = {
-				addClass: jest.fn(),
-				removeClass: jest.fn(),
-				prop: jest.fn()
-			};
-			const mockButtonDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockTable = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox') {
-						return { length: 3 };
-					}
-					if (selector === 'input.action_multiple_checkbox:checked') {
-						return { length: 3 };
-					}
-					if (selector === 'thead tr th input.action_multiple_check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				}),
-				parent: jest.fn(() => ({
-					next: jest.fn(() => mockButtonDiv),
-					parent: jest.fn(() => ({
-						parent: jest.fn(() => ({
-							parent: jest.fn(() => ({
-								next: jest.fn(() => mockButtonDiv)
-							}))
-						}))
-					}))
-				}))
-			};
-
-			MultipleActionInTable.updateCheckbox(mockTable);
-
-			expect(mockCheckboxSelectAll.removeClass).toHaveBeenCalledWith('hide');
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', true);
+		test('should check check-all when all checkboxes are checked', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.init(table);
+			const checkboxes = table.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => { cb.checked = true; });
+			MultipleActionInTable.updateCheckbox(table);
+			expect(table.querySelector('input.action_multiple_check_all').checked).toBe(true);
 		});
 
-		test('should uncheck select-all checkbox when not all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = {
-				addClass: jest.fn(),
-				removeClass: jest.fn(),
-				prop: jest.fn()
-			};
-			const mockButtonDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockTable = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox') {
-						return { length: 5 };
-					}
-					if (selector === 'input.action_multiple_checkbox:checked') {
-						return { length: 2 };
-					}
-					if (selector === 'thead tr th input.action_multiple_check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				}),
-				parent: jest.fn(() => ({
-					next: jest.fn(() => mockButtonDiv),
-					parent: jest.fn(() => ({
-						parent: jest.fn(() => ({
-							parent: jest.fn(() => ({
-								next: jest.fn(() => mockButtonDiv)
-							}))
-						}))
-					}))
-				}))
-			};
-
-			MultipleActionInTable.updateCheckbox(mockTable);
-
-			expect(mockCheckboxSelectAll.removeClass).toHaveBeenCalledWith('hide');
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', false);
+		test('should uncheck check-all when not all checkboxes are checked', () => {
+			const table = setupTable({ nbRows: 2 });
+			MultipleActionInTable.init(table);
+			const checkboxes = table.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes[0].checked = true;
+			MultipleActionInTable.updateCheckbox(table);
+			expect(table.querySelector('input.action_multiple_check_all').checked).toBe(false);
 		});
 	});
 
 	describe('showButtonsAction', () => {
 		test('should return early when button div is null', () => {
-			mockTable = {
-				parent: jest.fn(() => ({
-					next: jest.fn(() => ({ hasClass: jest.fn(() => false) })),
-					parent: jest.fn(() => ({
-						parent: jest.fn(() => ({
-							parent: jest.fn(() => ({
-								next: jest.fn(() => ({ hasClass: jest.fn(() => false) }))
-							}))
-						}))
-					}))
-				})),
-				find: jest.fn(() => ({ length: 0 }))
-			};
-
-			expect(() => {
-				MultipleActionInTable.showButtonsAction(mockTable);
-			}).not.toThrow();
+			const table = setupTable({ withButtonsDiv: false });
+			expect(() => MultipleActionInTable.showButtonsAction(table)).not.toThrow();
 		});
 
-		test('should show button div when items are checked', () => {
-			const mockButtonDiv = {
-				hasClass: jest.fn(() => true),
-				is: jest.fn((selector) => selector === ':hidden'),
-				removeClass: jest.fn(),
-				addClass: jest.fn(),
-				find: jest.fn(() => ({
-					length: 1,
-					remove: jest.fn(),
-					after: jest.fn()
-				}))
-			};
-			mockTable = {
-				parent: jest.fn(() => ({
-					next: jest.fn(() => mockButtonDiv)
-				})),
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox:checked') {
-						return { length: 2 };
-					}
-					return { length: 0 };
-				}),
-				is: jest.fn(() => false)
-			};
-
-			MultipleActionInTable.showButtonsAction(mockTable);
-
-			expect(mockButtonDiv.removeClass).toHaveBeenCalledWith('hide');
+		test('should show buttons div when a checkbox is checked', () => {
+			const table = setupTable({ nbRows: 1 });
+			MultipleActionInTable.init(table);
+			const cb = table.querySelector('input.action_multiple_checkbox');
+			cb.checked = true;
+			MultipleActionInTable.showButtonsAction(table);
+			const divBtn = MultipleActionInTable.getDivBtn(table);
+			expect(divBtn.classList.contains('hide')).toBe(false);
 		});
 
-		test('should hide button div when no items are checked', () => {
-			const mockButtonDiv = {
-				hasClass: jest.fn(() => true),
-				is: jest.fn((selector) => selector === ':visible'),
-				removeClass: jest.fn(),
-				addClass: jest.fn(),
-				find: jest.fn((selector) => {
-					if (selector === 'span.no_button') {
-						return { remove: jest.fn() };
-					}
-					if (selector === 'button:visible, a:visible') {
-						return { length: 0 };
-					}
-					if (selector === 'img') {
-						return { after: jest.fn() };
-					}
-					return {
-						length: 0,
-						remove: jest.fn()
-					};
-				})
-			};
-			mockTable = {
-				parent: jest.fn(() => ({
-					next: jest.fn(() => mockButtonDiv)
-				})),
-				find: jest.fn(() => ({ length: 0 })),
-				is: jest.fn(() => false)
-			};
+		test('should hide buttons div when no checkbox is checked', () => {
+			const table = setupTable({ nbRows: 1 });
+			MultipleActionInTable.init(table);
+			const divBtn = MultipleActionInTable.getDivBtn(table);
+			divBtn.classList.remove('hide'); // force visible
+			MultipleActionInTable.showButtonsAction(table);
+			expect(divBtn.classList.contains('hide')).toBe(true);
+		});
 
-			MultipleActionInTable.showButtonsAction(mockTable);
-
-			expect(mockButtonDiv.addClass).toHaveBeenCalledWith('hide');
+		test('should show "no action" message when div is visible but has no visible buttons', () => {
+			document.body.innerHTML = `
+				<div>
+					<div>
+						<table class="table-action_multiple">
+							<thead><tr><th>Name</th></tr></thead>
+							<tbody>
+								<tr data-action_multiple_input_name="ids[]" data-action_multiple_item_id="1">
+									<td>Item 1</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="action_multiple_buttons">
+						<img src="" alt="" />
+					</div>
+				</div>`;
+			const table = document.querySelector('table');
+			MultipleActionInTable.init(table);
+			const cb = table.querySelector('input.action_multiple_checkbox');
+			cb.checked = true;
+			MultipleActionInTable.showButtonsAction(table);
+			const divBtn = MultipleActionInTable.getDivBtn(table);
+			expect(divBtn.querySelector('span.no_button')).not.toBeNull();
 		});
 	});
 });
 
+// ─── MultipleActionInDivList ─────────────────────────────────────────────────
+
 describe('MultipleActionInDivList', () => {
-	let mockContentDiv;
-
-	beforeEach(() => {
-		// Mock jQuery
-		global.$ = jest.fn((selector) => {
-			if (typeof selector === 'string' && (selector.includes('<') || selector.includes('img'))) {
-				return {
-					addClass: jest.fn().mockReturnThis(),
-					removeClass: jest.fn().mockReturnThis(),
-					prepend: jest.fn().mockReturnThis(),
-					append: jest.fn().mockReturnThis()
-				};
-			}
-			return {
-				find: jest.fn(() => ({ length: 0 })),
-				hasClass: jest.fn(() => false)
-			};
-		});
-
-	});
-
 	afterEach(() => {
-		jest.clearAllMocks();
-		delete global.$;
+		document.body.innerHTML = '';
 	});
 
 	describe('getButtonsDiv', () => {
-		test('should return buttons div when found', () => {
-			const mockButtonsDiv = {
-				hasClass: jest.fn(() => true)
-			};
-			mockContentDiv = {
-				next: jest.fn(() => mockButtonsDiv)
-			};
-
-			const result = MultipleActionInDivList.getButtonsDiv(mockContentDiv);
-
-			expect(result).toBe(mockButtonsDiv);
-			expect(mockButtonsDiv.hasClass).toHaveBeenCalledWith('action_multiple_buttons');
+		test('should return buttons div when found as next sibling', () => {
+			const contentDiv = setupDivList();
+			const result = MultipleActionInDivList.getButtonsDiv(contentDiv);
+			expect(result).not.toBeNull();
+			expect(result.classList.contains('action_multiple_buttons')).toBe(true);
 		});
 
 		test('should return null when buttons div not found', () => {
-			const notButtonsDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockContentDiv = {
-				next: jest.fn(() => notButtonsDiv)
-			};
-
-			const result = MultipleActionInDivList.getButtonsDiv(mockContentDiv);
-
+			const contentDiv = setupDivList({ withButtonsDiv: false });
+			const result = MultipleActionInDivList.getButtonsDiv(contentDiv);
 			expect(result).toBeNull();
 		});
 	});
 
+	describe('init', () => {
+		test('should return early when no buttons div found', () => {
+			const contentDiv = setupDivList({ withButtonsDiv: false });
+			MultipleActionInDivList.init(contentDiv);
+			expect(contentDiv.querySelector('input.action_multiple_check_all')).toBeNull();
+		});
+
+		test('should return early when no .multiple_action divs found', () => {
+			document.body.innerHTML = `
+				<div id="content"></div>
+				<div class="action_multiple_buttons"></div>`;
+			const contentDiv = document.getElementById('content');
+			MultipleActionInDivList.init(contentDiv);
+			expect(contentDiv.querySelector('input.action_multiple_check_all')).toBeNull();
+		});
+
+		test('should add checkbox to each .multiple_action div', () => {
+			const contentDiv = setupDivList({ nbItems: 2 });
+			MultipleActionInDivList.init(contentDiv);
+			expect(contentDiv.querySelectorAll('input.action_multiple_checkbox').length).toBe(2);
+		});
+
+		test('should set correct name and value on checkboxes', () => {
+			const contentDiv = setupDivList({ nbItems: 1 });
+			MultipleActionInDivList.init(contentDiv);
+			const cb = contentDiv.querySelector('input.action_multiple_checkbox');
+			expect(cb.name).toBe('ids[]');
+			expect(cb.value).toBe('1');
+		});
+
+		test('should add check-all input', () => {
+			const contentDiv = setupDivList();
+			MultipleActionInDivList.init(contentDiv);
+			expect(contentDiv.querySelector('input.action_multiple_check_all')).not.toBeNull();
+		});
+
+		test('should add arrow image to buttons div once', () => {
+			const contentDiv = setupDivList();
+			MultipleActionInDivList.init(contentDiv);
+			const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+			expect(buttonsDiv.querySelector('img')).not.toBeNull();
+		});
+
+		test('should not add arrow image twice when called again', () => {
+			const contentDiv = setupDivList();
+			MultipleActionInDivList.init(contentDiv);
+			MultipleActionInDivList.init(contentDiv);
+			const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+			expect(buttonsDiv.querySelectorAll('img').length).toBe(1);
+		});
+
+		test('check-all toggles all checkboxes to checked when none checked', () => {
+			const contentDiv = setupDivList({ nbItems: 2 });
+			MultipleActionInDivList.init(contentDiv);
+			const checkAll = contentDiv.querySelector('input.action_multiple_check_all');
+			checkAll.click();
+			const checkboxes = contentDiv.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+		});
+
+		test('check-all unchecks all when all are checked', () => {
+			const contentDiv = setupDivList({ nbItems: 2 });
+			MultipleActionInDivList.init(contentDiv);
+			const checkboxes = contentDiv.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => { cb.checked = true; });
+			const checkAll = contentDiv.querySelector('input.action_multiple_check_all');
+			checkAll.click();
+			checkboxes.forEach(cb => expect(cb.checked).toBe(false));
+		});
+
+		test('checking a checkbox updates check-all state', () => {
+			const contentDiv = setupDivList({ nbItems: 2 });
+			MultipleActionInDivList.init(contentDiv);
+			const checkboxes = contentDiv.querySelectorAll('input.action_multiple_checkbox');
+			checkboxes.forEach(cb => {
+				cb.checked = true;
+				cb.dispatchEvent(new Event('change'));
+			});
+			expect(contentDiv.querySelector('input.action_multiple_check_all').checked).toBe(true);
+		});
+
+		test('should hide buttons div initially', () => {
+			const contentDiv = setupDivList();
+			const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+			buttonsDiv.classList.remove('hide');
+			MultipleActionInDivList.init(contentDiv);
+			expect(buttonsDiv.classList.contains('hide')).toBe(true);
+		});
+	});
+
 	describe('updateCheckbox', () => {
-		test('should hide select-all checkbox when no checkboxes exist', () => {
-			const mockCheckboxSelectAll = {
-				addClass: jest.fn(),
-				removeClass: jest.fn()
-			};
-			const mockButtonsDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockContentDiv = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox') {
-						return { length: 0 };
-					}
-					if (selector === 'input.action_multiple_check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				}),
-				next: jest.fn(() => mockButtonsDiv)
-			};
-
-			MultipleActionInDivList.updateCheckbox(mockContentDiv);
-
-			expect(mockCheckboxSelectAll.addClass).toHaveBeenCalledWith('hide');
+		test('should hide check-all when no checkboxes exist', () => {
+			document.body.innerHTML = `
+				<div id="content">
+					<p class="mb-2"><input type="checkbox" class="action_multiple_check_all" /> Tout sélectionner</p>
+				</div>
+				<div class="action_multiple_buttons hide"></div>`;
+			const contentDiv = document.getElementById('content');
+			MultipleActionInDivList.updateCheckbox(contentDiv);
+			expect(contentDiv.querySelector('input.action_multiple_check_all').classList.contains('hide')).toBe(true);
 		});
 
-		test('should check select-all checkbox when all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = {
-				addClass: jest.fn(),
-				removeClass: jest.fn(),
-				prop: jest.fn()
-			};
-			const mockButtonsDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockContentDiv = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox') {
-						return { length: 4 };
-					}
-					if (selector === 'input.action_multiple_checkbox:checked') {
-						return { length: 4 };
-					}
-					if (selector === 'input.action_multiple_check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				}),
-				next: jest.fn(() => mockButtonsDiv)
-			};
-
-			MultipleActionInDivList.updateCheckbox(mockContentDiv);
-
-			expect(mockCheckboxSelectAll.removeClass).toHaveBeenCalledWith('hide');
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', true);
+		test('should check check-all when all checkboxes are checked', () => {
+			const contentDiv = setupDivList({ nbItems: 2 });
+			MultipleActionInDivList.init(contentDiv);
+			contentDiv.querySelectorAll('input.action_multiple_checkbox').forEach(cb => { cb.checked = true; });
+			MultipleActionInDivList.updateCheckbox(contentDiv);
+			expect(contentDiv.querySelector('input.action_multiple_check_all').checked).toBe(true);
 		});
 
-		test('should uncheck select-all checkbox when not all checkboxes are checked', () => {
-			const mockCheckboxSelectAll = {
-				addClass: jest.fn(),
-				removeClass: jest.fn(),
-				prop: jest.fn()
-			};
-			const mockButtonsDiv = {
-				hasClass: jest.fn(() => false)
-			};
-			mockContentDiv = {
-				find: jest.fn((selector) => {
-					if (selector === 'input.action_multiple_checkbox') {
-						return { length: 4 };
-					}
-					if (selector === 'input.action_multiple_checkbox:checked') {
-						return { length: 1 };
-					}
-					if (selector === 'input.action_multiple_check_all') {
-						return mockCheckboxSelectAll;
-					}
-					return { length: 0 };
-				}),
-				next: jest.fn(() => mockButtonsDiv)
-			};
+		test('should uncheck check-all when not all checkboxes are checked', () => {
+			const contentDiv = setupDivList({ nbItems: 2 });
+			MultipleActionInDivList.init(contentDiv);
+			contentDiv.querySelectorAll('input.action_multiple_checkbox')[0].checked = true;
+			MultipleActionInDivList.updateCheckbox(contentDiv);
+			expect(contentDiv.querySelector('input.action_multiple_check_all').checked).toBe(false);
+		});
+	});
 
-			MultipleActionInDivList.updateCheckbox(mockContentDiv);
+	describe('showButtonsAction', () => {
+		test('should return early when buttons div is null', () => {
+			const contentDiv = setupDivList({ withButtonsDiv: false });
+			expect(() => MultipleActionInDivList.showButtonsAction(contentDiv)).not.toThrow();
+		});
 
-			expect(mockCheckboxSelectAll.prop).toHaveBeenCalledWith('checked', false);
+		test('should show buttons div when a checkbox is checked', () => {
+			const contentDiv = setupDivList({ nbItems: 1 });
+			MultipleActionInDivList.init(contentDiv);
+			const cb = contentDiv.querySelector('input.action_multiple_checkbox');
+			cb.checked = true;
+			MultipleActionInDivList.showButtonsAction(contentDiv);
+			const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+			expect(buttonsDiv.classList.contains('hide')).toBe(false);
+		});
+
+		test('should hide buttons div when no checkbox is checked', () => {
+			const contentDiv = setupDivList({ nbItems: 1 });
+			MultipleActionInDivList.init(contentDiv);
+			const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+			buttonsDiv.classList.remove('hide');
+			MultipleActionInDivList.showButtonsAction(contentDiv);
+			expect(buttonsDiv.classList.contains('hide')).toBe(true);
 		});
 	});
 });

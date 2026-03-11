@@ -5,19 +5,19 @@ class MultipleActionInTable {
 	// Idempotent : sans effet si les colonnes existent déjà.
 	// Doit être appelé AVANT l'initialisation DataTable.
 	static initCols(table, cellSelector = 'select') {
-		if (!table.hasClass('table-action_multiple')) {
+		if (!table.classList.contains('table-action_multiple')) {
 			return;
 		}
 		if (MultipleActionInTable.getDivBtn(table) == null) {
 			return;
 		}
 
-		if (table.find('thead tr th[data-key="select"]').length === 0) {
-			table.find('thead tr').prepend($('<th class="' + cellSelector + '" data-key="select"></th>'));
+		if (!table.querySelector('thead tr th[data-key="select"]')) {
+			table.querySelector('thead tr').insertAdjacentHTML('afterbegin', '<th class="' + cellSelector + '" data-key="select"></th>');
 		}
-		table.find('tbody tr:not(.no_items)').each(function(idx, tr) {
-			if ($(tr).find('td.select').length === 0) {
-				$(tr).prepend($('<td class="select"><input type="checkbox" class="action_multiple_checkbox" name="' + $(tr).data('action_multiple_input_name') + '" value="' + $(tr).data('action_multiple_item_id') + '"></td>'));
+		table.querySelectorAll('tbody tr:not(.no_items)').forEach(tr => {
+			if (!tr.querySelector('td.select')) {
+				tr.insertAdjacentHTML('afterbegin', '<td class="select"><input type="checkbox" class="action_multiple_checkbox" name="' + tr.dataset.action_multiple_input_name + '" value="' + tr.dataset.action_multiple_item_id + '"></td>');
 			}
 		});
 	}
@@ -27,7 +27,7 @@ class MultipleActionInTable {
 	static init(table, options = {}) {
 		const { cellSelector = 'select', imgArrow = '' } = options;
 
-		if (!table.hasClass('table-action_multiple')) {
+		if (!table.classList.contains('table-action_multiple')) {
 			return;
 		}
 
@@ -38,33 +38,36 @@ class MultipleActionInTable {
 
 		MultipleActionInTable.initCols(table, cellSelector);
 
-		if (!divBtn.hasClass('action_multiple_buttons_initialized')) {
-			divBtn.prepend($('<img src="'+imgArrow+'" alt="" /> &nbsp;'));
-			divBtn.append($('<br/><br/>'));
-			divBtn.addClass('action_multiple_buttons_initialized');
+		if (!divBtn.classList.contains('action_multiple_buttons_initialized')) {
+			divBtn.insertAdjacentHTML('afterbegin', '<img src="'+imgArrow+'" alt="" /> &nbsp;');
+			divBtn.insertAdjacentHTML('beforeend', '<br/><br/>');
+			divBtn.classList.add('action_multiple_buttons_initialized');
 		}
 
-		let firstTh = table.find('thead tr th').first();
-		if (firstTh.find('input').length === 0) {
-			firstTh.html('<input type="checkbox" class="action_multiple_check_all" />');
+		const firstTh = table.querySelector('thead tr th');
+		if (firstTh && !firstTh.querySelector('input')) {
+			firstTh.innerHTML = '<input type="checkbox" class="action_multiple_check_all" />';
 		}
 
-		table.find('input.action_multiple_checkbox').change(function() {
-			MultipleActionInTable.updateCheckbox(table);
+		table.querySelectorAll('input.action_multiple_checkbox').forEach(cb => {
+			cb.addEventListener('change', () => {
+				MultipleActionInTable.updateCheckbox(table);
+			});
 		});
 
-		table.find('input.action_multiple_check_all').off('click').click(function() {
-			let table = $(this).closest('table');
-			let checkbox = table.find('input.action_multiple_checkbox');
-			let checkboxChecked = table.find('input.action_multiple_checkbox:checked');
-			if (checkbox.length === checkboxChecked.length) {
-				checkbox.prop('checked', false);
-			}
-			else {
-				checkbox.prop('checked', true);
-			}
-			MultipleActionInTable.updateCheckbox(table);
-		});
+		const checkAll = table.querySelector('input.action_multiple_check_all');
+		if (checkAll) {
+			const checkAllClone = checkAll.cloneNode(true);
+			checkAll.parentElement.replaceChild(checkAllClone, checkAll);
+			checkAllClone.addEventListener('click', function() {
+				const t = this.closest('table');
+				const checkboxes = t.querySelectorAll('input.action_multiple_checkbox');
+				const checked = t.querySelectorAll('input.action_multiple_checkbox:checked');
+				const newState = checkboxes.length !== checked.length;
+				checkboxes.forEach(cb => { cb.checked = newState; });
+				MultipleActionInTable.updateCheckbox(t);
+			});
+		}
 
 		MultipleActionInTable.updateCheckbox(table);
 	}
@@ -72,60 +75,62 @@ class MultipleActionInTable {
 	static updateCheckbox(table) {
 		MultipleActionInTable.showButtonsAction(table);
 
-		let allCheckbox = table.find('input.action_multiple_checkbox');
-		let allCheckboxChecked = table.find('input.action_multiple_checkbox:checked');
-		let checkboxSelectAll = table.find('thead tr th input.action_multiple_check_all');
+		const allCheckbox = table.querySelectorAll('input.action_multiple_checkbox');
+		const allCheckboxChecked = table.querySelectorAll('input.action_multiple_checkbox:checked');
+		const checkboxSelectAll = table.querySelector('thead tr th input.action_multiple_check_all');
 
-		if (allCheckbox.length === 0) {
-			checkboxSelectAll.addClass('hide');
+		if (!checkboxSelectAll) {
 			return;
 		}
 
-		checkboxSelectAll.removeClass('hide');
-		if (allCheckbox.length === allCheckboxChecked.length) {
-			checkboxSelectAll.prop('checked', true);
+		if (allCheckbox.length === 0) {
+			checkboxSelectAll.classList.add('hide');
+			return;
 		}
-		else {
-			checkboxSelectAll.prop('checked', false);
-		}
+
+		checkboxSelectAll.classList.remove('hide');
+		checkboxSelectAll.checked = allCheckbox.length === allCheckboxChecked.length;
 	}
 
 	static getDivBtn(table) {
-		let divTableResponsive = table.parent();
-		let divBtn = divTableResponsive.next();
-		if (divBtn.hasClass('action_multiple_buttons')) {
+		const divTableResponsive = table.parentElement;
+		let divBtn = divTableResponsive.nextElementSibling;
+		if (divBtn && divBtn.classList.contains('action_multiple_buttons')) {
 			return divBtn;
 		}
-		divBtn = divTableResponsive.parent().parent().parent().next();
-		if (divBtn.hasClass('action_multiple_buttons')) {
+		divBtn = divTableResponsive.parentElement?.parentElement?.parentElement?.nextElementSibling;
+		if (divBtn && divBtn.classList.contains('action_multiple_buttons')) {
 			return divBtn;
 		}
 		return null;
 	}
 
 	static showButtonsAction(table) {
-		let divBtn = MultipleActionInTable.getDivBtn(table);
+		const divBtn = MultipleActionInTable.getDivBtn(table);
 		if (divBtn == null) {
 			return;
 		}
 
-		// console.log(divBtn);
-		//var nbItems = $('input[name="' + checkbox.attr('name') + '"]:checked').length;
-		let nbItems = table.find('input.action_multiple_checkbox:checked').length;
+		const nbItems = table.querySelectorAll('input.action_multiple_checkbox:checked').length;
+		const isHidden = divBtn.classList.contains('hide');
+		const isVisible = !isHidden;
 
-		if (nbItems > 0 && divBtn.is(':hidden')) {
-			divBtn.removeClass('hide');
+		if (nbItems > 0 && isHidden) {
+			divBtn.classList.remove('hide');
 		}
 		// 13/04/2021 : si le tableau est caché cela veut dire qu'il est en train de s'initialiser (après avoir chargé les données) et donc s'il n'y a pas de ligne sélectionnées, on cache la div buttons
-		else if ((nbItems === 0 && divBtn.is(':visible')) || (nbItems === 0 && table.is(':hidden'))) {
-			divBtn.addClass('hide');
+		else if ((nbItems === 0 && isVisible) || (nbItems === 0 && table.classList.contains('hide'))) {
+			divBtn.classList.add('hide');
 		}
 
 		// affichage aucune action possible si aucun bouton n'est visible
-		if (divBtn.is(':visible')) {
-			divBtn.find('span.no_button').remove();
-			if (divBtn.find('button:visible, a:visible').length === 0) {
-				divBtn.find('img').after('<span class="no_button"><em>aucune action possible</em></span>');
+		if (!divBtn.classList.contains('hide')) {
+			divBtn.querySelectorAll('span.no_button').forEach(el => el.remove());
+			if (divBtn.querySelectorAll('button:not(.hide), a:not(.hide)').length === 0) {
+				const img = divBtn.querySelector('img');
+				if (img) {
+					img.insertAdjacentHTML('afterend', '<span class="no_button"><em>aucune action possible</em></span>');
+				}
 			}
 		}
 	}
@@ -142,46 +147,49 @@ class MultipleActionInDivList {
 			return;
 		}
 
-		buttonsDiv.addClass('hide');
+		buttonsDiv.classList.add('hide');
 
 		// Si aucune div sélectionnable, on n'applique pas le plugin
-		if (!contentDiv.find('.multiple_action').length) {
+		if (!contentDiv.querySelectorAll('.multiple_action').length) {
 			return;
 		}
 
-		if (!buttonsDiv.data('action_multiple_buttons_initialized')) {
-			buttonsDiv.prepend($('<img src="'+imgArrow+'" alt="" /> &nbsp;'));
-			buttonsDiv.append($('<br/><br/>'));
-			buttonsDiv.data('action_multiple_buttons_initialized', 1);
+		if (!buttonsDiv.dataset.action_multiple_buttons_initialized) {
+			buttonsDiv.insertAdjacentHTML('afterbegin', '<img src="'+imgArrow+'" alt="" /> &nbsp;');
+			buttonsDiv.insertAdjacentHTML('beforeend', '<br/><br/>');
+			buttonsDiv.dataset.action_multiple_buttons_initialized = '1';
 		}
 
 		// Ajout checkbox pour chaque div sélectionnable
-		contentDiv.find('.multiple_action').each(function(idx, div) {
-			if ($(div).find('div.multi_select').length === 0) {
-				$(div).prepend($('<div class="multi_select float-start me-2"><input type="checkbox" class="action_multiple_checkbox" name="'+$(div).data('action_multiple_input_name')+'" value="'+$(div).data('action_multiple_item_id')+'"></div>'));
+		contentDiv.querySelectorAll('.multiple_action').forEach(div => {
+			if (!div.querySelector('div.multi_select')) {
+				div.insertAdjacentHTML('afterbegin', '<div class="multi_select float-start me-2"><input type="checkbox" class="action_multiple_checkbox" name="'+div.dataset.action_multiple_input_name+'" value="'+div.dataset.action_multiple_item_id+'"></div>');
 			}
 		});
 
 		// Ajout checkbox select all
-		if (contentDiv.find('input.action_multiple_check_all').length === 0) {
-			contentDiv.prepend('<p class="mb-2"><input type="checkbox" class="action_multiple_check_all" /> Tout sélectionner</p>');
+		if (!contentDiv.querySelector('input.action_multiple_check_all')) {
+			contentDiv.insertAdjacentHTML('afterbegin', '<p class="mb-2"><input type="checkbox" class="action_multiple_check_all" /> Tout sélectionner</p>');
 		}
 
-		contentDiv.find('input.action_multiple_checkbox').change(function() {
-			MultipleActionInDivList.updateCheckbox(contentDiv);
+		contentDiv.querySelectorAll('input.action_multiple_checkbox').forEach(cb => {
+			cb.addEventListener('change', () => {
+				MultipleActionInDivList.updateCheckbox(contentDiv);
+			});
 		});
 
-		contentDiv.find('input.action_multiple_check_all').off('click').click(function() {
-			let checkbox = contentDiv.find('input.action_multiple_checkbox');
-			let checkboxChecked = contentDiv.find('input.action_multiple_checkbox:checked');
-			if (checkbox.length === checkboxChecked.length) {
-				checkbox.prop('checked', false);
-			}
-			else {
-				checkbox.prop('checked', true);
-			}
-			MultipleActionInDivList.updateCheckbox(contentDiv);
-		});
+		const checkAll = contentDiv.querySelector('input.action_multiple_check_all');
+		if (checkAll) {
+			const checkAllClone = checkAll.cloneNode(true);
+			checkAll.parentElement.replaceChild(checkAllClone, checkAll);
+			checkAllClone.addEventListener('click', function() {
+				const checkboxes = contentDiv.querySelectorAll('input.action_multiple_checkbox');
+				const checked = contentDiv.querySelectorAll('input.action_multiple_checkbox:checked');
+				const newState = checkboxes.length !== checked.length;
+				checkboxes.forEach(cb => { cb.checked = newState; });
+				MultipleActionInDivList.updateCheckbox(contentDiv);
+			});
+		}
 
 		MultipleActionInDivList.updateCheckbox(contentDiv);
 	}
@@ -189,55 +197,57 @@ class MultipleActionInDivList {
 	static updateCheckbox(contentDiv) {
 		MultipleActionInDivList.showButtonsAction(contentDiv);
 
-		let allCheckbox = contentDiv.find('input.action_multiple_checkbox');
-		let allCheckboxChecked = contentDiv.find('input.action_multiple_checkbox:checked');
-		let checkboxSelectAll = contentDiv.find('input.action_multiple_check_all');
+		const allCheckbox = contentDiv.querySelectorAll('input.action_multiple_checkbox');
+		const allCheckboxChecked = contentDiv.querySelectorAll('input.action_multiple_checkbox:checked');
+		const checkboxSelectAll = contentDiv.querySelector('input.action_multiple_check_all');
 
-		if (allCheckbox.length === 0) {
-			checkboxSelectAll.addClass('hide');
+		if (!checkboxSelectAll) {
 			return;
 		}
 
-		checkboxSelectAll.removeClass('hide');
-		if (allCheckbox.length === allCheckboxChecked.length) {
-			checkboxSelectAll.prop('checked', true);
+		if (allCheckbox.length === 0) {
+			checkboxSelectAll.classList.add('hide');
+			return;
 		}
-		else {
-			checkboxSelectAll.prop('checked', false);
-		}
+
+		checkboxSelectAll.classList.remove('hide');
+		checkboxSelectAll.checked = allCheckbox.length === allCheckboxChecked.length;
 	}
 
 	static getButtonsDiv(contentDiv) {
-		let buttonsDiv = contentDiv.next();
-		if (buttonsDiv.hasClass('action_multiple_buttons')) {
+		const buttonsDiv = contentDiv.nextElementSibling;
+		if (buttonsDiv && buttonsDiv.classList.contains('action_multiple_buttons')) {
 			return buttonsDiv;
 		}
 		return null;
 	}
 
 	static showButtonsAction(contentDiv) {
-		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
+		const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
 		if (buttonsDiv == null) {
 			return;
 		}
 
-		// console.log(divBtn);
-		//var nbItems = $('input[name="' + checkbox.attr('name') + '"]:checked').length;
-		let nbItems = contentDiv.find('input.action_multiple_checkbox:checked').length;
+		const nbItems = contentDiv.querySelectorAll('input.action_multiple_checkbox:checked').length;
+		const isHidden = buttonsDiv.classList.contains('hide');
+		const isVisible = !isHidden;
 
-		if (nbItems > 0 && buttonsDiv.is(':hidden')) {
-			buttonsDiv.removeClass('hide');
+		if (nbItems > 0 && isHidden) {
+			buttonsDiv.classList.remove('hide');
 		}
 		// 13/04/2021 : si le tableau est caché cela veut dire qu'il est en train de s'initialiser (après avoir chargé les données) et donc s'il n'y a pas de ligne sélectionnées, on cache la div buttons
-		else if ((nbItems === 0 && buttonsDiv.is(':visible')) || (nbItems === 0 && contentDiv.is(':hidden'))) {
-			buttonsDiv.addClass('hide');
+		else if ((nbItems === 0 && isVisible) || (nbItems === 0 && contentDiv.classList.contains('hide'))) {
+			buttonsDiv.classList.add('hide');
 		}
 
 		// affichage aucune action possible si aucun bouton n'est visible
-		if (buttonsDiv.is(':visible')) {
-			buttonsDiv.find('span.no_button').remove();
-			if (buttonsDiv.find('button:visible, a:visible').length === 0) {
-				buttonsDiv.find('img').after('<span class="no_button"><em>aucune action possible</em></span>');
+		if (!buttonsDiv.classList.contains('hide')) {
+			buttonsDiv.querySelectorAll('span.no_button').forEach(el => el.remove());
+			if (buttonsDiv.querySelectorAll('button:not(.hide), a:not(.hide)').length === 0) {
+				const img = buttonsDiv.querySelector('img');
+				if (img) {
+					img.insertAdjacentHTML('afterend', '<span class="no_button"><em>aucune action possible</em></span>');
+				}
 			}
 		}
 	}
