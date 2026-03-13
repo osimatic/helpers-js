@@ -502,6 +502,4 @@ class HTTPClient {
 
 }
 
-require('whatwg-fetch'); //fetch polyfill loaded in window.fetch
-
 module.exports = { HTTPClient };

@@ -200,18 +200,6 @@ class FormHelper {
 
 	static initTypeFields(form) {
 		form = toEl(form);
-		if (typeof Modernizr != 'undefined') {
-			if (!Modernizr.inputtypes.date) {
-				form.querySelectorAll('input[type="date"]').forEach(el => el.style.maxWidth = '120px');
-			}
-			if (!Modernizr.inputtypes.time) {
-				form.querySelectorAll('input[type="time"]').forEach(el => {
-					el.style.maxWidth = '100px';
-					el.placeholder = 'hh:mm';
-				});
-				form.querySelectorAll('input[type="time"][step="1"]').forEach(el => el.placeholder = 'hh:mm:ss');
-			}
-		}
 
 		// Show/Hide password
 		form.querySelectorAll('input[type="password"]').forEach(inputEl => {

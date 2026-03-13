@@ -157,16 +157,9 @@ class UserMedia {
 	/** Generic => all other errors */
 
 	static requestMediaPermissions(constraints) {
-		/*try {
-			console.log(require.resolve("bowser"));
-		} catch(e) {
-			return;
-		}*/
-
 		return new Promise((resolve, reject) => {
-			const bowser = require('bowser');
-			const browser = bowser.getParser(window.navigator.userAgent);
-			const browserName = browser.getBrowserName();
+			const { UAParser } = require('ua-parser-js');
+			const browserName = new UAParser(window.navigator.userAgent).getBrowser().name;
 
 			navigator.mediaDevices.getUserMedia(typeof constraints !== 'undefined' ? constraints : { audio: true, video: true })
 			.then((stream) => resolve(stream))
@@ -189,7 +182,7 @@ class UserMedia {
 					if (errName === 'NotAllowedError') {
 						errorType = "UserPermissionDenied";
 					}
-				} else if (browserName === 'Microsoft Edge') {
+				} else if (browserName === 'Edge') {
 					if (errName === 'NotAllowedError') {
 						errorType = "UserPermissionDenied";
 					} else if (errName === 'NotReadableError') {

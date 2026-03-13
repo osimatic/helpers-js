@@ -1,10 +1,3 @@
-// Mock bowser module before requiring media.js (bowser is used inside requestMediaPermissions)
-jest.mock('bowser', () => ({
-	getParser: jest.fn(() => ({
-		getBrowserName: jest.fn(() => 'Chrome')
-	}))
-}), { virtual: true });
-
 const { AudioMedia, VideoMedia, UserMedia } = require('../media');
 
 describe('media.js', () => {
@@ -100,9 +93,13 @@ describe('media.js', () => {
 			});
 		});
 
-		describe('requestMediaPermissions', () => {
-			const bowser = require('bowser');
+		const UA_CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+		const UA_FIREFOX = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0';
+		const UA_SAFARI = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
+		const UA_EDGE = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0';
+		const UA_OPERA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0';
 
+		describe('requestMediaPermissions', () => {
 			beforeEach(() => {
 				global.navigator = {
 					mediaDevices: {
@@ -110,18 +107,13 @@ describe('media.js', () => {
 					}
 				};
 				global.window = {
-					navigator: {
-						userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-					}
+					navigator: { userAgent: UA_CHROME }
 				};
 			});
 
 			test('should resolve with stream on success', async () => {
 				const mockStream = { id: 'test-stream' };
 				global.navigator.mediaDevices.getUserMedia.mockResolvedValue(mockStream);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 
 				const result = await UserMedia.requestMediaPermissions({ audio: true, video: true });
 
@@ -132,9 +124,6 @@ describe('media.js', () => {
 			test('should use default constraints when not provided', async () => {
 				const mockStream = { id: 'test-stream' };
 				global.navigator.mediaDevices.getUserMedia.mockResolvedValue(mockStream);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 
 				await UserMedia.requestMediaPermissions();
 
@@ -145,9 +134,6 @@ describe('media.js', () => {
 				const error = new Error('Permission denied by system');
 				error.name = 'NotAllowedError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -161,9 +147,6 @@ describe('media.js', () => {
 				const error = new Error('Permission denied');
 				error.name = 'NotAllowedError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -177,9 +160,6 @@ describe('media.js', () => {
 				const error = new Error('Could not start video source');
 				error.name = 'NotReadableError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 
 				await expect(UserMedia.requestMediaPermissions({ video: true }))
 					.rejects.toEqual({
@@ -193,9 +173,7 @@ describe('media.js', () => {
 				const error = new Error('Permission denied');
 				error.name = 'NotAllowedError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Safari')
-				});
+				global.window.navigator.userAgent = UA_SAFARI;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -209,9 +187,7 @@ describe('media.js', () => {
 				const error = new Error('Permission denied');
 				error.name = 'NotAllowedError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Microsoft Edge')
-				});
+				global.window.navigator.userAgent = UA_EDGE;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -225,9 +201,7 @@ describe('media.js', () => {
 				const error = new Error('Could not start video source');
 				error.name = 'NotReadableError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Microsoft Edge')
-				});
+				global.window.navigator.userAgent = UA_EDGE;
 
 				await expect(UserMedia.requestMediaPermissions({ video: true }))
 					.rejects.toEqual({
@@ -241,9 +215,7 @@ describe('media.js', () => {
 				const error = new Error('Requested device not found');
 				error.name = 'NotFoundError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Firefox')
-				});
+				global.window.navigator.userAgent = UA_FIREFOX;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -257,9 +229,7 @@ describe('media.js', () => {
 				const error = new Error('Media device not readable');
 				error.name = 'NotReadableError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Firefox')
-				});
+				global.window.navigator.userAgent = UA_FIREFOX;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -273,9 +243,7 @@ describe('media.js', () => {
 				const error = new Error('Permission denied');
 				error.name = 'NotAllowedError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Firefox')
-				});
+				global.window.navigator.userAgent = UA_FIREFOX;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -289,9 +257,7 @@ describe('media.js', () => {
 				const error = new Error('Operation aborted');
 				error.name = 'AbortError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Firefox')
-				});
+				global.window.navigator.userAgent = UA_FIREFOX;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -305,9 +271,7 @@ describe('media.js', () => {
 				const error = new Error('Unknown error');
 				error.name = 'UnknownError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Opera')
-				});
+				global.window.navigator.userAgent = UA_OPERA;
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -321,9 +285,6 @@ describe('media.js', () => {
 				const error = new Error('Weird error');
 				error.name = 'WeirdError';
 				global.navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 
 				await expect(UserMedia.requestMediaPermissions({ audio: true }))
 					.rejects.toEqual({
@@ -342,14 +303,8 @@ describe('media.js', () => {
 					}
 				};
 				global.window = {
-					navigator: {
-						userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-					}
+					navigator: { userAgent: UA_CHROME }
 				};
-				const bowser = require('bowser');
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 			});
 
 			test('should call requestMediaPermissions with audio:true, video:false', async () => {
@@ -387,14 +342,8 @@ describe('media.js', () => {
 					}
 				};
 				global.window = {
-					navigator: {
-						userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-					}
+					navigator: { userAgent: UA_CHROME }
 				};
-				const bowser = require('bowser');
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 			});
 
 			test('should call requestMediaPermissions with audio and video', async () => {
@@ -433,14 +382,8 @@ describe('media.js', () => {
 					}
 				};
 				global.window = {
-					navigator: {
-						userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-					}
+					navigator: { userAgent: UA_CHROME }
 				};
-				const bowser = require('bowser');
-				bowser.getParser.mockReturnValue({
-					getBrowserName: jest.fn().mockReturnValue('Chrome')
-				});
 			});
 
 			test('should call requestMediaPermissions with audio:false, video:true', async () => {

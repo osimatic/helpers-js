@@ -482,29 +482,6 @@ describe('FormHelper', () => {
 			expect(passwordInput.type).toBe('password');
 		});
 
-		test('should set max-width on date inputs when Modernizr.inputtypes.date is false', () => {
-			const form = setupForm();
-			const dateInput = addInput(form, 'mydate', 'date');
-			global.Modernizr = { inputtypes: { date: false, time: true } };
-
-			FormHelper.initTypeFields(form);
-
-			expect(dateInput.style.maxWidth).toBe('120px');
-			delete global.Modernizr;
-		});
-
-		test('should set placeholder on time inputs when Modernizr.inputtypes.time is false', () => {
-			const form = setupForm();
-			const timeInput = addInput(form, 'mytime', 'time');
-			global.Modernizr = { inputtypes: { date: true, time: false } };
-
-			FormHelper.initTypeFields(form);
-
-			expect(timeInput.style.maxWidth).toBe('100px');
-			expect(timeInput.placeholder).toBe('hh:mm');
-			delete global.Modernizr;
-		});
-
 		test('should skip Modernizr block when Modernizr not defined', () => {
 			const form = setupForm();
 			addInput(form, 'password', 'password');
