@@ -215,6 +215,100 @@ describe('OpenStreetMap', () => {
 		});
 	});
 
+	describe('createMap', () => {
+		let mockMap;
+		let mockTileLayer;
+		let domUtilGetSpy;
+		let mapSpy;
+		let tileLayerSpy;
+
+		beforeEach(() => {
+			mockMap = {
+				setView: jest.fn(),
+				getZoom: jest.fn(() => 6),
+				setZoom: jest.fn(),
+				fitBounds: jest.fn(),
+				invalidateSize: jest.fn(),
+			};
+			mockTileLayer = { addTo: jest.fn() };
+			domUtilGetSpy = jest.spyOn(L.DomUtil, 'get').mockReturnValue(null);
+			mapSpy = jest.spyOn(L, 'map').mockReturnValue(mockMap);
+			tileLayerSpy = jest.spyOn(L, 'tileLayer').mockReturnValue(mockTileLayer);
+		});
+
+		afterEach(() => {
+			domUtilGetSpy.mockRestore();
+			mapSpy.mockRestore();
+			tileLayerSpy.mockRestore();
+		});
+
+		test('should return null when mapContainer is null', () => {
+			const result = OpenStreetMap.createMap(null);
+
+			expect(result).toBeNull();
+			expect(mapSpy).not.toHaveBeenCalled();
+		});
+
+		test('should return null when mapContainer is undefined', () => {
+			const result = OpenStreetMap.createMap(undefined);
+
+			expect(result).toBeNull();
+			expect(mapSpy).not.toHaveBeenCalled();
+		});
+
+		test('should create and return a Leaflet map for a valid DOM element', () => {
+			const div = document.createElement('div');
+			document.body.appendChild(div);
+
+			const result = OpenStreetMap.createMap(div);
+
+			expect(mapSpy).toHaveBeenCalledWith(div, {});
+			expect(tileLayerSpy).toHaveBeenCalled();
+			expect(mockTileLayer.addTo).toHaveBeenCalledWith(mockMap);
+			expect(result).toBe(mockMap);
+
+			document.body.removeChild(div);
+		});
+
+		test('should reset _leaflet_id when container already has one', () => {
+			const div = document.createElement('div');
+			document.body.appendChild(div);
+			const existingContainer = { _leaflet_id: 42 };
+			domUtilGetSpy.mockReturnValue(existingContainer);
+
+			OpenStreetMap.createMap(div);
+
+			expect(existingContainer._leaflet_id).toBeNull();
+
+			document.body.removeChild(div);
+		});
+
+		test('should pass options to L.map', () => {
+			const div = document.createElement('div');
+			document.body.appendChild(div);
+			const options = { zoomControl: false };
+
+			OpenStreetMap.createMap(div, options);
+
+			expect(mapSpy).toHaveBeenCalledWith(div, options);
+
+			document.body.removeChild(div);
+		});
+
+		test('should center on France by default', () => {
+			const div = document.createElement('div');
+			document.body.appendChild(div);
+			const fitBoundsSpy = jest.spyOn(L, 'latLngBounds').mockReturnValue({ _bounds: [] });
+
+			OpenStreetMap.createMap(div);
+
+			expect(mockMap.fitBounds).toHaveBeenCalled();
+
+			fitBoundsSpy.mockRestore();
+			document.body.removeChild(div);
+		});
+	});
+
 	describe('centerOnFrance', () => {
 		test('should call setView with France coordinates', () => {
 			const mockMap = {

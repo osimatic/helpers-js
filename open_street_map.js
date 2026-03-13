@@ -30,16 +30,16 @@ class OpenStreetMap {
 
 	static createMap(mapContainer, options={}) {
 		mapContainer = toEl(mapContainer);
-		if (!mapContainer.length) {
+		if (!mapContainer) {
 			return null;
 		}
 
-		const container = L.DomUtil.get(mapContainer[0]);
+		const container = L.DomUtil.get(mapContainer);
 		if (container != null) {
 			container._leaflet_id = null;
 		}
 
-		const map = L.map(mapContainer[0], options);
+		const map = L.map(mapContainer, options);
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
