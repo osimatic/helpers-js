@@ -1,4 +1,4 @@
-const { toEl } = require('./util');
+const { toEl, toJquery } = require('./util');
 
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton=null) {
@@ -11,11 +11,10 @@ class FormHelper {
 			FormHelper.buttonLoader(this, 'loading');
 			FormHelper.hideFormErrors(form);
 			if (typeof onSubmitCallback == 'function') {
-				const jq = wasJQuery && typeof $ !== 'undefined';
-				onSubmitCallback(jq ? $(form) : form, jq ? $(submitButton) : submitButton);
+				onSubmitCallback(wasJQuery ? toJquery(form) : form, wasJQuery ? toJquery(submitButton) : submitButton);
 			}
 		};
-		return wasJQuery && typeof $ !== 'undefined' ? $(form) : form;
+		return wasJQuery ? toJquery(form) : form;
 	}
 
 	static reset(form, submitButton=null) {
@@ -29,7 +28,7 @@ class FormHelper {
 		form.querySelectorAll('select.selectpicker').forEach(el => el.value = '');
 		FormHelper.buttonLoader(submitButton, 'reset');
 		FormHelper.hideFormErrors(form);
-		return wasJQuery && typeof $ !== 'undefined' ? $(form) : form;
+		return wasJQuery ? toJquery(form) : form;
 	}
 
 	static populateForm(form, data) {
@@ -358,7 +357,7 @@ class FormHelper {
 		button = toEl(button);
 		if (action === 'start' || action === 'loading') {
 			if (button.disabled) {
-				return wasJQuery && typeof $ !== 'undefined' ? $(button) : button;
+				return wasJQuery ? toJquery(button) : button;
 			}
 			button.disabled = true;
 			button.dataset.btnText = button.innerHTML;
@@ -380,7 +379,7 @@ class FormHelper {
 			button.classList.remove('disabled');
 			button.disabled = false;
 		}
-		return wasJQuery && typeof $ !== 'undefined' ? $(button) : button;
+		return wasJQuery ? toJquery(button) : button;
 	}
 
 
@@ -403,6 +402,7 @@ class ArrayField {
 		get_errors_callback: null,
 
 	}) {
+		const wasJQuery = formGroupDiv && formGroupDiv.jquery;
 		formGroupDiv = toEl(formGroupDiv);
 		function isOptionDefined(optionName) {
 			return typeof options[optionName] != 'undefined' && null !== options[optionName];
@@ -588,11 +588,11 @@ class ArrayField {
 			let items = Array.isArray(item) ? item : [item];
 
 			if (typeof options['format_entered_value_callback'] == 'function') {
-				items = items.map(item => options['format_entered_value_callback'](item, divAdd));
+				items = items.map(item => options['format_entered_value_callback'](item, wasJQuery ? toJquery(divAdd) : divAdd));
 			}
 
 			if (typeof options['get_errors_callback'] == 'function') {
-				const errors = options['get_errors_callback'](items, itemsList, divAdd);
+				const errors = options['get_errors_callback'](items, itemsList, wasJQuery ? toJquery(divAdd) : divAdd);
 				if (null !== errors && errors.length) {
 					displayErrors(divAdd, errors);
 					return;
@@ -704,7 +704,7 @@ class ArrayField {
 		onUpdateList();
 
 		if (typeof options['init_callback'] == 'function') {
-			options['init_callback'](formGroupDiv, onUpdateList, addItemsInList);
+			options['init_callback'](wasJQuery ? toJquery(formGroupDiv) : formGroupDiv, onUpdateList, addItemsInList);
 		}
 	}
 }

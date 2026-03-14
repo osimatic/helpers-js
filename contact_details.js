@@ -56,10 +56,6 @@ class TelephoneNumber {
 		TelephoneNumber.localCountryCode = countryCode;
 	}
 
-	static setIntlTelInputUtilsPath(path) {
-		TelephoneNumber.intlTelInputUtilsPath = path;
-	}
-
 	static getCountryIsoCode(phoneNumber, localCountryIsoCode=TelephoneNumber.localCountryCode) {
 		try {
 			const number = libphonenumber.parsePhoneNumber(phoneNumber, localCountryIsoCode.toUpperCase());
@@ -172,12 +168,10 @@ class TelephoneNumber {
 
 	static setIntlTelInput(input, placeholderNumberType) {
 		TelephoneNumber.localCountryCode = typeof TelephoneNumber.localCountryCode != 'undefined' ? TelephoneNumber.localCountryCode : null;
-		TelephoneNumber.intlTelInputUtilsPath = typeof TelephoneNumber.intlTelInputUtilsPath != 'undefined' ? TelephoneNumber.intlTelInputUtilsPath : null;
 
 		return intlTelInputLib(input[0], {
 			initialCountry: null != TelephoneNumber.localCountryCode ? TelephoneNumber.localCountryCode.toLowerCase() : null, // depuis version 19.x, le code pays doit être en minuscule
 			placeholderNumberType: placeholderNumberType || 'FIXED_LINE_OR_MOBILE',
-			utilsScript: TelephoneNumber.intlTelInputUtilsPath
 		});
 	}
 

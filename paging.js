@@ -133,7 +133,14 @@ class Pagination {
 
 class Navigation {
 	static activateTab(a) {
+		a = toEl(a);
+		if (!a) {
+			return;
+		}
 		let ulNav = a.closest('.nav');
+		if (!ulNav) {
+			return;
+		}
 		let tabContent = ulNav.parentElement.querySelector('.tab-content');
 
 		ulNav.querySelectorAll('a.nav-link').forEach(navLink => {

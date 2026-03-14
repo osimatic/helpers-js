@@ -17,6 +17,9 @@ class Country {
 
 	static fillCountrySelect(select, defaultValue=null, countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
 		select = toEl(select);
+		if (!select) {
+			return;
+		}
 		if (select.children.length === 0) {
 			if (addNoneValue) {
 				select.insertAdjacentHTML('beforeend', '<option value="">'+noneLabel+'</option>');

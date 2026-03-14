@@ -18,4 +18,8 @@ function toEl(el) {
 	return el && el.jquery ? el[0] : el;
 }
 
-module.exports = { sleep, refresh, toEl };
+function toJquery(el) {
+	return typeof $ !== 'undefined' ? $(el) : el;
+}
+
+module.exports = { sleep, refresh, toEl, toJquery };
