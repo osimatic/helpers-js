@@ -21,6 +21,7 @@
   "peerDependencies": {
     "intl-tel-input": ">=19.0",
     "leaflet": ">=1.9",
+    "leaflet-draw": ">=1.0",
     "papaparse": ">=5.0"
   },
   "devDependencies": {
