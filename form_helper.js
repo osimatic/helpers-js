@@ -239,7 +239,7 @@ class FormHelper {
 			return json.error;
 		}
 
-		if (onlyIfUniqueError && !json.length || json.length > 1) {
+		if (onlyIfUniqueError && (!json.length || json.length > 1)) {
 			return null;
 		}
 
@@ -263,7 +263,7 @@ class FormHelper {
 			return json.error;
 		}
 
-		if (onlyIfUniqueError && !json.length || json.length > 1) {
+		if (onlyIfUniqueError && (!json.length || json.length > 1)) {
 			return null;
 		}
 

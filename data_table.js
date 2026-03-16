@@ -1,11 +1,16 @@
 
-class DataTable {
+const DataTable = require('datatables.net');
+const { FormHelper } = require('./form_helper');
+const { UrlAndQueryString } = require('./network');
+const { InputPeriod } = require('./form_date');
+
+class DataTableManager {
 
 	static setOptions(options) {
-		DataTable.dateTableOptions = Object.assign(...DataTable.getOptions(), options);
+		DataTableManager.dateTableOptions = Object.assign({}, DataTableManager.getOptions(), options);
 	}
 	static getOptions() {
-		return DataTable.dateTableOptions || {};
+		return DataTableManager.dateTableOptions || {};
 	}
 
 	static setCallbackOnLoadData(callback) {
@@ -29,7 +34,7 @@ class DataTable {
 	}
 
 	static getFilterParam(key) {
-		return this.criteres[key] || 'NONE';
+		return this.criteres[key] || null;
 	}
 
 	static getFilters() {
@@ -41,50 +46,46 @@ class DataTable {
 	// ------------------------------------------------------------
 
 	static init(options) {
-		let div = options.div;
-		let defaultFilters = options.default_filters || {};
+		let {
+			div,
+			default_filters: defaultFilters = {},
+			on_show_filter_form: onShowFilterForm,
+			export_modal_enabled: exportModalEnabled,
+			on_export: onExport,
+			set_export_form: setExportForm,
+			on_show_export_form: onShowExportForm,
+			on_submit_export_modal: onSubmitExportModal,
+			on_load_data: onLoadData,
+		} = options;
 
-		//let form = div.find('.filter_popover_content form');
-		//if (typeof form != 'undefined') {
 		let queryStringFilters = UrlAndQueryString.parseQuery(window.location.search);
 		defaultFilters = Object.assign(defaultFilters, queryStringFilters);
-		//}
 
 		// Bouton filtrer
 		let filterLink = div.find('a.filter_link');
 		if (filterLink.length) {
-			filterLink.popover({
-				content: div.find('.filter_popover_content').html(),
-				template: '<div class="popover filter_popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>',
-				container: 'body',
-				// trigger: 'manual',
-				trigger: 'click',
-				html: true,
-				animation: false,
-				// placement: 'topRight'
-				placement: 'leftTop'
-			})
-			.click(function(e) {
-				// 	$('.popover').not(this).hide(); // optional, hide other popovers
+			filterLink.click(function(e) {
 				e.preventDefault();
 			});
 
-			filterLink.on('shown.bs.popover', function () {
-				let form = $('.filter_popover form');
+			$('div#modal_filter').on('show.bs.modal', function (event) {
+				let button = $(event.relatedTarget);
+				let modal = $(this);
+				let form = modal.find('form');
 
-				DataTable.populateFormFromFilters(form);
+				DataTableManager.populateFormFromFilters(form);
 
 				// Lien input period
 				InputPeriod.addLinks(form);
 
 				// Callback custom
-				if (typeof options.on_show_filter_form != 'undefined' && options.on_show_filter_form != null) {
-					options.on_show_filter_form(form);
+				if (typeof onShowFilterForm == 'function') {
+					onShowFilterForm(modal, button);
 				}
 
 				form.find('button[type="submit"]').off('click').click(function(e) {
-					// e.preventDefault();
-					DataTable.updateFiltersAndLoadData(div, form);
+					e.preventDefault();
+					DataTableManager.updateFiltersAndLoadData(div, form);
 					return false;
 				});
 			});
@@ -93,13 +94,13 @@ class DataTable {
 		// Bouton exporter
 		let exportLink = div.find('a.export_link');
 		if (exportLink.length) {
-			if (typeof options.export_modal_enabled == 'undefined' || !options.export_modal_enabled) {
+			if (!exportModalEnabled) {
 				// sans modal
 				exportLink.click(function(e) {
 					e.preventDefault();
 					var button = $(this).attr('disabled', true).button('loading');
-					if (typeof options.on_export != 'undefined' && options.on_export != null) {
-						options.on_export(button.data('format'), {...DataTable.getFilters()}, () => {
+					if (typeof onExport == 'function') {
+						onExport(button.data('format'), {...DataTableManager.getFilters()}, () => {
 							button.attr('disabled', false).button('reset');
 						});
 					}
@@ -118,13 +119,13 @@ class DataTable {
 					let form = modal.find('form');
 
 					// Fonction de callback permettant d'initialiser contenu du modal export, cette fonction doit renvoyer le contenu du modal
-					if (typeof options.set_export_form != 'undefined' && options.set_export_form != null) {
-						modal.find('modal-body').html(options.set_export_form(modal, button));
+					if (typeof setExportForm == 'function') {
+						modal.find('.modal-body').html(setExportForm(modal, button));
 					}
 
 					// Fonction de callback permettant d'initialiser le modal export
-					if (typeof options.on_show_export_form != 'undefined' && options.on_show_export_form != null) {
-						modal.find('modal-body').html(options.on_show_export_form(modal, button));
+					if (typeof onShowExportForm == 'function') {
+						onShowExportForm(modal, button);
 					}
 
 					let btnSubmit = form.find('button[type="submit"]').attr('disabled', false).button('reset');
@@ -134,8 +135,8 @@ class DataTable {
 
 						// Une fois le formulaire d'export validé, si fonction callback spécifié, on l'appelle, cette fonction doit renvoyer true ou false pour savoir si le form contient des erreurs ou non.
 						let hasErrors = false;
-						if (typeof options.on_submit_export_modal != 'undefined' && options.on_submit_export_modal != null) {
-							hasErrors = options.on_submit_export_modal(modal, button);
+						if (typeof onSubmitExportModal == 'function') {
+							hasErrors = onSubmitExportModal(modal, button);
 						}
 
 						if (hasErrors) {
@@ -144,8 +145,8 @@ class DataTable {
 						}
 
 						// S'il n'y a pas d'erreur on enclenche l'export
-						if (typeof options.on_export != 'undefined' && options.on_export != null) {
-							options.on_export(button.data('format'), {...DataTable.getFilters()}, form, () => {
+						if (typeof onExport == 'function') {
+							onExport(button.data('format'), {...DataTableManager.getFilters()}, form, () => {
 								// Retrait du modal
 								modal.modal('hide');
 							});
@@ -158,31 +159,26 @@ class DataTable {
 
 		}
 
-		//console.log('defaultFilters', defaultFilters);
+		DataTableManager.setDefaultFilters(defaultFilters);
+		DataTableManager.setCallbackOnLoadData(onLoadData);
 
-		DataTable.setDefaultFilters(defaultFilters);
-		DataTable.setCallbackOnLoadData(options.on_load_data);
-
-		DataTable.loadData(div);
+		DataTableManager.loadData(div);
 	}
 
 	static updateFiltersAndLoadData(div, form) {
-		DataTable.setFiltersFromForm(form);
-		DataTable.addBrowserHistory();
-		// DataTable.populateFormFromFilters($('.filter_popover form'));
+		DataTableManager.setFiltersFromForm(form);
+		DataTableManager.addBrowserHistory();
 
-		$('a.filter_link').popover('hide');
-		$('.filter_popover').remove();
+		$('div#modal_filter').modal('hide');
 
-		DataTable.loadData(div);
+		DataTableManager.loadData(div);
 	}
 
 	static loadData(div) {
-		console.log('DataTable.loadData');
-		DataTable.addLoader(div);
+		DataTableManager.addLoader(div);
 
 		if (typeof this.callbackOnLoadData != 'undefined' && this.callbackOnLoadData != null) {
-			this.callbackOnLoadData(div, DataTable.getFilters());
+			this.callbackOnLoadData(div, DataTableManager.getFilters());
 		}
 	}
 
@@ -199,7 +195,12 @@ class DataTable {
 		let queryString = UrlAndQueryString.getQueryString(url);
 		//console.log('current QueryString', queryString);
 
-		// todo : delete params qui ne sont pas dans savedCriterias
+		// Supprimer de l'URL les clés de critères qui ne sont plus dans savedCriterias
+		Object.keys(this.criteres).forEach(key => {
+			if (!(key in savedCriterias)) {
+				queryString = UrlAndQueryString.deleteParam(queryString, key);
+			}
+		});
 		Object.entries(savedCriterias).forEach(([key, value]) => queryString = UrlAndQueryString.setParam(queryString, key, value));
 		queryString = queryString.includes('?') ? queryString.substring(1) : queryString;
 		//console.log('new queryString', queryString);
@@ -221,9 +222,10 @@ class DataTable {
 		table.find('thead,tfoot').removeClass('hide');
 		table.find('tbody').children().remove();
 
-		if ($.fn.dataTable.isDataTable(table)) {
-			table.DataTable().clear();
-			table.DataTable().destroy();
+		if (DataTable.isDataTable(table)) {
+			const dt = table.DataTable();
+			dt.clear();
+			dt.destroy();
 		}
 	}
 
@@ -266,7 +268,7 @@ class DataTable {
 		table.find('tbody').append('<tr class="no_items '+cssClass+'"><td>'+msgHtml+'</td></tr>');
 		// table.after(msgHtml);
 		// if (removeLoader) {
-		DataTable.removeLoader(div);
+		DataTableManager.removeLoader(div);
 		// }
 	}
 
@@ -305,7 +307,7 @@ class DataTable {
 		let table = div.find('table').removeClass('hide');
 
 		try {
-			DataTable.resetContent(div);
+			DataTableManager.resetContent(div);
 			let tableBody = table.find('tbody');
 			for (let i = 0; i < data.length; i++) {
 				tableBody.append(displayLineCallback(data[i]));
@@ -328,11 +330,11 @@ class DataTable {
 				}
 			}
 
-			DataTable.initDataContent(div);
+			DataTableManager.initDataContent(div);
 			if (typeof completeCallback == 'function') {
 				completeCallback();
 			}
-			DataTable.removeLoader(div);
+			DataTableManager.removeLoader(div);
 		}
 		catch (e) {
 			console.error(e);
@@ -355,14 +357,15 @@ class DataTable {
 			//paging(div.find('select.pagination_max_rows'));
 		}
 
-		if (table.length > 0 && !table.is('[data-no_datatables="1"]') && !$.fn.dataTable.isDataTable(table)) {
+		if (table.length > 0 && !table.is('[data-no_datatables="1"]') && !DataTable.isDataTable(table)) {
+			const dtOptions = {...DataTableManager.getOptions()};
 			if (table.data('page_length') != null) {
-				DataTable.getOptions()['pageLength'] = table.data('page_length');
+				dtOptions['pageLength'] = table.data('page_length');
 			}
-			table.DataTable(DataTable.getOptions());
+			table.DataTable(dtOptions);
 		}
 
-		DataTable.updateDataContent(div);
+		DataTableManager.updateDataContent(div);
 	}
 
 	static updateDataContent(div) {
@@ -387,31 +390,35 @@ class DataTable {
 	}
 
 	static filterRows(table, callback) {
-		if (!$.fn.dataTable.isDataTable(table)) {
+		if (!DataTable.isDataTable(table)) {
 			return;
 		}
 
-		$.fn.dataTable.ext.search = [];
-		//$.fn.dataTable.ext.search.pop();
-		let dataTableObject = table.DataTable();
-		$.fn.dataTable.ext.search.push(
-			function(settings, searchData, index, rowData, counter) {
-				return callback($(dataTableObject.row(index).node()));
-			}
-		);
-		dataTableObject.draw();
+		const dt = table.DataTable();
+
+		// Retire le filtre précédent enregistré pour cette table
+		DataTable.ext.search = DataTable.ext.search.filter(fn => fn._table !== table[0]);
+
+		// Enregistre un filtre scopé à cette table uniquement
+		const filterFn = function(settings, searchData, index) {
+			if (settings.nTable !== table[0]) return true;
+			return callback($(dt.row(index).node()));
+		};
+		filterFn._table = table[0];
+		DataTable.ext.search.push(filterFn);
+		dt.draw();
 	}
 
 	static sort(table, tdSelector) {
-		//if (table.find('tbody tr').length > 0 && $.fn.dataTable.isDataTable(table)) {
-		if ($.fn.dataTable.isDataTable(table)) {
+		//if (table.find('tbody tr').length > 0 && DataTable.isDataTable(table)) {
+		if (DataTable.isDataTable(table)) {
 			let idx = table.find('thead tr '+tdSelector).index();
 			if (idx >= 0) {
-				table.DataTable().order([idx, 'asc']);
+				table.DataTable().order([[idx, 'asc']]).draw();
 			}
 		}
 	}
 
 }
 
-module.exports = { DataTable };
+module.exports = { DataTableManager };

@@ -82,6 +82,10 @@ describe('SelectAll', () => {
 			const formGroup = document.querySelector('.form-group');
 			expect(() => SelectAll.updateFormGroup(formGroup)).not.toThrow();
 		});
+
+		test('should do nothing when formGroup is null', () => {
+			expect(() => SelectAll.updateFormGroup(null)).not.toThrow();
+		});
 	});
 
 	describe('initLinkInFormGroup', () => {
@@ -130,6 +134,20 @@ describe('SelectAll', () => {
 			});
 			expect(formGroup.querySelector('a.check_all').textContent).toBe('Tout désélectionner');
 		});
+
+		test('should not throw when checkbox has no .form-group ancestor', () => {
+			// Simule une checkbox hors de tout .form-group (le cas du bug en prod)
+			document.body.innerHTML = `
+				<div>
+					<a class="check_all" href="#">Tout sélectionner</a>
+					<input type="checkbox" id="orphan">
+				</div>`;
+			const link = document.querySelector('a.check_all');
+			SelectAll.initLinkInFormGroup(link);
+			const cb = document.getElementById('orphan');
+			cb.checked = true;
+			expect(() => cb.dispatchEvent(new Event('change'))).not.toThrow();
+		});
 	});
 
 	describe('updateTable', () => {
@@ -158,6 +176,10 @@ describe('SelectAll', () => {
 					<tbody><tr><td><input type="checkbox"></td></tr></tbody>
 				</table>`;
 			expect(() => SelectAll.updateTable(document.querySelector('table'))).not.toThrow();
+		});
+
+		test('should do nothing when table is null', () => {
+			expect(() => SelectAll.updateTable(null)).not.toThrow();
 		});
 	});
 
@@ -197,6 +219,10 @@ describe('SelectAll', () => {
 			});
 			expect(table.querySelector('thead input.check_all').checked).toBe(true);
 		});
+
+		test('should do nothing when table is null', () => {
+			expect(() => SelectAll.initInTable(null)).not.toThrow();
+		});
 	});
 
 	describe('updateDiv', () => {
@@ -221,6 +247,10 @@ describe('SelectAll', () => {
 		test('should do nothing when no check_all input found', () => {
 			document.body.innerHTML = `<div class="checkbox_with_check_all"><div class="form-check"><input type="checkbox"></div></div>`;
 			expect(() => SelectAll.updateDiv(document.querySelector('.checkbox_with_check_all'))).not.toThrow();
+		});
+
+		test('should do nothing when div is null', () => {
+			expect(() => SelectAll.updateDiv(null)).not.toThrow();
 		});
 	});
 
@@ -269,6 +299,24 @@ describe('SelectAll', () => {
 			const contentDiv = document.getElementById('content');
 			SelectAll.initDiv(contentDiv);
 			expect(contentDiv.querySelector('input.check_all').checked).toBe(true);
+		});
+
+		test('should do nothing when contentDiv is null', () => {
+			expect(() => SelectAll.initDiv(null)).not.toThrow();
+		});
+
+		test('should not throw when checkbox has no .checkbox_with_check_all ancestor', () => {
+			// check_all orpheline — closest('div.checkbox_with_check_all') retourne null
+			document.body.innerHTML = `
+				<div id="content">
+					<input type="checkbox" class="check_all">
+					<div class="form-check"><input type="checkbox" id="orphan"></div>
+				</div>`;
+			const contentDiv = document.getElementById('content');
+			SelectAll.initDiv(contentDiv);
+			const cb = document.getElementById('orphan');
+			cb.checked = true;
+			expect(() => cb.dispatchEvent(new Event('change'))).not.toThrow();
 		});
 	});
 });

@@ -101,7 +101,7 @@ class AudioMedia {
 		canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
 		function draw() {
-			let drawVisual = requestAnimationFrame(draw);
+			requestAnimationFrame(draw);
 
 			analyser.getByteFrequencyData(dataArray);
 

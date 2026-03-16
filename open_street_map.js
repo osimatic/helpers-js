@@ -486,7 +486,8 @@ class OsmMap {
 	}
 
 	resetTempSelection() {
-		this.tempLayer = OpenStreetMap.resetTempSelection(this.map, this.tempLayer);
+		OpenStreetMap.resetTempSelection(this.map, this.tempLayer);
+		this.tempLayer = null;
 		this.tempSelection = null;
 	}
 

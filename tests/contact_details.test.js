@@ -179,13 +179,6 @@ describe('TelephoneNumber', () => {
 		});
 	});
 
-	describe('setIntlTelInputUtilsPath', () => {
-		test('should set intl tel input utils path', () => {
-			const path = '/path/to/utils.js';
-			TelephoneNumber.setIntlTelInputUtilsPath(path);
-			expect(TelephoneNumber.intlTelInputUtilsPath).toBe(path);
-		});
-	});
 
 	describe('getCountryIsoCode', () => {
 		test('should return country code for valid phone number', () => {

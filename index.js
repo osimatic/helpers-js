@@ -26,7 +26,7 @@ const { Password } = require('./user');
 
 // exports plugins "maison"
 const { Browser, UserAgent } = require('./visitor');
-const { DataTable } = require('./data_table');
+const { DataTableManager } = require('./data_table');
 const { Pagination, Navigation } = require('./paging');
 const { DetailsSubArray } = require('./details_sub_array');
 const { SelectAll } = require('./select_all');
@@ -53,7 +53,7 @@ const { WebSocket } = require('./web_socket');
 module.exports = {
 	Array, Object, Number, String,
 	HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, NumberFormatter, Rating, Password,
-	Browser, DataTable, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
+	Browser, DataTableManager, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	Chartjs, GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };

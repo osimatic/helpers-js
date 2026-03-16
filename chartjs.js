@@ -1,9 +1,10 @@
 const { toEl } = require('./util');
 const deepmerge = require('deepmerge');
+const { DatePeriod } = require('./date_time');
 
 class Chartjs {
 	static init() {
-		if (typeof Chartjs.initialized == 'undefined' || Chartjs.initialized) {
+		if (Chartjs.initialized) {
 			return;
 		}
 
@@ -40,6 +41,7 @@ class Chartjs {
 	}
 
 	static createStackedChart(chartDiv, chartData, title=null, options={}) {
+		Chartjs.init();
 		chartDiv = toEl(chartDiv);
 		chartDiv.innerHTML = '';
 		new Chart(chartDiv.getContext("2d"), deepmerge({
@@ -90,6 +92,7 @@ class Chartjs {
 	}
 
 	static createBarChart(chartDiv, chartData, title=null, options={}) {
+		Chartjs.init();
 		chartDiv = toEl(chartDiv);
 		chartDiv.innerHTML = '';
 		new Chart(chartDiv.getContext("2d"), deepmerge({
