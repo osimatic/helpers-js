@@ -279,9 +279,10 @@ class FormHelper {
 	}
 
 	static hideFormErrors(form) {
+		const wasJQuery = form && form.jquery;
 		form = toEl(form);
 		form.querySelectorAll('div.form_errors').forEach(el => el.remove());
-		return form;
+		return wasJQuery ? toJquery(form) : form;
 	}
 
 	static getFormErrorText(errors) {

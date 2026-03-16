@@ -1,6 +1,6 @@
 {
   "name": "@osimatic/helpers-js",
-  "version": "1.5.22",
+  "version": "1.5.24",
   "main": "main.js",
   "scripts": {
     "test": "jest",

@@ -7,7 +7,7 @@ class MultipleActionInTable {
 	// Doit être appelé AVANT l'initialisation DataTable.
 	static initCols(table, cellSelector = 'select') {
 		table = toEl(table);
-		if (!table.classList.contains('table-action_multiple')) {
+		if (!table || !table.classList.contains('table-action_multiple')) {
 			return;
 		}
 		if (MultipleActionInTable.getDivBtn(table) == null) {
@@ -31,7 +31,7 @@ class MultipleActionInTable {
 		table = toEl(table);
 		const { cellSelector = 'select', imgArrow = '' } = options;
 
-		if (!table.classList.contains('table-action_multiple')) {
+		if (!table || !table.classList.contains('table-action_multiple')) {
 			return;
 		}
 

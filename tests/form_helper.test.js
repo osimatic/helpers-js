@@ -44,9 +44,15 @@ function addSelect(form, name, options = []) {
 	return select;
 }
 
+// Simule un objet jQuery wrappant un élément DOM natif
+function mockJQuery(el) {
+	return { jquery: '3.0', 0: el, length: 1 };
+}
+
 afterEach(() => {
 	document.body.innerHTML = '';
 	jest.clearAllMocks();
+	delete global.$;
 });
 
 describe('FormHelper', () => {
@@ -87,6 +93,18 @@ describe('FormHelper', () => {
 			customBtn.click();
 
 			expect(onSubmitCallback).toHaveBeenCalledWith(form, customBtn);
+		});
+
+		test('should return jQuery wrapper when passed a jQuery object', () => {
+			const form = setupForm();
+			addButton(form, 'validate', 'Submit');
+			const jqForm = mockJQuery(form);
+			global.$ = jest.fn(el => mockJQuery(el));
+
+			const result = FormHelper.init(jqForm, jest.fn());
+
+			expect(result).toHaveProperty('jquery');
+			expect(result[0]).toBe(form);
 		});
 
 		test('should call buttonLoader with loading on submit', () => {
@@ -521,6 +539,17 @@ describe('FormHelper', () => {
 
 			expect(form.querySelectorAll('div.form_errors').length).toBe(0);
 			expect(result).toBe(form);
+		});
+
+		test('should return jQuery wrapper when passed a jQuery object', () => {
+			const form = setupForm();
+			const jqForm = mockJQuery(form);
+			global.$ = jest.fn(el => mockJQuery(el));
+
+			const result = FormHelper.hideFormErrors(jqForm);
+
+			expect(result).toHaveProperty('jquery');
+			expect(result[0]).toBe(form);
 		});
 	});
 
