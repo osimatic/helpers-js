@@ -29,11 +29,11 @@ class MultipleActionInTable {
 	// Peut être appelé après l'initialisation DataTable.
 	static init(table, options = {}) {
 		table = toEl(table);
-		const { cellSelector = 'select', imgArrow = '' } = options;
-
 		if (!table || !table.classList.contains('table-action_multiple')) {
 			return;
 		}
+
+		const { cellSelector = 'select', imgArrow = '' } = options;
 
 		let divBtn = MultipleActionInTable.getDivBtn(table);
 		if (divBtn == null) {
@@ -145,6 +145,10 @@ class MultipleActionInDivList {
 // init checkbox
 	static init(contentDiv, options = {}) {
 		contentDiv = toEl(contentDiv);
+		if (!contentDiv) {
+			return;
+		}
+
 		const { imgArrow = '' } = options;
 
 		let buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);

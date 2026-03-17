@@ -3,24 +3,23 @@ const { toEl } = require('./util');
 
 class Pagination {
 	static paginateCards(div, nbItemsPerPage) {
-		div = toEl(div);
 		Pagination.paginate(div, div.querySelectorAll('.pagination_item'), nbItemsPerPage, null);
 	}
 
 	static paginateTable(table, select=null) {
-		table = toEl(table); select = toEl(select);
 		Pagination.paginate(table, table.querySelectorAll('tbody tr:not(.hide)'), parseInt(table.dataset.max_rows), select);
 	}
 
 	static paginate(div, items, nbItemsPerPage, select=null, labelDisplayAll=null) {
-		div = toEl(div); select = toEl(select);
-		let maxItems = nbItemsPerPage;
-
+		div = toEl(div);
 		if (!div) {
 			return;
 		}
 
-		if (select != null) {
+		let maxItems = nbItemsPerPage;
+
+		select = select != null ? toEl(select) : null;
+		if (select) {
 			if (!select.children.length) {
 				const opt0 = document.createElement('option');
 				opt0.value = '0';
@@ -53,6 +52,11 @@ class Pagination {
 	}
 
 	static initPaginationDiv(div, onTop) {
+		div = toEl(div);
+		if (!div) {
+			return;
+		}
+
 		const ul = document.createElement('ul');
 		ul.className = 'pagination';
 
@@ -137,6 +141,7 @@ class Navigation {
 		if (!a) {
 			return;
 		}
+
 		let ulNav = a.closest('.nav');
 		if (!ulNav) {
 			return;
@@ -164,9 +169,11 @@ class Navigation {
 	}
 
 	static showTab(a) {
-		if (typeof bootstrap == 'undefined') {
+		a = toEl(a);
+		if (!a || typeof bootstrap == 'undefined') {
 			return;
 		}
+
 		let tab = new bootstrap.Tab(a);
 		tab.show();
 	}

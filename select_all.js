@@ -39,6 +39,7 @@ class SelectAll {
 		if (!formGroup) {
 			return;
 		}
+
 		const allCheckbox = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all)');
 		const allCheckboxChecked = formGroup.querySelectorAll('input[type="checkbox"]:not(.check_all):checked');
 		const lienSelectAll = formGroup.querySelector('a.check_all');
@@ -60,6 +61,7 @@ class SelectAll {
 		if (!table) {
 			return;
 		}
+
 		const inputCheckAll = table.querySelector('tr input.check_all');
 		if (!inputCheckAll) {
 			return;
@@ -87,6 +89,7 @@ class SelectAll {
 		if (!table) {
 			return;
 		}
+
 		const allCheckbox = table.querySelectorAll('tbody input[type="checkbox"]');
 		const allCheckboxChecked = table.querySelectorAll('tbody input[type="checkbox"]:checked');
 		const checkboxSelectAll = table.querySelector('thead input.check_all');
@@ -103,6 +106,7 @@ class SelectAll {
 		if (!contentDiv) {
 			return;
 		}
+
 		contentDiv.querySelectorAll('input.check_all').forEach(inputCheckAll => {
 			const div = inputCheckAll.closest('div.checkbox_with_check_all');
 
@@ -137,6 +141,7 @@ class SelectAll {
 		if (!div) {
 			return;
 		}
+
 		// 22/11/2021 : rajout :not(.check_all) sinon si toutes les cases sont coché, la case select all n'est pas coché à l'initialisation
 		const allCheckbox = div.querySelectorAll('div.checkbox input[type="checkbox"]:not(.check_all), div.form-check input[type="checkbox"]:not(.check_all)');
 		const allCheckboxChecked = div.querySelectorAll('div.checkbox input[type="checkbox"]:not(.check_all):checked, div.form-check input[type="checkbox"]:not(.check_all):checked');

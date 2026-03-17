@@ -706,5 +706,35 @@ describe('PostalAddress', () => {
 			expect(result).toContain('Mountain View');
 			expect(result).toContain('94043');
 		});
+
+		test('should place postalCode before locality for FR (countryCode)', () => {
+			const result = PostalAddress.format({
+				streetAddress: '10 Rue de la Paix',
+				postalCode: '75001',
+				locality: 'Paris',
+				countryCode: 'FR',
+			}, '\n');
+			expect(result.indexOf('75001')).toBeLessThan(result.indexOf('Paris'));
+		});
+
+		test('should place postalCode before locality for FR (locale parameter)', () => {
+			const result = PostalAddress.format({
+				streetAddress: '10 Rue de la Paix',
+				postalCode: '75001',
+				locality: 'Paris',
+			}, '\n', 'fr-FR');
+			expect(result.indexOf('75001')).toBeLessThan(result.indexOf('Paris'));
+		});
+
+		test('should place postalCode after locality for US', () => {
+			const result = PostalAddress.format({
+				streetAddress: '1600 Amphitheatre Pkwy',
+				postalCode: '94043',
+				locality: 'Mountain View',
+				state: 'CA',
+				countryCode: 'US',
+			}, '\n');
+			expect(result.indexOf('94043')).toBeGreaterThan(result.indexOf('Mountain View'));
+		});
 	});
 });

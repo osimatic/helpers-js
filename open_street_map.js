@@ -457,6 +457,7 @@ class OsmMap {
 
 	constructor(mapContainer, options={}) {
 		mapContainer = toEl(mapContainer);
+		
 		this.markers = [];
 		this.locations = [];
 		this.tempSelection = null;

@@ -5,8 +5,15 @@ const { toEl } = require('./util');
 class MultiFilesInput {
 	static init(fileInput, setFilesList, nbMaxFiles, maxFileSize) {
 		fileInput = toEl(fileInput);
+		if (!fileInput) {
+			return;
+		}
+
 		let filesList = [];
 		const formGroup = fileInput.closest('.form-group');
+		if (!formGroup) {
+			return;
+		}
 
 		if (!formGroup.querySelector('.multi_files_input_dropzone')) {
 			fileInput.insertAdjacentHTML('afterend', `

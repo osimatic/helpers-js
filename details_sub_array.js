@@ -5,6 +5,10 @@ class DetailsSubArray {
 
 	static initDetailsLink(table, options = {}) {
 		table = toEl(table);
+		if (!table) {
+			return;
+		}
+
 		const {
 			onSuccess,
 			onError,

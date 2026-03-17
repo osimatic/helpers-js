@@ -306,6 +306,9 @@ class Country {
 class PostalAddress {
 	static setAutocomplete(input, onPlaceChanged) {
 		input = toEl(input);
+		if (!input) {
+			return;
+		}
 		const autocomplete = new google.maps.places.Autocomplete(
 			input,
 			{types: ['geocode']}
@@ -326,7 +329,7 @@ class PostalAddress {
 		return autocomplete;
 	}
 
-	static format(addressData, separator='<br/>') {
+	static format(addressData, separator='<br/>', locale=null) {
 		function empty(value) {
 			return typeof value == 'undefined' || value == null || value === '';
 		}
@@ -362,7 +365,8 @@ class PostalAddress {
 			addressDataForPluging['locality'] = addressData['stateDistrict'];
 		}
 
-		let af = new AddressFmt();
+		const afLocale = locale || (addressDataForPluging['countryCode'] ? `und-${addressDataForPluging['countryCode']}` : null);
+		let af = new AddressFmt(afLocale ? {locale: afLocale} : {});
 		let formattedAddress = af.format(new Address(addressDataForPluging));
 		return formattedAddress.replace(/\n+/g, separator);
 	}

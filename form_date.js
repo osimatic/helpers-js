@@ -6,6 +6,10 @@ class InputPeriod {
 
 	static addLinks(form) {
 		form = toEl(form);
+		if (!form) {
+			return;
+		}
+
 		const input = form.querySelector('input[type="date"][data-add_period_select_links]');
 		if (!input) {
 			return;
@@ -29,6 +33,9 @@ class InputPeriod {
 
 	static init(form) {
 		form = toEl(form);
+		if (!form) {
+			return;
+		}
 		//console.log(form.querySelector('a.period_select_current_week'));
 
 		const linkToday = form.querySelector('a.period_select_today');
@@ -175,6 +182,9 @@ class FormDate {
 
 	static initForm(form) {
 		form = toEl(form);
+		if (!form) {
+			return;
+		}
 
 		function fillPeriodSelect(select) {
 			Object.entries(FormDate.getPeriodList()).forEach(([idx, tabListPeriode]) => {

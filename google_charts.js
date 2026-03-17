@@ -45,6 +45,10 @@ class GoogleCharts {
 
 	static draw(div, options) {
 		div = toEl(div);
+		if (!div) {
+			return;
+		}
+
 		const {
 			chart_type: chartType,
 			title: title,

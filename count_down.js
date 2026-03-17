@@ -4,15 +4,15 @@ class CountDown {
 
 	static init(div, options = {}) {
 		div = toEl(div);
+		if (!div) {
+			return;
+		}
+
 		const {
 			onRefreshData,
 			labelNextUpdate = 'Prochaine mise à jour',
 			labelDoUpdate = 'Mettre à jour',
 		} = options;
-
-		if (!div) {
-			return;
-		}
 
 		div.insertAdjacentHTML('beforeend', '<div class="count_down_title">'+labelNextUpdate+'</div>');
 		div.insertAdjacentHTML('beforeend', '<div class="count_down_progress"><div class="count_down_current"></div></div>');

@@ -10,6 +10,10 @@ class AudioMedia {
 
 	static initPlayLinks(div) {
 		div = toEl(div);
+		if (!div) {
+			return;
+		}
+
 		// Affiche un lecteur audio
 		div.querySelectorAll('.play_link').forEach(link => {
 			link.addEventListener('click', function(e) {
@@ -128,6 +132,10 @@ class AudioMedia {
 class VideoMedia {
 	static initPlayPauseClick(videoElement) {
 		videoElement = toEl(videoElement);
+		if (!videoElement) {
+			return;
+		}
+		
 		videoElement.addEventListener('click', function(e) {
 			// handle click if not Firefox (Firefox supports this feature natively)
 			if (typeof InstallTrigger === 'undefined') {

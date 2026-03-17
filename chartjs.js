@@ -42,7 +42,12 @@ class Chartjs {
 
 	static createStackedChart(chartDiv, chartData, title=null, options={}) {
 		Chartjs.init();
+
 		chartDiv = toEl(chartDiv);
+		if (!chartDiv) {
+			return;
+		}
+
 		chartDiv.innerHTML = '';
 		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "bar",
@@ -93,7 +98,12 @@ class Chartjs {
 
 	static createBarChart(chartDiv, chartData, title=null, options={}) {
 		Chartjs.init();
+
 		chartDiv = toEl(chartDiv);
+		if (!chartDiv) {
+			return;
+		}
+
 		chartDiv.innerHTML = '';
 		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "bar",
@@ -151,6 +161,10 @@ class Chartjs {
 		Chartjs.init();
 
 		chartDiv = toEl(chartDiv);
+		if (!chartDiv) {
+			return;
+		}
+
 		chartDiv.innerHTML = '';
 		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "line",
@@ -204,6 +218,10 @@ class Chartjs {
 		Chartjs.init();
 
 		chartDiv = toEl(chartDiv);
+		if (!chartDiv) {
+			return;
+		}
+
 		chartDiv.innerHTML = '';
 		new Chart(chartDiv.getContext("2d"), deepmerge({
 			type: "doughnut",

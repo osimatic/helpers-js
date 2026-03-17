@@ -105,6 +105,10 @@ class Img {
 
 	static initImg(div) {
 		div = toEl(div);
+		if (!div) {
+			return;
+		}
+
 		div.querySelectorAll('.asynchronously_img').forEach(img => {
 			Img.loadImgUrl(img.dataset.url, img);
 		});

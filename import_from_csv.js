@@ -21,6 +21,10 @@ class ImportFromCsv {
 
 	static initForm(div, options = {}) {
 		div = toEl(div);
+		if (!div) {
+			return;
+		}
+
 		const {
 			importColumns,
 			requestImportData,
@@ -74,7 +78,7 @@ class ImportFromCsv {
 			}
 
 			const hasHeader = formUpload.querySelectorAll('input[name="header"][value="1"]:checked').length;
-			const encoding = formUpload.querySelector('select[name="encoding"]').value;
+			const encoding = formUpload.querySelector('select[name="encoding"]')?.value;
 
 			Papa.parse(fileInput.files[0], {
 				header: hasHeader,
@@ -175,6 +179,10 @@ class ImportFromCsv {
 
 	static displayData(divResult, data, header, formMatching) {
 		divResult = toEl(divResult);
+		if (!divResult) {
+			return;
+		}
+
 		let table = divResult.querySelector('table');
 		if (!table) {
 			divResult.insertAdjacentHTML('beforeend', '<table class="table table-sm table-bordered"></table>');

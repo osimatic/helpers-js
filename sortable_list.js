@@ -3,6 +3,10 @@ const { toEl } = require('./util');
 class SortableList {
 	static init(sortableList, clientYOffset=0) {
 		sortableList = toEl(sortableList);
+		if (!sortableList) {
+			return;
+		}
+
 		sortableList.querySelectorAll('[draggable="true"]').forEach(item => {
 			item.addEventListener('dragstart', () => {
 				// Adding dragging class to an item after a delay
