@@ -144,6 +144,9 @@ class FormDate {
 
 	static fillYearSelect(select, nbYearsBefore=5, nbYearsAfter=0) {
 		select = toEl(select);
+		if (!select) {
+			return;
+		}
 		const currentDate = new Date();
 		for (let year=currentDate.getUTCFullYear()-nbYearsBefore; year<=(currentDate.getUTCFullYear()+nbYearsAfter); year++) {
 			select.insertAdjacentHTML('beforeend', '<option value="'+year+'">'+year+'</option>');
@@ -152,6 +155,9 @@ class FormDate {
 
 	static fillMonthSelect(select, locale) {
 		select = toEl(select);
+		if (!select) {
+			return;
+		}
 		for (let month=1; month<=12; month++) {
 			select.insertAdjacentHTML('beforeend', '<option value="'+month+'">'+DateTime.getMonthNameByMonth(month, locale).capitalize()+'</option>');
 		}
@@ -159,6 +165,9 @@ class FormDate {
 
 	static fillDayOfWeekSelect(select, locale) {
 		select = toEl(select);
+		if (!select) {
+			return;
+		}
 		for (let dayOfWeek=1; dayOfWeek<=7; dayOfWeek++) {
 			select.insertAdjacentHTML('beforeend', '<option value="'+dayOfWeek+'">'+DateTime.getDayNameByDayOfWeek(dayOfWeek, locale).capitalize()+'</option>');
 		}

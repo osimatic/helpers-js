@@ -182,6 +182,11 @@ describe('FormDate', () => {
 			mockSelect = { insertAdjacentHTML: jest.fn() };
 		});
 
+		test('should do nothing if element does not exist', () => {
+			expect(() => FormDate.fillYearSelect(null)).not.toThrow();
+			expect(() => FormDate.fillYearSelect(undefined)).not.toThrow();
+		});
+
 		test('should fill select with years from 5 years before to current year', () => {
 			FormDate.fillYearSelect(mockSelect);
 
@@ -259,6 +264,11 @@ describe('FormDate', () => {
 			}
 		});
 
+		test('should do nothing if element does not exist', () => {
+			expect(() => FormDate.fillMonthSelect(null)).not.toThrow();
+			expect(() => FormDate.fillMonthSelect(undefined)).not.toThrow();
+		});
+
 		test('should fill select with 12 months', () => {
 			FormDate.fillMonthSelect(mockSelect, 'fr');
 
@@ -279,6 +289,11 @@ describe('FormDate', () => {
 					return this.charAt(0).toUpperCase() + this.slice(1);
 				};
 			}
+		});
+
+		test('should do nothing if element does not exist', () => {
+			expect(() => FormDate.fillDayOfWeekSelect(null)).not.toThrow();
+			expect(() => FormDate.fillDayOfWeekSelect(undefined)).not.toThrow();
 		});
 
 		test('should fill select with 7 days of week', () => {
