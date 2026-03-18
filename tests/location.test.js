@@ -1,4 +1,4 @@
-const { Country, PostalAddress, GeographicCoordinates, Polygon } = require('../location');
+const { Country, Locale, PostalAddress, GeographicCoordinates, Polygon } = require('../location');
 
 describe('Country', () => {
 	describe('getCountries', () => {
@@ -13,16 +13,27 @@ describe('Country', () => {
 		test('should have correct country names', () => {
 			const countries = Country.getCountries();
 			expect(countries.FR).toBe('France');
-			expect(countries.US).toBe('United States');
+			expect(countries.US).toBe('United States of America');
 			expect(countries.GB).toBe('United Kingdom');
 		});
 	});
 
 	describe('getCountryName', () => {
-		test('should return country name for valid code', () => {
+		test('should return country name for valid code (default fr-FR locale)', () => {
 			expect(Country.getCountryName('FR')).toBe('France');
-			expect(Country.getCountryName('US')).toBe('United States');
+			expect(Country.getCountryName('US')).toBe("États-Unis d'Amérique");
 			expect(Country.getCountryName('CA')).toBe('Canada');
+		});
+
+		test('should return country name in specified locale', () => {
+			expect(Country.getCountryName('US', 'en')).toBe('United States of America');
+			expect(Country.getCountryName('DE', 'de')).toBeTruthy();
+		});
+
+		test('should handle full locale with region (fr-FR, en-US)', () => {
+			expect(Country.getCountryName('FR', 'fr-FR')).toBe('France');
+			expect(Country.getCountryName('US', 'fr-FR')).toBe("États-Unis d'Amérique");
+			expect(Country.getCountryName('US', 'en-US')).toBe('United States of America');
 		});
 
 		test('should return the code itself if country not found', () => {
@@ -42,50 +53,35 @@ describe('Country', () => {
 	});
 
 	describe('getFlagPath', () => {
-		test('should return correct flag path', () => {
-			const path = Country.getFlagPath('FR');
-			expect(path).toContain('fr.png');
+		test('should return null when no flagsPath set', () => {
+			Country.flagsPath = undefined;
+			expect(Country.getFlagPath('FR')).toBeNull();
 		});
 
-		test('should lowercase the country code', () => {
-			const path = Country.getFlagPath('US');
-			expect(path).toContain('us.png');
-		});
-
-		test('should use custom flags path when set', () => {
+		test('should return image path when flagsPath set', () => {
 			Country.setFlagsPath('/custom/flags/');
-			const path = Country.getFlagPath('FR');
-			expect(path).toBe('/custom/flags/fr.png');
-
-			// Reset for other tests
+			expect(Country.getFlagPath('FR')).toBe('/custom/flags/fr.png');
+			expect(Country.getFlagPath('US')).toBe('/custom/flags/us.png');
 			Country.flagsPath = undefined;
-		});
-
-		test('should use default path when not set', () => {
-			Country.flagsPath = undefined;
-			const path = Country.getFlagPath('DE');
-			expect(path).toBe('/de.png');
 		});
 	});
 
 	describe('getFlagImg', () => {
-		test('should return HTML img tag', () => {
+		test('should return flag-icons span when no flagsPath set', () => {
+			Country.flagsPath = undefined;
+			const html = Country.getFlagImg('FR');
+			expect(html).toContain('<span');
+			expect(html).toContain('fi fi-fr');
+		});
+
+		test('should return img tag when flagsPath set', () => {
+			Country.setFlagsPath('/flags/');
 			const html = Country.getFlagImg('FR');
 			expect(html).toContain('<img');
-			expect(html).toContain('src=');
 			expect(html).toContain('fr.png');
 			expect(html).toContain('class="flag"');
-		});
-
-		test('should include country name in title', () => {
-			const html = Country.getFlagImg('US');
-			expect(html).toContain('title="United States"');
-		});
-
-		test('should wrap img in span', () => {
-			const html = Country.getFlagImg('GB');
-			expect(html).toMatch(/^<span>/);
-			expect(html).toMatch(/<\/span>$/);
+			expect(html).toContain("title=\"France\"");
+			Country.flagsPath = undefined;
 		});
 	});
 
@@ -94,6 +90,173 @@ describe('Country', () => {
 			const list = Country.getCountryList();
 			const countries = Country.getCountries();
 			expect(list).toEqual(countries);
+		});
+	});
+
+	describe('getFlagEmoji', () => {
+		test('should return emoji flag for country code', () => {
+			expect(Country.getFlagEmoji('FR')).toBe('🇫🇷');
+			expect(Country.getFlagEmoji('US')).toBe('🇺🇸');
+			expect(Country.getFlagEmoji('GB')).toBe('🇬🇧');
+		});
+		test('should handle lowercase country codes', () => {
+			expect(Country.getFlagEmoji('fr')).toBe('🇫🇷');
+		});
+	});
+
+	describe('getCountries with locale', () => {
+		test('should auto-register and return names for an unregistered locale', () => {
+			const countriesFr = Country.getCountries('fr');
+			expect(typeof countriesFr).toBe('object');
+			expect(countriesFr.FR).toBe('France');
+			expect(typeof countriesFr.US).toBe('string');
+		});
+
+		test('should return names for de locale', () => {
+			const countriesDe = Country.getCountries('de');
+			expect(typeof countriesDe).toBe('object');
+			expect(countriesDe.DE).toBeTruthy();
+		});
+
+		test('should return empty object for unknown locale', () => {
+			const result = Country.getCountries('xx');
+			expect(typeof result).toBe('object');
+		});
+	});
+
+	describe('fillSelect', () => {
+		function makeSelect() {
+			const options = [];
+			return {
+				children: options,
+				value: null,
+				insertAdjacentHTML(position, html) { options.push(html); },
+			};
+		}
+
+		test('should populate with all countries in given locale', () => {
+			const select = makeSelect();
+			Country.fillSelect(select, null, 'fr-FR');
+			expect(select.children.length).toBeGreaterThan(0);
+			expect(select.children.some(h => h.includes('value="FR"'))).toBe(true);
+			expect(select.children.some(h => h.includes('France'))).toBe(true);
+		});
+
+		test('should restrict to provided countriesList', () => {
+			const select = makeSelect();
+			Country.fillSelect(select, null, 'fr-FR', false, ['FR', 'DE', 'US']);
+			expect(select.children).toHaveLength(3);
+			expect(select.children.some(h => h.includes('value="FR"'))).toBe(true);
+			expect(select.children.some(h => h.includes('value="DE"'))).toBe(true);
+		});
+
+		test('should add none option when addNoneValue is true', () => {
+			const select = makeSelect();
+			Country.fillSelect(select, null, 'fr-FR', false, ['FR'], true, '-- Aucun --');
+			expect(select.children[0]).toContain('value=""');
+			expect(select.children[0]).toContain('-- Aucun --');
+			expect(select.children).toHaveLength(2);
+		});
+
+		test('should add data-content with flag-icons when showFlags is true', () => {
+			const select = makeSelect();
+			Country.fillSelect(select, null, 'fr-FR', true, ['FR']);
+			expect(select.children[0]).toContain('data-content=');
+			expect(select.children[0]).toContain('fi fi-fr');
+		});
+
+		test('should not add options if select already has children', () => {
+			const select = makeSelect();
+			select.children.push('<option value="FR">France</option>');
+			Country.fillSelect(select, null, 'fr-FR');
+			expect(select.children).toHaveLength(1);
+		});
+	});
+
+	describe('fillSelectWithFlags', () => {
+		function makeSelect() {
+			const options = [];
+			return {
+				children: options,
+				value: null,
+				insertAdjacentHTML(position, html) { options.push(html); },
+			};
+		}
+
+		test('should add data-content with flag-icons', () => {
+			const select = makeSelect();
+			Country.fillSelectWithFlags(select, null, 'fr-FR', ['FR', 'US']);
+			expect(select.children).toHaveLength(2);
+			expect(select.children[0]).toContain('fi fi-fr');
+			expect(select.children[1]).toContain('fi fi-us');
+		});
+	});
+});
+
+describe('Locale', () => {
+	describe('normalize', () => {
+		test('should canonicalize to lang-REGION format', () => {
+			expect(Locale.normalize('fr-FR')).toBe('fr-FR');
+			expect(Locale.normalize('fr-fr')).toBe('fr-FR');
+			expect(Locale.normalize('FR-fr')).toBe('fr-FR');
+			expect(Locale.normalize('fr_FR')).toBe('fr-FR');
+		});
+
+		test('should handle lang-only locales', () => {
+			expect(Locale.normalize('fr')).toBe('fr');
+			expect(Locale.normalize('EN')).toBe('en');
+		});
+	});
+
+	describe('getBaseLang', () => {
+		test('should extract base language', () => {
+			expect(Locale.getBaseLang('fr-FR')).toBe('fr');
+			expect(Locale.getBaseLang('en-US')).toBe('en');
+			expect(Locale.getBaseLang('fr_FR')).toBe('fr');
+		});
+
+		test('should return lang as-is when no region', () => {
+			expect(Locale.getBaseLang('fr')).toBe('fr');
+		});
+	});
+
+	describe('getRegion', () => {
+		test('should extract region code', () => {
+			expect(Locale.getRegion('fr-FR')).toBe('FR');
+			expect(Locale.getRegion('en-US')).toBe('US');
+			expect(Locale.getRegion('fr_FR')).toBe('FR');
+		});
+
+		test('should return null when no region', () => {
+			expect(Locale.getRegion('fr')).toBeNull();
+		});
+	});
+
+	describe('isValid', () => {
+		test('should accept valid locales', () => {
+			expect(Locale.isValid('fr')).toBe(true);
+			expect(Locale.isValid('fr-FR')).toBe(true);
+			expect(Locale.isValid('en-US')).toBe(true);
+			expect(Locale.isValid('zh-CN')).toBe(true);
+		});
+
+		test('should reject invalid locales', () => {
+			expect(Locale.isValid('foobar')).toBe(false);
+			expect(Locale.isValid('fr_FR')).toBe(false);
+			expect(Locale.isValid('')).toBe(false);
+			expect(Locale.isValid('1234')).toBe(false);
+		});
+	});
+
+	describe('toPOSIX', () => {
+		test('should convert to POSIX format', () => {
+			expect(Locale.toPOSIX('fr-FR')).toBe('fr_FR');
+			expect(Locale.toPOSIX('en-US')).toBe('en_US');
+			expect(Locale.toPOSIX('fr_FR')).toBe('fr_FR');
+		});
+
+		test('should handle lang-only locales', () => {
+			expect(Locale.toPOSIX('fr')).toBe('fr');
 		});
 	});
 });
@@ -717,11 +880,21 @@ describe('PostalAddress', () => {
 			expect(result.indexOf('75001')).toBeLessThan(result.indexOf('Paris'));
 		});
 
-		test('should place postalCode before locality for FR (locale parameter)', () => {
+		test('should place postalCode before locality for FR (locale parameter, no countryCode)', () => {
 			const result = PostalAddress.format({
 				streetAddress: '10 Rue de la Paix',
 				postalCode: '75001',
 				locality: 'Paris',
+			}, '\n', 'fr-FR');
+			expect(result.indexOf('75001')).toBeLessThan(result.indexOf('Paris'));
+		});
+
+		test('should place postalCode before locality for FR (locale parameter and countryCode)', () => {
+			const result = PostalAddress.format({
+				streetAddress: '10 Rue de la Paix',
+				postalCode: '75001',
+				locality: 'Paris',
+				countryCode: 'FR',
 			}, '\n', 'fr-FR');
 			expect(result.indexOf('75001')).toBeLessThan(result.indexOf('Paris'));
 		});

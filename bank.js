@@ -15,7 +15,7 @@ class BankCard {
 		return cardNumber;
 	}
 
-	static formatExpirationDate(expirationDate, locale="fr-FR") {
+	static formatExpirationDate(expirationDate, locale='fr-FR') {
 		return SqlDateTime.getMonthName(expirationDate, locale)+' '+SqlDateTime.getYear(expirationDate);
 	}
 }
