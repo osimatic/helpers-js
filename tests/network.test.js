@@ -465,6 +465,69 @@ describe('UrlAndQueryString', () => {
 		});
 	});
 
+	describe('matchQueryParamsToFormFields', () => {
+		test('should keep scalar param matching a scalar field', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ name: 'John' },
+				['name', 'age']
+			);
+			expect(result).toEqual({ name: 'John' });
+		});
+
+		test('should keep array param matching an array field', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ tags: ['a', 'b'] },
+				['tags[]']
+			);
+			expect(result).toEqual({ tags: ['a', 'b'] });
+		});
+
+		test('should wrap scalar into array when field expects array', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ tags: 'a' },
+				['tags[]']
+			);
+			expect(result).toEqual({ tags: ['a'] });
+		});
+
+		test('should exclude params not in the list', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ name: 'John', unknown: 'x' },
+				['name']
+			);
+			expect(result).toEqual({ name: 'John' });
+			expect(result).not.toHaveProperty('unknown');
+		});
+
+		test('should handle mix of scalar and array fields', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ name: 'John', tags: ['a', 'b'], page: '1' },
+				['name', 'tags[]', 'page']
+			);
+			expect(result).toEqual({ name: 'John', tags: ['a', 'b'], page: '1' });
+		});
+
+		test('should return empty object when no params match', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ foo: 'bar' },
+				['name', 'tags[]']
+			);
+			expect(result).toEqual({});
+		});
+
+		test('should return empty object when inputs are empty', () => {
+			expect(UrlAndQueryString.matchQueryParamsToFormFields({}, [])).toEqual({});
+		});
+
+		test('should not include array param when field only accepts scalar', () => {
+			const result = UrlAndQueryString.matchQueryParamsToFormFields(
+				{ name: ['a', 'b'] },
+				['name']
+			);
+			expect(result).toEqual({});
+		});
+	});
+
 	describe('getQuery (deprecated)', () => {
 		test('should get query string from URL', () => {
 			const result = UrlAndQueryString.getQuery('https://example.com/path?query=1&param=2');

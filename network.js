@@ -307,6 +307,26 @@ class UrlAndQueryString {
 		return str.substr(0, strpos);
 	}
 
+	/**
+	 * Match query string parameters to a list of known form field names.
+	 * Handles array fields (e.g. "foo[]"): if the field expects an array but the value is scalar, it wraps it.
+	 * @param {object} queryStringFilters - key/value pairs from the query string
+	 * @param {string[]} listOfPossibleFieldNames - list of accepted field names (e.g. ['foo', 'bar[]'])
+	 * @returns {object} filtered and normalized parameters
+	 */
+	static matchQueryParamsToFormFields(queryStringFilters, listOfPossibleFieldNames) {
+		const result = {};
+		Object.keys(queryStringFilters).forEach(key => {
+			const value = queryStringFilters[key];
+			if (listOfPossibleFieldNames.indexOf(key + (Array.isArray(value) ? '[]' : '')) !== -1) {
+				result[key] = value;
+			} else if (!Array.isArray(value) && listOfPossibleFieldNames.indexOf(key + '[]') !== -1) {
+				result[key] = [value];
+			}
+		});
+		return result;
+	}
+
 }
 
 module.exports = { Cookie, UrlAndQueryString };
