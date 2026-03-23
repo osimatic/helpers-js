@@ -309,5 +309,13 @@ describe('Password', () => {
 			const bar = document.querySelector('.password_strength_bar');
 			expect(bar.classList.contains('bg-warning')).toBe(true);
 		});
+
+		test('should not throw when input is null', () => {
+			expect(() => Password.displayPasswordStrength(null)).not.toThrow();
+		});
+
+		test('should not throw when input is undefined', () => {
+			expect(() => Password.displayPasswordStrength(undefined)).not.toThrow();
+		});
 	});
 });

@@ -1,3 +1,5 @@
+const { toEl } = require('./util');
+
 class Password {
 	static getPasswordStrength(password) {
 		let score = 0;
@@ -14,6 +16,10 @@ class Password {
 	}
 
 	static displayPasswordStrength(input) {
+		input = toEl(input);
+		if (!input) {
+			return;
+		}
 		function update(input) {
 			const password = input.value;
 			const div = input.closest('.form-group').querySelector('.password_strength_content');
