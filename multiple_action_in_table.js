@@ -14,11 +14,11 @@ class MultipleActionInTable {
 			return;
 		}
 
-		const theadTr = table.querySelector('thead tr');
+		const theadTr = table.querySelector(':scope > thead > tr');
 		if (theadTr && !theadTr.querySelector('th[data-key="select"]')) {
 			theadTr.insertAdjacentHTML('afterbegin', '<th class="' + cellSelector + '" data-key="select"></th>');
 		}
-		table.querySelectorAll('tbody tr:not(.no_items)').forEach(tr => {
+		table.querySelectorAll(':scope > tbody > tr:not(.no_items)').forEach(tr => {
 			if (!tr.querySelector('td.select')) {
 				tr.insertAdjacentHTML('afterbegin', '<td class="select"><input type="checkbox" class="action_multiple_checkbox" name="' + tr.dataset.action_multiple_input_name + '" value="' + tr.dataset.action_multiple_item_id + '"></td>');
 			}
@@ -77,6 +77,11 @@ class MultipleActionInTable {
 	}
 
 	static updateCheckbox(table) {
+		table = toEl(table);
+		if (!table) {
+			return;
+		}
+		
 		MultipleActionInTable.showButtonsAction(table);
 
 		const allCheckbox = table.querySelectorAll('input.action_multiple_checkbox');
@@ -97,19 +102,29 @@ class MultipleActionInTable {
 	}
 
 	static getDivBtn(table) {
+		const isJquery = typeof jQuery !== 'undefined' && table instanceof jQuery;
+		table = toEl(table);
+		if (!table) {
+			return null;
+		}
 		const divTableResponsive = table.parentElement;
 		let divBtn = divTableResponsive.nextElementSibling;
 		if (divBtn && divBtn.classList.contains('action_multiple_buttons')) {
-			return divBtn;
+			return isJquery ? jQuery(divBtn) : divBtn;
 		}
 		divBtn = divTableResponsive.parentElement?.parentElement?.parentElement?.nextElementSibling;
 		if (divBtn && divBtn.classList.contains('action_multiple_buttons')) {
-			return divBtn;
+			return isJquery ? jQuery(divBtn) : divBtn;
 		}
 		return null;
 	}
 
 	static showButtonsAction(table) {
+		table = toEl(table);
+		if (!table) {
+			return;
+		}
+		
 		const divBtn = MultipleActionInTable.getDivBtn(table);
 		if (divBtn == null) {
 			return;
@@ -204,6 +219,11 @@ class MultipleActionInDivList {
 	}
 
 	static updateCheckbox(contentDiv) {
+		contentDiv = toEl(contentDiv);
+		if (!contentDiv) {
+			return;
+		}
+		
 		MultipleActionInDivList.showButtonsAction(contentDiv);
 
 		const allCheckbox = contentDiv.querySelectorAll('input.action_multiple_checkbox');
@@ -224,6 +244,11 @@ class MultipleActionInDivList {
 	}
 
 	static getButtonsDiv(contentDiv) {
+		contentDiv = toEl(contentDiv);
+		if (!contentDiv) {
+			return null;
+		}
+		
 		const buttonsDiv = contentDiv.nextElementSibling;
 		if (buttonsDiv && buttonsDiv.classList.contains('action_multiple_buttons')) {
 			return buttonsDiv;
@@ -232,6 +257,11 @@ class MultipleActionInDivList {
 	}
 
 	static showButtonsAction(contentDiv) {
+		contentDiv = toEl(contentDiv);
+		if (!contentDiv) {
+			return;
+		}
+		
 		const buttonsDiv = MultipleActionInDivList.getButtonsDiv(contentDiv);
 		if (buttonsDiv == null) {
 			return;

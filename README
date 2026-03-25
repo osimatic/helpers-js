@@ -1,2 +1,2 @@
-npm install @osimatic/helpers-js
+npm install @osimatic/core-js
 browserify index.js -o index.bundle.js
