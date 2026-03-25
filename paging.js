@@ -178,6 +178,12 @@ class Navigation {
 		tab.show();
 	}
 
+	static removeTabFromHistory(queryStringKey='tab') {
+		let url = window.location.href;
+		url = UrlAndQueryString.deleteParamOfUrl(queryStringKey, url);
+		window.history.replaceState('', document.title, url);
+	}
+
 	static addTabInHistory(tabId, queryStringKey='tab', replace=true) {
 		let url = window.location.href;
 		url = UrlAndQueryString.setParamOfUrl(queryStringKey, tabId, url);
