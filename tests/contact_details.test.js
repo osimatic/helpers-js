@@ -314,15 +314,15 @@ describe('TelephoneNumber', () => {
 	describe('getFlagImg', () => {
 		test('should return flag image for phone number', () => {
 			const result = TelephoneNumber.getFlagImg('+33612345678', 'FR');
-			expect(result).toContain('fr.png');
-			expect(result).toContain('<img');
+			expect(result).toContain('fi-fr');
+			expect(result).toContain('<span');
 		});
 	});
 
 	describe('formatNationalWithFlagImg', () => {
 		test('should format phone number with flag image', () => {
 			const result = TelephoneNumber.formatNationalWithFlagImg('+33612345678', 'FR');
-			expect(result).toContain('fr.png');
+			expect(result).toContain('fi-fr');
 			expect(result).toContain('06 12 34 56 78');
 		});
 	});
@@ -330,7 +330,7 @@ describe('TelephoneNumber', () => {
 	describe('formatNationalWithFlagImgAndTelLink', () => {
 		test('should format phone number with flag and tel link', () => {
 			const result = TelephoneNumber.formatNationalWithFlagImgAndTelLink('+33612345678', 'FR');
-			expect(result).toContain('fr.png');
+			expect(result).toContain('fi-fr');
 			expect(result).toContain('<a href="tel:+33612345678">');
 			expect(result).toContain('06 12 34 56 78');
 		});

@@ -39,7 +39,10 @@ class ImportFromCsv {
 		} = { ...ImportFromCsv._defaults, ...options };
 
 		const template = document.querySelector('.import_form_base');
-		if (!template) return;
+		if (!template) {
+			return;
+		}
+
 		const clone = template.cloneNode(true);
 		clone.classList.remove('import_form_base', 'hide');
 		div.innerHTML = '';
@@ -55,8 +58,9 @@ class ImportFromCsv {
 			formUpload.querySelector('div.errors')?.classList.add('hide');
 		}
 
-		if (specificDescDiv != null) {
-			div.querySelector('.specific_desc')?.append(specificDescDiv);
+		const specificDescDivEl = toEl(specificDescDiv);
+		if (specificDescDivEl != null) {
+			div.querySelector('.specific_desc')?.append(specificDescDivEl);
 		}
 
 		if (additionalFormField != null) {

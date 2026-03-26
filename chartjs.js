@@ -1,3 +1,4 @@
+const { Chart } = require('chart.js');
 const { toEl } = require('./util');
 const deepmerge = require('deepmerge');
 const { DatePeriod } = require('./date_time');
