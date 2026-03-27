@@ -1,4 +1,5 @@
 const { SqlDateTime } = require('./date_time');
+const { Locale } = require('./locale');
 
 class IBAN {
 	static format(iban) {
@@ -15,7 +16,7 @@ class BankCard {
 		return cardNumber;
 	}
 
-	static formatExpirationDate(expirationDate, locale='fr-FR') {
+	static formatExpirationDate(expirationDate, locale=Locale.getDefault()) {
 		return SqlDateTime.getMonthName(expirationDate, locale)+' '+SqlDateTime.getYear(expirationDate);
 	}
 }

@@ -7,12 +7,13 @@ require('./array');
 require('./number');
 
 // exports d'ojets non natif
+const { Locale } = require('./locale');
 const { HTTPClient } = require('./http_client');
 const { Cookie, UrlAndQueryString } = require('./network');
 const { IBAN, BankCard } = require('./bank');
 const { AudioMedia, VideoMedia, UserMedia } = require('./media');
 const { PersonName, Email, TelephoneNumber } = require('./contact_details');
-const { DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
+const { TimeZone, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime } = require('./date_time');
 const { Duration } = require('./duration');
 const { File, CSV, Img } = require('./file');
 const { FormHelper, EditValue } = require('./form_helper');
@@ -52,7 +53,7 @@ const { WebSocket } = require('./web_socket');
 
 module.exports = {
 	Array, Object, Number, String,
-	HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, NumberFormatter, Rating, Password,
+	Locale, HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, TimeZone, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, NumberFormatter, Rating, Password,
 	Browser, DataTableManager, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	Chartjs, GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap

@@ -1,7 +1,8 @@
 const { Chart } = require('chart.js');
 const { toEl } = require('./util');
 const deepmerge = require('deepmerge');
-const { DatePeriod } = require('./date_time');
+const { TimeZone, DatePeriod } = require('./date_time');
+const { Locale } = require('./locale');
 
 class Chartjs {
 	static init() {
@@ -314,7 +315,7 @@ class Chartjs {
 		});
 	}
 
-	static getPeriodLabels(data, period, locale = 'fr-FR', timeZone = 'Europe/Paris') {
+	static getPeriodLabels(data, period, locale= Locale.getDefault(), timeZone= TimeZone.getDefault()) {
 		return DatePeriod.getPeriodLabels(Object.keys(data), period, locale, timeZone);
 	}
 

@@ -1,3 +1,4 @@
+const { Locale } = require('./locale');
 
 class Duration {
 
@@ -5,7 +6,7 @@ class Duration {
 	// Days formatting
 	// -------------------------------------------------------------------------
 
-	static formatDays(days, locale = 'fr-FR') {
+	static formatDays(days, locale = Locale.getDefault()) {
 		return new Intl.NumberFormat(locale, {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2
@@ -203,7 +204,7 @@ class Duration {
 	// -------------------------------------------------------------------------
 
 	/** @deprecated Use {@link formatDays} instead */
-	static formatNbDays(nbDays, locale = 'fr-FR') { return this.formatDays(nbDays, locale); }
+	static formatNbDays(nbDays, locale = Locale.getDefault()) { return this.formatDays(nbDays, locale); }
 	/** @deprecated Use {@link formatDaysIfPositive} instead */
 	static formatNbDaysIfPositive(nbDays) { return this.formatDaysIfPositive(nbDays); }
 	/** @deprecated Use {@link formatDaysWithColor} instead */

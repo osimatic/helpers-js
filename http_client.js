@@ -1,5 +1,6 @@
 const { JwtSession } = require('./jwt');
 const { UrlAndQueryString } = require('./network');
+const { Locale } = require('./locale');
 
 class HTTPClient {
 	static setAuthorizationToken(authorizationToken) {
@@ -45,6 +46,8 @@ class HTTPClient {
 			HTTPClient.headers['Authorization'] = null;
 			httpHeadersData = HTTPClient.headers;
 		}
+
+		httpHeadersData['Accept-Language'] = Locale.getDefault();
 
 		if (addAuthorizationHeader) {
 			const authorizationToken = typeof HTTPClient.authorizationToken != 'undefined' && null != HTTPClient.authorizationToken ? HTTPClient.authorizationToken : JwtSession.getToken();

@@ -1,3 +1,5 @@
+const { Locale } = require('./locale');
+
 class NumberFormatter {
 	static getDecimalFormatter(locale, digits = 2) {
 		this.decimalFormatter = this.decimalFormatter || {};
@@ -27,29 +29,29 @@ class NumberFormatter {
 	}
 }
 
-Number.prototype.format = Number.prototype.format || function(nbDecimal=2, locale='fr-FR') {
+Number.prototype.format = Number.prototype.format || function(nbDecimal=2, locale=Locale.getDefault()) {
 	return Number.format(this, nbDecimal, locale);
 }
 
 if (!Number.format) {
-	Number.format = function(number, nbDecimal=2, locale='fr-FR') {
+	Number.format = function(number, nbDecimal=2, locale=Locale.getDefault()) {
 		return NumberFormatter.getDecimalFormatter(locale, nbDecimal).format(number);
 	};
 }
 
-Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency, nbDecimal=2, locale='fr-FR') {
+Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency, nbDecimal=2, locale=Locale.getDefault()) {
 	return Number.formatCurrency(this, currency, nbDecimal, locale);
 }
 
-Number.formatCurrency = Number.formatCurrency || function(number, currency, nbDecimal=2, locale='fr-FR') {
+Number.formatCurrency = Number.formatCurrency || function(number, currency, nbDecimal=2, locale=Locale.getDefault()) {
 	return NumberFormatter.getCurrencyFormatter(locale, currency, nbDecimal).format(number);
 }
 
-Number.prototype.formatPercent = Number.prototype.formatPercent || function(nbDecimal=2, locale='fr-FR') {
+Number.prototype.formatPercent = Number.prototype.formatPercent || function(nbDecimal=2, locale=Locale.getDefault()) {
 	return Number.formatPercent(this, nbDecimal, locale);
 }
 
-Number.formatPercent = Number.formatPercent || function(number, nbDecimal=2, locale='fr-FR') {
+Number.formatPercent = Number.formatPercent || function(number, nbDecimal=2, locale=Locale.getDefault()) {
 	return NumberFormatter.getPercentFormatter(locale, nbDecimal).format(number);
 }
 

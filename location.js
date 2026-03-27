@@ -1,9 +1,8 @@
-
 const Address = require('ilib/lib/Address');
 const AddressFmt = require('ilib/lib/AddressFmt');
-const { HTTPClient } = require('./http_client');
 const { toEl } = require('./util');
 const isoCountries = require('i18n-iso-countries');
+const { Locale } = require('./locale');
 isoCountries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 class Country {
@@ -14,7 +13,7 @@ class Country {
 	static getFlagPath(countryCode) {
 		return typeof Country.flagsPath !== 'undefined' ? Country.flagsPath + countryCode.toLowerCase() + '.png' : null;
 	}
-	static getFlagImg(countryCode, locale='fr-FR') {
+	static getFlagImg(countryCode, locale=Locale.getDefault()) {
 		if (typeof Country.flagsPath !== 'undefined') {
 			return '<span><img src="'+Country.getFlagPath(countryCode)+'" alt="" title="'+Country.getCountryName(countryCode, locale)+'" class="flag" /></span>';
 		}
@@ -24,7 +23,7 @@ class Country {
 		return [...countryCode.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 - 65 + c.charCodeAt(0))).join('');
 	}
 
-	static fillSelect(select, defaultValue=null, locale='fr-FR', showFlags=false, countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
+	static fillSelect(select, defaultValue=null, locale=Locale.getDefault(), showFlags=false, countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
 		select = toEl(select);
 		if (!select) {
 			return;
@@ -53,11 +52,11 @@ class Country {
 		}
 	}
 
-	static fillSelectWithFlags(select, defaultValue=null, locale='fr-FR', countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
+	static fillSelectWithFlags(select, defaultValue=null, locale=Locale.getDefault(), countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
 		return Country.fillSelect(select, defaultValue, locale, true, countriesList, addNoneValue, noneLabel);
 	}
 
-	static getCountryName(countryCode, locale='fr-FR') {
+	static getCountryName(countryCode, locale=Locale.getDefault()) {
 		const baseLang = Locale.getBaseLang(locale);
 		Country.getCountries(locale); // ensure locale is registered
 		const name = isoCountries.getName(countryCode, baseLang);
@@ -534,37 +533,6 @@ class GeographicCoordinates {
 		return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 	}
 
-}
-
-class Locale {
-	static getBaseLang(locale) {
-		return Locale.normalize(locale).split('-')[0];
-	}
-
-	static getRegion(locale) {
-		const parts = Locale.normalize(locale).split('-');
-		return parts.length > 1 ? parts[1] : null;
-	}
-
-	static normalize(locale) {
-		// Accept both 'fr_FR' and 'fr-fr', output 'fr-FR'
-		const parts = locale.replace('_', '-').split('-');
-		const lang = parts[0].toLowerCase();
-		const region = parts[1] ? parts[1].toUpperCase() : null;
-		return region ? lang + '-' + region : lang;
-	}
-
-	static isValid(locale) {
-		return /^[a-zA-Z]{2,3}(-[a-zA-Z]{2,3})?$/.test(locale);
-	}
-
-	static toPOSIX(locale) {
-		return Locale.normalize(locale).replace('-', '_');
-	}
-
-	static update(locale) {
-		HTTPClient.setHeader('Accept-Language', Locale.normalize(locale));
-	}
 }
 
 module.exports = { Country, Locale, PostalAddress, GeographicCoordinates, Polygon };

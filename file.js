@@ -1,5 +1,6 @@
 const { toEl } = require('./util');
 const { HTTPClient } = require('./http_client');
+const { Locale } = require('./locale');
 
 class File {
 	static download(data, contentType, contentDisposition) {
@@ -44,7 +45,7 @@ class File {
 		}
 	}
 
-	static formatFileSize(fileSizeInBytes, fractionDigits=2, locale='fr-FR') {
+	static formatFileSize(fileSizeInBytes, fractionDigits=2, locale=Locale.getDefault()) {
 		let i = -1;
 		let byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 		if (fileSizeInBytes === 0) {
@@ -135,6 +136,7 @@ class Img {
 
 	static setBlobToImg(img, blob) {
 		// Validation de l'élément img
+		img = toEl(img);
 		if (!img) {
 			console.error('Invalid img element provided to setBlobToImg');
 			return;

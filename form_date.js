@@ -1,5 +1,6 @@
 const { toEl } = require('./util');
 const { DateTime } = require('./date_time');
+const {Locale} = require('./locale');
 
 // input period de type : Du <input type="date" name="start_date" /> au <input type="date" name="end_date" />
 class InputPeriod {
@@ -160,7 +161,7 @@ class FormDate {
 		}
 	}
 
-	static fillMonthSelect(select, locale) {
+	static fillMonthSelect(select, locale=Locale.getDefault()) {
 		select = toEl(select);
 		if (!select) {
 			return;
@@ -170,7 +171,7 @@ class FormDate {
 		}
 	}
 
-	static fillDayOfWeekSelect(select, locale) {
+	static fillDayOfWeekSelect(select, locale=Locale.getDefault()) {
 		select = toEl(select);
 		if (!select) {
 			return;
