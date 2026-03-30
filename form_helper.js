@@ -32,11 +32,13 @@ class FormHelper {
 		}
 
 		submitButton = null != submitButton ? toEl(submitButton) : form.querySelector('button[name="validate"]');
-		form.querySelectorAll('input[name]:not([type="checkbox"]):not([type="radio"]), select:not(.selectpicker), textarea').forEach(el => {
+		form.querySelectorAll('input[name]:not([type="checkbox"]):not([type="radio"]), select, textarea').forEach(el => {
 			el.value = '';
 			el.onchange = null;
+			if (el.tomselect) {
+				el.tomselect.clear(true);
+			}
 		});
-		form.querySelectorAll('select.selectpicker').forEach(el => el.value = '');
 		FormHelper.buttonLoader(submitButton, 'reset');
 		FormHelper.hideFormErrors(form);
 		return wasJQuery ? toJquery(form) : form;
@@ -577,9 +579,13 @@ class ArrayField {
 			if (typeof item != 'undefined' && null !== item) {
 				tr.dataset.item = item ?? '';
 				const inputEl = tr.querySelector('input');
-				if (inputEl) inputEl.value = item;
+				if (inputEl) {
+					inputEl.value = item;
+				}
 				const spanEl = tr.querySelector('span.value');
-				if (spanEl) spanEl.textContent = item;
+				if (spanEl) {
+					spanEl.textContent = item;
+				}
 			}
 
 			table.querySelector('tbody').appendChild(tr);

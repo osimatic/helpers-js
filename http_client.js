@@ -68,7 +68,9 @@ class HTTPClient {
 
 		let httpHeaders = new Headers();
 		Object.entries(httpHeadersData).forEach(([key, value]) => {
-			httpHeaders.append(key, value);
+			if (value !== null && value !== undefined) {
+				httpHeaders.append(key, value);
+			}
 		});
 		return httpHeaders;
 	}
@@ -210,7 +212,7 @@ class HTTPClient {
 		JwtSession.logout(HTTPClient.onInvalidTokenRedirectUrl);
 	}
 
-	static async request(method, url, data, successCallback=null, errorCallback=null, formErrorCallback=null, additionalHeaders={}, sendAuthorizationHeader=true) {
+	static async request(method, url, data={}, successCallback=null, errorCallback=null, formErrorCallback=null, additionalHeaders={}, sendAuthorizationHeader=true) {
 		if (!window.fetch) {
 			return;
 		}
@@ -234,7 +236,8 @@ class HTTPClient {
 			}
 		}
 		else {
-			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
+			const qs = HTTPClient.formatQueryString(data);
+			url += url.includes('?') ? qs : '?' + qs.substring(1);
 			data = null;
 		}
 
@@ -257,7 +260,7 @@ class HTTPClient {
 			}
 
 			if (HTTPClient.isExpiredToken(response, jsonData)) {
-				HTTPClient.refreshToken(() => HTTPClient.request(method, url, data, successCallback, errorCallback, formErrorCallback, additionalHeaders), errorCallback);
+				HTTPClient.refreshToken(() => HTTPClient.request(method, url, data, successCallback, errorCallback, formErrorCallback, additionalHeaders, sendAuthorizationHeader), errorCallback);
 				return;
 			}
 
@@ -292,7 +295,19 @@ class HTTPClient {
 		}
 	}
 
-	static download(method, url, data, errorCallback=null, completeCallback=null, additionalHeaders={}) {
+	static requestAsPromise(method, url, data={}, additionalHeaders={}, sendAuthorizationHeader=true) {
+		return new Promise((resolve, reject) => {
+			HTTPClient.request(method, url, data,
+				(jsonData, response) => resolve({ jsonData, response }),
+				(response, jsonData) => reject({ response, jsonData }),
+				(jsonData, response) => reject({ response, jsonData }),
+				additionalHeaders,
+				sendAuthorizationHeader
+			);
+		});
+	}
+
+	static download(method, url, data={}, errorCallback=null, completeCallback=null, additionalHeaders={}) {
 		HTTPClient.requestBlob(method, url, data,
 			(blobData, response) => {
 				const contentType = response.headers.get('content-type');
@@ -308,7 +323,7 @@ class HTTPClient {
 		);
 	}
 
-	static async requestBlob(method, url, data, successCallback=null, errorCallback=null, completeCallback=null, additionalHeaders={}) {
+	static async requestBlob(method, url, data={}, successCallback=null, errorCallback=null, completeCallback=null, additionalHeaders={}) {
 		if (!window.fetch) {
 			return;
 		}
@@ -330,7 +345,8 @@ class HTTPClient {
 			}
 		}
 		else {
-			url += (!url.includes('?') ? '?' : '') + HTTPClient.formatQueryString(data);
+			const qs = HTTPClient.formatQueryString(data);
+			url += url.includes('?') ? qs : '?' + qs.substring(1);
 			data = null;
 		}
 
@@ -347,12 +363,17 @@ class HTTPClient {
 			// On met le fetch dans un try catch pour détecter les erreurs de connexion réseau (si pas de connexion, une exception est déclenchée par fetch)
 			response = await fetch(url, requestOptions);
 
-			if (response.status === 401 && response.statusText === 'Expired JWT Token') {
+			let jsonDataBlob = {};
+			if (response.status === 401) {
+				try { jsonDataBlob = await response.json(); } catch (e) { /* ignore */ }
+			}
+
+			if (HTTPClient.isExpiredToken(response, jsonDataBlob)) {
 				HTTPClient.refreshToken(() => HTTPClient.requestBlob(method, url, data, successCallback, errorCallback, completeCallback, additionalHeaders), errorCallback);
 				return;
 			}
 
-			if (response.status === 401 && response.statusText === 'Invalid JWT Token') {
+			if (HTTPClient.isInvalidToken(response, jsonDataBlob)) {
 				HTTPClient.onInvalidToken();
 				return;
 			}
@@ -410,7 +431,9 @@ class HTTPClient {
 
 			// On exécute les completeCallback qui était en attente de la requete refresh token
 			if (typeof HTTPClient.listCompleteCallbackAfterRefreshTokenFinished != 'undefined') {
-				HTTPClient.listCompleteCallbackAfterRefreshTokenFinished.forEach(callback => typeof callback == 'function' ? callback() : null);
+				const callbacks = HTTPClient.listCompleteCallbackAfterRefreshTokenFinished;
+				HTTPClient.listCompleteCallbackAfterRefreshTokenFinished = [];
+				callbacks.forEach(callback => typeof callback == 'function' ? callback() : null);
 			}
 		}
 
@@ -445,6 +468,8 @@ class HTTPClient {
 				onRefreshTokenComplete();
 			},
 			() => {
+				HTTPClient.refreshTokenStarted = false;
+				HTTPClient.listCompleteCallbackAfterRefreshTokenFinished = [];
 				if (typeof HTTPClient.onInvalidRefreshTokenCallback == 'function') {
 					HTTPClient.onInvalidRefreshTokenCallback();
 				}

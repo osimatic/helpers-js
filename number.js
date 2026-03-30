@@ -1,5 +1,21 @@
 const { Locale } = require('./locale');
 
+class Currency {
+	static current = 'EUR';
+
+	static getDefault() {
+		return Currency.current;
+	}
+
+	static setDefault(currency) {
+		Currency.current = currency;
+	}
+
+	static format(number, nbDecimal=2, currency=Currency.getDefault(), locale=Locale.getDefault()) {
+		return NumberFormatter.getCurrencyFormatter(locale, currency, nbDecimal).format(number);
+	}
+}
+
 class NumberFormatter {
 	static getDecimalFormatter(locale, digits = 2) {
 		this.decimalFormatter = this.decimalFormatter || {};
@@ -39,12 +55,12 @@ if (!Number.format) {
 	};
 }
 
-Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency, nbDecimal=2, locale=Locale.getDefault()) {
-	return Number.formatCurrency(this, currency, nbDecimal, locale);
+Number.prototype.formatCurrency = Number.prototype.formatCurrency || function(currency=Currency.getDefault(), nbDecimal=2, locale=Locale.getDefault()) {
+	return Currency.format(this, nbDecimal, currency, locale);
 }
 
-Number.formatCurrency = Number.formatCurrency || function(number, currency, nbDecimal=2, locale=Locale.getDefault()) {
-	return NumberFormatter.getCurrencyFormatter(locale, currency, nbDecimal).format(number);
+Number.formatCurrency = Number.formatCurrency || function(number, currency=Currency.getDefault(), nbDecimal=2, locale=Locale.getDefault()) {
+	return Currency.format(number, nbDecimal, currency, locale);
 }
 
 Number.prototype.formatPercent = Number.prototype.formatPercent || function(nbDecimal=2, locale=Locale.getDefault()) {
@@ -123,4 +139,4 @@ class Rating {
 	}
 }
 
-module.exports = { NumberFormatter, Rating };
+module.exports = { Currency, NumberFormatter, Rating };

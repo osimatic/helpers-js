@@ -3,6 +3,7 @@ const AddressFmt = require('ilib/lib/AddressFmt');
 const { toEl } = require('./util');
 const isoCountries = require('i18n-iso-countries');
 const { Locale } = require('./locale');
+const { SelectBox } = require('./select_box');
 isoCountries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 class Country {
@@ -50,6 +51,8 @@ class Country {
 		if (null != defaultValue) {
 			select.value = defaultValue;
 		}
+
+		SelectBox.refresh(select);
 	}
 
 	static fillSelectWithFlags(select, defaultValue=null, locale=Locale.getDefault(), countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {

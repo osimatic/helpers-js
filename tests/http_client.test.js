@@ -567,4 +567,59 @@ describe('HTTPClient', () => {
 			);
 		});
 	});
+
+	describe('request', () => {
+		let mockFetch;
+
+		beforeEach(() => {
+			mockFetch = jest.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				statusText: 'OK',
+				json: jest.fn().mockResolvedValue({ success: true }),
+			});
+			global.window = { fetch: mockFetch };
+			global.fetch = mockFetch;
+			global.URLSearchParams = jest.fn().mockImplementation(function() {
+				this.toString = jest.fn().mockReturnValue('');
+			});
+		});
+
+		afterEach(() => {
+			delete global.window;
+			delete global.fetch;
+			delete global.URLSearchParams;
+		});
+
+		test('should handle null data for GET, POST and PATCH', async () => {
+			const successCallback = jest.fn();
+
+			await HTTPClient.request('GET', 'https://api.example.com/users', null, successCallback);
+			expect(mockFetch).toHaveBeenCalledWith(
+				'https://api.example.com/users?',
+				expect.objectContaining({ method: 'GET', body: null })
+			);
+			expect(successCallback).toHaveBeenCalledWith({ success: true }, expect.anything());
+
+			mockFetch.mockClear();
+			successCallback.mockClear();
+
+			await HTTPClient.request('POST', 'https://api.example.com/users', null, successCallback);
+			expect(mockFetch).toHaveBeenCalledWith(
+				'https://api.example.com/users',
+				expect.objectContaining({ method: 'POST', body: expect.any(FormData) })
+			);
+			expect(successCallback).toHaveBeenCalledWith({ success: true }, expect.anything());
+
+			mockFetch.mockClear();
+			successCallback.mockClear();
+
+			await HTTPClient.request('PATCH', 'https://api.example.com/users/1', null, successCallback);
+			expect(mockFetch).toHaveBeenCalledWith(
+				'https://api.example.com/users/1',
+				expect.objectContaining({ method: 'PATCH', body: '' })
+			);
+			expect(successCallback).toHaveBeenCalledWith({ success: true }, expect.anything());
+		});
+	});
 });
