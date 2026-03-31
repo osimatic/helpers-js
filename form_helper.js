@@ -1,4 +1,5 @@
 const { toEl, toJquery } = require('./util');
+const { SelectBox } = require('./select_box');
 
 class FormHelper {
 	static init(form, onSubmitCallback, submitButton=null) {
@@ -35,8 +36,8 @@ class FormHelper {
 		form.querySelectorAll('input[name]:not([type="checkbox"]):not([type="radio"]), select, textarea').forEach(el => {
 			el.value = '';
 			el.onchange = null;
-			if (el.tomselect) {
-				el.tomselect.clear(true);
+			if (el.tagName === 'SELECT') {
+				SelectBox.clear(el);
 			}
 		});
 		FormHelper.buttonLoader(submitButton, 'reset');
@@ -65,19 +66,26 @@ class FormHelper {
 					select.dataset.default_id = value.join(',');
 					value.forEach(val => {
 						const opt = select.querySelector('option[value="'+val+'"]');
-						if (opt) opt.selected = true;
+						if (opt) {
+							opt.selected = true;
+						}
 					});
+					//SelectBox.refresh(select);
 				}
 				return;
 			}
 
 			const inputs = form.querySelectorAll('[name="'+key+'"]');
-			if (!inputs.length) return;
+			if (!inputs.length) {
+				return;
+			}
 
 			if (inputs[0].type === 'radio' || inputs[0].type === 'checkbox') {
 				inputs.forEach(i => i.checked = false);
 				const target = form.querySelector('[name="'+key+'"][value="'+value+'"]');
-				if (target) target.checked = true;
+				if (target) {
+					target.checked = true;
+				}
 				return;
 			}
 

@@ -29,7 +29,7 @@ class Country {
 		if (!select) {
 			return;
 		}
-		if (select.children.length === 0) {
+ 		if (select.querySelectorAll('option[value]:not([value=""])').length === 0) {
 			if (addNoneValue) {
 				select.insertAdjacentHTML('beforeend', '<option value="">'+noneLabel+'</option>');
 			}
@@ -48,11 +48,11 @@ class Country {
 				select.insertAdjacentHTML('beforeend', '<option value="' + countryCode + '"' + attrs + '>' + countryName + '</option>');
 			});
 		}
-		if (null != defaultValue) {
-			select.value = defaultValue;
-		}
 
 		SelectBox.refresh(select);
+		if (null != defaultValue) {
+			SelectBox.setValue(select, defaultValue);
+		}
 	}
 
 	static fillSelectWithFlags(select, defaultValue=null, locale=Locale.getDefault(), countriesList=null, addNoneValue=false, noneLabel='- Aucun -') {
@@ -101,7 +101,7 @@ class Country {
 		if (!select) {
 			return;
 		}
-		if (select.children.length === 0) {
+		if (select.querySelectorAll('option[value]:not([value=""])').length === 0) {
 			if (addNoneValue) {
 				select.insertAdjacentHTML('beforeend', '<option value="">'+noneLabel+'</option>');
 			}

@@ -50,7 +50,7 @@ class SelectBox {
 		if (isMultiple && (el.dataset.actionsBox || el.dataset.actions_box)) {
 			plugins.push('actions_box');
 		}
-		if (el.dataset.allowClear || el.dataset.allow_clear) {
+		if (!isMultiple && el.dataset.allowClear !== 'false') {
 			plugins.push('clear_button');
 		}
 		if (isMultiple) {
@@ -58,18 +58,33 @@ class SelectBox {
 		}
 
 		const ts = new TomSelect(el, {
-			allowEmptyOption: false,
+			allowEmptyOption: !isMultiple,
 			placeholder: el.getAttribute('title') || 'Choisissez\u2026',
 			plugins,
 			wrapperClass: 'ts-wrapper' + (isMultiple ? ' multi' : ' single form-select'),
 			onItemAdd: isMultiple ? undefined : function() { this.setTextboxValue(''); this.blur(); },
 		});
 
+		if (!isMultiple && !el.querySelector('option[selected]')) {
+			ts.clear(true);
+		}
+
 		if (el.dataset.hide_if_empty) {
 			SelectBox._checkHideIfEmpty(ts);
 		}
 
 		return ts;
+	}
+
+	static resetAll(container) {
+		container = toEl(container);
+		container.querySelectorAll('select.ts-select').forEach(el => {
+			if (!el.tomselect) {
+				el.parentElement.querySelectorAll('.ts-wrapper').forEach(w => w.remove());
+				el.classList.remove('ts-hidden-accessible', 'tomselected');
+			}
+			SelectBox.init(el);
+		});
 	}
 
 	/**
@@ -95,8 +110,21 @@ class SelectBox {
 			return;
 		}
 
-		ts.sync();
+		const rawVal = ts.getValue();
+		const prevVal = Array.isArray(rawVal) ? [...rawVal] : rawVal;
 		el = toEl(el);
+		ts.sync();
+		if (prevVal && prevVal !== '' && !(Array.isArray(prevVal) && prevVal.length === 0)) {
+			ts.setValue(prevVal, true); // restore selection, ignore values not in options
+		}
+		else {
+			// When there was no previous selection, honor option[selected] set before refresh()
+			// (e.g. by updateSelectEmployeeCompanyTask). ts.sync() loaded them — read back from the DOM.
+			const selectedValues = el
+				? [...el.options].filter(o => o.selected && o.value !== '').map(o => o.value)
+				: [];
+			selectedValues.length > 0 ? ts.setValue(selectedValues, true) : ts.clear(true);
+		}
 		if (el && el.dataset.hide_if_empty) {
 			SelectBox._checkHideIfEmpty(ts);
 		}
@@ -108,8 +136,14 @@ class SelectBox {
 	 * @param {string|string[]|null} val
 	 */
 	static setValue(el, val) {
-		const ts = SelectBox.getInstance(el);
+		el = toEl(el);
+		if (!el) {
+			return;
+		}
+
+		const ts = el.tomselect;
 		if (!ts) {
+			el.value = (val === null || val === undefined) ? '' : val;
 			return;
 		}
 
@@ -118,6 +152,24 @@ class SelectBox {
 		}
 		else {
 			ts.setValue(val, true);
+		}
+	}
+
+	/**
+	 * Clear the selected value(s).
+	 * @param {HTMLElement|jQuery} el
+	 */
+	static clear(el) {
+		el = toEl(el);
+		if (!el) {
+			return;
+		}
+
+		if (el.tomselect) {
+			el.tomselect.clear(true);
+		}
+		else {
+			el.value = '';
 		}
 	}
 
