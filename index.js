@@ -41,6 +41,7 @@ const { ImportFromCsv } = require('./import_from_csv');
 const { JwtToken, JwtSession, ApiTokenSession } = require('./jwt');
 const { ListBox } = require('./list_box');
 const { SelectBox } = require('./select_box');
+const { Modal } = require('./modal');
 const { WebRTC } = require('./web_rtc');
 const { EventBus } = require('./event_bus');
 
@@ -55,7 +56,7 @@ const { WebSocket } = require('./web_socket');
 module.exports = {
 	Array, Object, Number, String,
 	Locale, HTTPClient, Cookie, UrlAndQueryString, IBAN, BankCard, AudioMedia, VideoMedia, UserMedia, PersonName, Email, TelephoneNumber, TimeZone, DateTime, DatePeriod, TimestampUnix, SqlDate, SqlTime, SqlDateTime, Duration, File, CSV, Img, FormHelper, Country, PostalAddress, GeographicCoordinates, Polygon, HexColor, RgbColor, SocialNetwork, Currency, NumberFormatter, Rating, Password,
-	Browser, DataTableManager, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, SelectBox, WebRTC, WebSocket, EventBus,
+	Browser, DataTableManager, Pagination, Navigation, DetailsSubArray, SelectAll, MultipleActionInTable, MultipleActionInDivList, MultiFilesInput, EditValue, FormDate, InputPeriod, ShoppingCart, FlashMessage, CountDown, ImportFromCsv, JwtToken, JwtSession, ApiTokenSession, ListBox, SelectBox, Modal, WebRTC, WebSocket, EventBus,
 	sleep, refresh, chr, ord, trim, empty,
 	Chartjs, GoogleCharts, GoogleRecaptcha, GoogleMap, OpenStreetMap
 };

@@ -50,7 +50,7 @@ class UrlAndQueryString {
 		if (typeof url == 'undefined') {
 			return withProtocol ? window.location.origin : window.location.host;
 		}
-		url = new URL(url);
+		url = new URL(url, window.location.origin);
 		return (withProtocol ? url.protocol + '//' : '') + url.host;
 	}
 
@@ -58,7 +58,7 @@ class UrlAndQueryString {
 		if (typeof url == 'undefined') {
 			return window.location.pathname;
 		}
-		url = new URL(url);
+		url = new URL(url, window.location.origin);
 		return url.pathname;
 	}
 
@@ -66,7 +66,7 @@ class UrlAndQueryString {
 		if (typeof url == 'undefined') {
 			return window.location.search;
 		}
-		url = new URL(url);
+		url = new URL(url, window.location.origin);
 		return url.search;
 	}
 

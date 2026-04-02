@@ -50,26 +50,44 @@ class SelectBox {
 		if (isMultiple && (el.dataset.actionsBox || el.dataset.actions_box)) {
 			plugins.push('actions_box');
 		}
-		if (!isMultiple && el.dataset.allowClear !== 'false') {
+		if (!isMultiple && el.dataset.allowClear !== 'false' && el.dataset.allow_clear !== 'false') {
 			plugins.push('clear_button');
+		}
+		if (!isMultiple && el.dataset.dropdownInput !== 'false' && el.dataset.dropdown_input !== 'false') {
+			plugins.push('dropdown_input');
 		}
 		if (isMultiple) {
 			plugins.push('remove_button');
 		}
 
+		const searchDisabled = el.dataset.search === 'false';
+		const maxOptions = el.dataset.maxOptions ?? el.dataset.max_options ?? null;
+
 		const ts = new TomSelect(el, {
+			maxOptions: maxOptions !== null ? parseInt(maxOptions, 10) : null,
 			allowEmptyOption: !isMultiple,
 			placeholder: el.getAttribute('title') || 'Choisissez\u2026',
 			plugins,
 			wrapperClass: 'ts-wrapper' + (isMultiple ? ' multi' : ' single form-select'),
 			onItemAdd: isMultiple ? undefined : function() { this.setTextboxValue(''); this.blur(); },
+			...(searchDisabled ? { controlInput: null } : {}),
+			render: {
+				// Use data-content attribute (set e.g. by Country.fillSelectWithFlags) as raw HTML
+				// for both the dropdown option and the selected item display.
+				option: (data, escape) => data.content
+					? '<div>' + data.content + '</div>'
+					: '<div>' + escape(data.text) + '</div>',
+				item: (data, escape) => data.content
+					? '<div>' + data.content + '</div>'
+					: '<div>' + escape(data.text) + '</div>',
+			},
 		});
 
 		if (!isMultiple && !el.querySelector('option[selected]')) {
 			ts.clear(true);
 		}
 
-		if (el.dataset.hide_if_empty) {
+		if ((el.dataset.hide_if_empty || el.dataset.hideIfEmpty)) {
 			SelectBox._checkHideIfEmpty(ts);
 		}
 
@@ -113,19 +131,34 @@ class SelectBox {
 		const rawVal = ts.getValue();
 		const prevVal = Array.isArray(rawVal) ? [...rawVal] : rawVal;
 		el = toEl(el);
+
+		// Tom Select's updateOriginalInput() inserts <option value=""> (no text, selected) into
+		// the DOM when nothing is selected in single mode. With allowEmptyOption: true, sync()
+		// would read it back, add it to the option store as selected, display a blank first item
+		// in the dropdown, and suppress the placeholder. Remove it before sync() if it has no
+		// text content (auto-generated). Intentional "none" options (e.g. "- Aucun -") are kept.
+		if (ts.settings.mode === 'single') {
+			const emptyOption = el ? el.querySelector('option[value=""]') : null;
+			if (emptyOption && !emptyOption.textContent.trim()) {
+				emptyOption.remove();
+			}
+		}
+
 		ts.sync();
 		if (prevVal && prevVal !== '' && !(Array.isArray(prevVal) && prevVal.length === 0)) {
 			ts.setValue(prevVal, true); // restore selection, ignore values not in options
 		}
 		else {
 			// When there was no previous selection, honor option[selected] set before refresh()
-			// (e.g. by updateSelectEmployeeCompanyTask). ts.sync() loaded them — read back from the DOM.
+			// (e.g. by updateSelectEmployeeCompanyTask, which appends options with selected="selected").
+			// Use hasAttribute('selected') — not o.selected — to distinguish an explicit selection from
+			// the browser's implicit default (first option has .selected=true by default but no attribute).
 			const selectedValues = el
-				? [...el.options].filter(o => o.selected && o.value !== '').map(o => o.value)
+				? [...el.options].filter(o => o.hasAttribute('selected') && o.value !== '').map(o => o.value)
 				: [];
 			selectedValues.length > 0 ? ts.setValue(selectedValues, true) : ts.clear(true);
 		}
-		if (el && el.dataset.hide_if_empty) {
+		if (el && (el.dataset.hide_if_empty || el.dataset.hideIfEmpty)) {
 			SelectBox._checkHideIfEmpty(ts);
 		}
 	}
