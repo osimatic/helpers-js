@@ -91,6 +91,17 @@ describe('Cookie', () => {
 });
 
 describe('UrlAndQueryString', () => {
+	beforeEach(() => {
+		global.window = {
+			location: {
+				origin: 'https://example.com',
+				host: 'example.com',
+				pathname: '/',
+				search: '',
+			},
+		};
+	});
+
 	describe('displayUrl', () => {
 		test('should display URL with link by default', () => {
 			const result = UrlAndQueryString.displayUrl('https://example.com/path');
@@ -290,6 +301,61 @@ describe('UrlAndQueryString', () => {
 		test('should handle parameter without value', () => {
 			const result = UrlAndQueryString.getParam('query', 'https://example.com/path?query');
 			expect(result).toBe('');
+		});
+	});
+
+	describe('setParam', () => {
+		test('should add a new parameter to empty query string', () => {
+			const result = UrlAndQueryString.setParam('', 'foo', 'bar');
+			expect(result).toBe('foo=bar');
+		});
+
+		test('should add a new parameter to existing query string', () => {
+			const result = UrlAndQueryString.setParam('?a=1&b=2', 'c', '3');
+			expect(result).toContain('a=1');
+			expect(result).toContain('b=2');
+			expect(result).toContain('c=3');
+		});
+
+		test('should override existing parameter', () => {
+			const result = UrlAndQueryString.setParam('?a=1&b=2', 'a', '99');
+			expect(result).toContain('a=99');
+			expect(result).not.toContain('a=1');
+			expect(result).toContain('b=2');
+		});
+
+		test('should encode spaces as %20, not +', () => {
+			const result = UrlAndQueryString.setParam('', 'q', 'hello world');
+			expect(result).toContain('q=hello%20world');
+			expect(result).not.toContain('+');
+		});
+
+		test('should encode accented characters', () => {
+			const result = UrlAndQueryString.setParam('', 'q', 'café');
+			expect(result).not.toContain('é');
+			expect(result).toContain('q=caf');
+		});
+	});
+
+	describe('setParamOfUrl', () => {
+		test('should add a parameter to a URL', () => {
+			const result = UrlAndQueryString.setParamOfUrl('foo', 'bar', 'https://example.com/path?a=1');
+			expect(result).toContain('https://example.com/path?');
+			expect(result).toContain('a=1');
+			expect(result).toContain('foo=bar');
+		});
+
+		test('should override existing parameter in URL', () => {
+			const result = UrlAndQueryString.setParamOfUrl('a', '99', 'https://example.com/path?a=1&b=2');
+			expect(result).toContain('a=99');
+			expect(result).not.toContain('a=1');
+			expect(result).toContain('b=2');
+		});
+
+		test('should encode spaces as %20 in URL', () => {
+			const result = UrlAndQueryString.setParamOfUrl('q', 'hello world', 'https://example.com/path');
+			expect(result).toContain('q=hello%20world');
+			expect(result).not.toContain('+');
 		});
 	});
 

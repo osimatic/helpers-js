@@ -40,6 +40,10 @@ class UrlAndQueryString {
 		return (withLink ? '<a href="' + url + '">' : '') + formattedUrl + (withLink ? '</a>' : '');
 	}
 
+	static #baseFor(url) {
+		return /^https?:\/\//.test(url) ? undefined : window.location.origin;
+	}
+
 	static urlify(text) {
 		return text.replace(/(https?:\/\/[^\s]+)/g, url => '<a href="' + url + '">' + url + '</a>');
 		// or alternatively
@@ -50,7 +54,7 @@ class UrlAndQueryString {
 		if (typeof url == 'undefined') {
 			return withProtocol ? window.location.origin : window.location.host;
 		}
-		url = new URL(url, window.location.origin);
+		url = new URL(url, UrlAndQueryString.#baseFor(url));
 		return (withProtocol ? url.protocol + '//' : '') + url.host;
 	}
 
@@ -58,7 +62,7 @@ class UrlAndQueryString {
 		if (typeof url == 'undefined') {
 			return window.location.pathname;
 		}
-		url = new URL(url, window.location.origin);
+		url = new URL(url, UrlAndQueryString.#baseFor(url));
 		return url.pathname;
 	}
 
@@ -66,7 +70,7 @@ class UrlAndQueryString {
 		if (typeof url == 'undefined') {
 			return window.location.search;
 		}
-		url = new URL(url, window.location.origin);
+		url = new URL(url, UrlAndQueryString.#baseFor(url));
 		return url.search;
 	}
 
@@ -94,7 +98,7 @@ class UrlAndQueryString {
 		let params = UrlAndQueryString.parseQuery(queryString);
 		//console.log(params);
 		params[name] = value;
-		return decodeURI(new URLSearchParams(params).toString());
+		return new URLSearchParams(params).toString().replace(/\+/g, '%20');
 	}
 
 	static setParamOfUrl(name, value, url) {
@@ -105,7 +109,7 @@ class UrlAndQueryString {
 	static deleteParam(queryString, name) {
 		let params = new URLSearchParams(queryString);
 		params.delete(name);
-		return decodeURI(params.toString());
+		return params.toString().replace(/\+/g, '%20');
 
 		//let params = UrlAndQueryString.parseQuery(queryString);
 		//params[name] = null;
