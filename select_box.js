@@ -83,6 +83,14 @@ class SelectBox {
 			},
 		});
 
+		// Toggle dropdown when clicking the control while it is already open
+		ts.wrapper.addEventListener('mousedown', (e) => {
+			if (ts.isOpen && e.target.closest('.ts-control') && !e.target.closest('[data-value]') && !e.target.closest('.clear-button')) {
+				e.preventDefault();
+				ts.close();
+			}
+		});
+
 		if (!isMultiple && !el.querySelector('option[selected]')) {
 			ts.clear(true);
 		}

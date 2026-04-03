@@ -1,0 +1,590 @@
+/* ---------- Title ---------- */
+
+/* ---------- Text ---------- */
+
+.text-normal {
+	font-weight: normal;
+}
+.text-justify {
+	text-align: justify;
+}
+.text-italic {
+	font-style: italic;
+}
+.text-bold {
+	font-weight: bold;
+}
+.text-underline {
+	text-decoration: underline;
+}
+.text-strikethrough, .text-strike  {
+	text-decoration: line-through;
+}
+
+.text-white {
+	color: #fff;
+}
+.text-black {
+	color: #000;
+}
+
+.text-small {
+	font-size: 0.75rem;
+}
+.text-large {
+	font-size: 1.25rem;
+}
+
+/* ---------- Link ---------- */
+
+.pointer {
+	cursor: pointer;
+}
+.clickable {
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+.clickable:hover {
+	opacity: 0.8;
+}
+
+/* ---------- Button ---------- */
+
+/* ---------- Media ---------- */
+
+/* ---------- Table ---------- */
+
+table.vertical-center > tbody > tr > td {
+	vertical-align: middle;
+}
+
+table.table-header-rotated {
+	border-collapse: collapse;
+	width: auto;
+}
+table.table-header-rotated>thead>tr>th {
+	border-bottom: 1px solid #ddd;
+}
+table.table-header-rotated th {
+	padding: 5px 10px;
+	border-bottom: 2px solid #ddd;
+}
+table.table-header-rotated th.rotate {
+	height: 300px;
+	white-space: nowrap;
+	vertical-align: bottom;
+}
+table.table-header-rotated th.rotate > div {
+	transform: translate(25px, -1px) rotate(315deg);
+	width: 30px;
+}
+table.table-header-rotated th.rotate > div > span {
+	border-bottom: 1px solid #ddd;
+	padding: 5px 10px;
+}
+table.table-header-rotated td {
+	width: 30px;
+	text-align: center;
+	padding: 10px 5px;
+	border: 1px solid #ddd;
+}
+
+/* ---------- List ---------- */
+
+.list-none {
+	list-style: none;
+}
+
+.circle-number {
+	display: block;
+	padding: 0;
+	list-style: none;
+	overflow: hidden;
+	counter-reset: numList;
+}
+.circle-number li {
+	margin-bottom: 0.5rem;
+}
+.circle-number li::before {
+	counter-increment: numList;
+	content: counter(numList);
+	font-weight: bold;
+	text-align: center;
+	color: currentColor;
+	margin-right: 0.5rem;
+	display: inline-flex;
+	width: 1.5rem;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	border-radius: 50%;
+	border: 2px solid currentColor;
+}
+
+.sortable-list {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.sortable-list .item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.sortable-list .item[draggable="true"] {
+	cursor: move;
+}
+.sortable-list .item.dragging {
+	opacity: 0.6;
+}
+
+/* ---------- Card ---------- */
+
+/* ---------- Tab / Pill ---------- */
+
+.pill {
+	border-radius: 999px;
+	padding: 4px 10px;
+	font-size: 0.78rem;
+	border: 1px solid transparent;
+	display: inline-block;
+}
+.pill-ok {
+	background: rgba(25, 135, 84, 0.10);
+	color: #146c43;
+	border-color: rgba(25, 135, 84, 0.22);
+}
+.pill-warn {
+	background: rgba(255, 193, 7, 0.14);
+	color: #8a5a00;
+	border-color: rgba(255, 193, 7, 0.30);
+}
+.pill-bad {
+	background: rgba(220, 53, 69, 0.10);
+	color: #b02a37;
+	border-color: rgba(220, 53, 69, 0.22);
+}
+.pill-info {
+	background: rgba(13, 110, 253, 0.10);
+	color: #0b5ed7;
+	border-color: rgba(13, 110, 253, 0.20);
+}
+.pill-soft {
+	background: rgba(108, 117, 125, 0.12);
+	color: #495057;
+	border-color: rgba(108, 117, 125, 0.18);
+}
+
+/* ---------- Form ---------- */
+
+input[type='date'], input[type='time'] {
+	-webkit-appearance: auto;
+	-moz-appearance: textfield;
+	appearance: auto;
+}
+
+/* ---------- Separator ---------- */
+
+hr.md {
+	margin: 4px 0;
+}
+
+/* ---------- Display ---------- */
+
+.hidden {
+	display: none !important;
+}
+.invisible {
+	visibility: hidden;
+}
+.visible {
+	visibility: visible;
+}
+
+/* ---------- Alignment ---------- */
+
+.center {
+	text-align:center;
+}
+.floatLeft {
+	float: left;
+}
+.floatRight {
+	float: right;
+}
+.clear {
+	clear: both;
+}
+
+/* ---------- Size ---------- */
+
+.no-margin {
+	margin: 0;
+}
+
+.w-60 {
+	width: 60%;
+}
+.w-70 {
+	width: 70%;
+}
+.w-80 {
+	width: 80%;
+}
+.w-90 {
+	width: 90%;
+}
+
+/* Small devices (landscape phones, 576px and up)*/
+@media (min-width: 576px) {
+	.w-sm-100 {
+		width: 100% !important;
+	}
+
+	.w-sm-75 {
+		width: 75% !important;
+	}
+
+	.w-sm-50 {
+		width: 50% !important;
+	}
+
+	.w-sm-25 {
+		width: 25% !important;
+	}
+
+	.h-sm-100 {
+		height: 100% !important;
+	}
+
+	.h-sm-75 {
+		height: 75% !important;
+	}
+
+	.h-sm-50 {
+		height: 50% !important;
+	}
+
+	.h-sm-25 {
+		height: 25% !important;
+	}
+}
+
+/* Medium devices (tablets, 768px and up)*/
+@media (min-width: 768px) {
+	.w-md-100 {
+		width: 100% !important;
+	}
+
+	.w-md-75 {
+		width: 75% !important;
+	}
+
+	.w-md-50 {
+		width: 50% !important;
+	}
+
+	.w-md-25 {
+		width: 25% !important;
+	}
+
+	.h-md-100 {
+		height: 100% !important;
+	}
+
+	.h-md-75 {
+		height: 75% !important;
+	}
+
+	.h-md-50 {
+		height: 50% !important;
+	}
+
+	.h-md-25 {
+		height: 25% !important;
+	}
+}
+
+/* Large devices (desktops, 992px and up)*/
+@media (min-width: 992px) {
+	.w-lg-100 {
+		width: 100% !important;
+	}
+
+	.w-lg-75 {
+		width: 75% !important;
+	}
+
+	.w-lg-50 {
+		width: 50% !important;
+	}
+
+	.w-lg-25 {
+		width: 25% !important;
+	}
+
+	.h-lg-100 {
+		height: 100% !important;
+	}
+
+	.h-lg-75 {
+		height: 75% !important;
+	}
+
+	.h-lg-50 {
+		height: 50% !important;
+	}
+
+	.h-lg-25 {
+		height: 25% !important;
+	}
+}
+
+/* Extra large devices (large desktops, 1200px and up)*/
+@media (min-width: 1200px) {
+	.w-xl-100 {
+		width: 100% !important;
+	}
+
+	.w-xl-75 {
+		width: 75% !important;
+	}
+
+	.w-xl-50 {
+		width: 50% !important;
+	}
+
+	.w-xl-25 {
+		width: 25% !important;
+	}
+
+	.h-xl-100 {
+		height: 100% !important;
+	}
+
+	.h-xl-75 {
+		height: 75% !important;
+	}
+
+	.h-xl-50 {
+		height: 50% !important;
+	}
+
+	.h-xl-25 {
+		height: 25% !important;
+	}
+}
+
+/* ---------- Trend ---------- */
+
+.trend-up { color: #198754; }
+.trend-up::before {
+	content: '↑ ';
+	font-weight: bold;
+}
+
+.trend-down { color: #dc3545; }
+.trend-down::before {
+	content: '↓ ';
+	font-weight: bold;
+}
+
+.trend-neutral {
+	color: #6c757d;
+}
+.trend-neutral::before {
+	content: '→ ';
+}
+
+/* ---------- Animation ---------- */
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(10px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50%       { opacity: 0.5; }
+}
+
+.fade-in {
+	animation: fadeIn 0.3s ease-in-out;
+}
+.pulse {
+	animation: pulse 2s infinite;
+}
+
+/* ---------- Snackbar ---------- */
+
+.snackbar {
+	visibility: hidden;
+	width: 50%;
+	margin: 20px 0;
+	text-align: center;
+	border-radius: 2px;
+	padding: 16px;
+	position: fixed;
+	z-index: 1;
+	left: 25%;
+	top: 60px;
+	font-size: 17px;
+}
+.snackbar.show {
+	visibility: visible;
+}
+.snackbar.success {
+	background-color: #dff0d8;
+	border-color: #d0e9c6;
+	color: #3c763d;
+}
+.snackbar.warning {
+	background-color: #fff3cd;
+	border-color: #ffecb5;
+	color: #664d03;
+}
+.snackbar.danger {
+	background-color: #f2dede;
+	border-color: #ebccd1;
+	color: #a94442;
+}
+.snackbar.info {
+	background-color: #E3F2FD;
+	border-color: #cff2f9;
+	color: #055160;
+}
+
+/* ---------- Accessibility ---------- */
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+*:focus-visible {
+	outline: 2px solid var(--bs-primary, #0d6efd);
+	outline-offset: 2px;
+}
+
+/* ---------- DataTables ---------- */
+
+/* DataTables v2 Bootstrap 5 - force full width for the table column */
+div.dt-container div.dt-layout-full {
+	flex: 0 0 auto !important;
+	width: 100% !important;
+}
+
+/* DataTables v2 — allow custom row classes to show their background-color through cells */
+.dt-container table tbody tr:not(.table-success):not(.table-info):not(.table-warning):not(.table-danger) td {
+	background-color: inherit !important;
+}
+
+/* DataTables v2 + Bootstrap 5 — compatibility fixes (requires DataTables)
+   Bootstrap 5 uses box-shadow on cells for striped/hover effects; DataTables needs
+   its own box-shadow trick to colorize cells without overriding row-level classes. */
+body table.dataTable.table-striped > tbody > tr.odd > * {
+	box-shadow: inset 0 0 0 9999px rgb(0 0 0 / 1%);
+}
+body table.dataTable.table-hover > tbody > tr:hover > * {
+	box-shadow: inset 0 0 0 9999px rgb(0 0 0 / 8%);
+}
+
+/* ---------- Modal ---------- */
+
+/* Fix: bootstrap-select inside modal causes scroll issues
+   https://github.com/snapappointments/bootstrap-select/issues/2613 */
+.modal-dialog.modal-scrollable .modal-body {
+	max-height: calc(100vh - 225px);
+	overflow-y: auto;
+}
+
+.modal-dialog.modal-fullscreen {
+	overflow: hidden;
+}
+.modal-dialog.modal-fullscreen .modal-body {
+	max-height: calc(100vh - 128px);
+	overflow-y: auto;
+}
+
+/* ---------- Tom Select ---------- */
+
+.form-inline .ts-wrapper {
+	display: block !important;
+}
+/* Keep the control height stable so the clear button (position:absolute, top:50%) stays centered
+   even after the selected item is removed and the control would otherwise collapse. */
+.form-inline .ts-wrapper .ts-control {
+	min-height: calc(1.5em + .75rem);
+}
+/* Tom-select copies all classes from the original <select> to its wrapper div.
+   When the original select has class="form-control ts-select", the wrapper inherits
+   form-control, which makes the layout.css .form-control rule (font-size:14px) apply to it,
+   while ts-wrappers without form-control use Bootstrap's .form-select (font-size:1rem).
+   Normalize all ts-wrappers to the same font size. */
+.ts-wrapper.form-control {
+	font-size: 1rem;
+}
+.ts-dropdown .option.selected::after {
+	content: '✔';
+	float: right;
+	font-weight: bold;
+}
+
+/* ---------- on-off switch ---------- */
+
+/* https://proto.io/freebies/onoff/ */
+
+.onoffswitch {
+	position: relative; width: 55px;
+	-webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+	margin-top: 5px;
+}
+.onoffswitch-checkbox {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+.onoffswitch-label {
+	display: block; overflow: hidden; cursor: pointer;
+	border: 1px solid #999999; border-radius: 20px;
+	margin-bottom: 0;
+}
+.onoffswitch-inner {
+	display: block; width: 200%; margin-left: -100%;
+	transition: margin 0.3s ease-in 0s;
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+	display: block; float: left; width: 50%; height: 18px; padding: 0; line-height: 18px;
+	font-size: 12px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+	box-sizing: border-box;
+}
+.onoffswitch-inner:before {
+	content: "ON";
+	padding-left: 8px;
+	background-color: #0D6EFD; color: #FFFFFF;
+}
+.onoffswitch-inner:after {
+	content: "OFF";
+	padding-right: 6px;
+	background-color: #EEEEEE; color: #999999;
+	text-align: right;
+}
+.onoffswitch-switch {
+	display: block; width: 24px; margin: -2px;
+	background: #FFFFFF;
+	position: absolute; top: 0; bottom: 0;
+	right: 36px;
+	border: 1px solid #999999; border-radius: 20px;
+	transition: all 0.3s ease-in 0s;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+	margin-left: 0;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+	right: 0;
+}
