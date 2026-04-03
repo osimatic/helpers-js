@@ -83,14 +83,6 @@ class SelectBox {
 			},
 		});
 
-		// Toggle dropdown when clicking the control while it is already open
-		ts.wrapper.addEventListener('mousedown', (e) => {
-			if (ts.isOpen && e.target.closest('.ts-control') && !e.target.closest('[data-value]') && !e.target.closest('.clear-button')) {
-				e.preventDefault();
-				ts.close();
-			}
-		});
-
 		if (!isMultiple && !el.querySelector('option[selected]')) {
 			ts.clear(true);
 		}
@@ -153,6 +145,11 @@ class SelectBox {
 		}
 
 		ts.sync();
+		// sync() with allowEmptyOption: true may re-add the auto-generated empty option to the store.
+		// Remove it if it has no text (auto-generated); intentional empty options (e.g. "- Aucun -") are kept.
+		if (ts.settings.mode === 'single' && '' in ts.options && !ts.options[''].text?.trim()) {
+			ts.removeOption('');
+		}
 		if (prevVal && prevVal !== '' && !(Array.isArray(prevVal) && prevVal.length === 0)) {
 			ts.setValue(prevVal, true); // restore selection, ignore values not in options
 		}

@@ -177,10 +177,41 @@ table.table-header-rotated td {
 
 /* ---------- Form ---------- */
 
+.form-inline, .form-inline .form-control {
+	display: inline !important;
+}
+.form-inline .form-text-inline {
+	display: inline !important;
+}
+.form-inline .form-control {
+	width: auto;
+}
+
+label.form-check-label, label.radio-inline {
+	font-weight: normal;
+	margin-bottom: 0;
+}
+
 input[type='date'], input[type='time'] {
 	-webkit-appearance: auto;
 	-moz-appearance: textfield;
 	appearance: auto;
+}
+
+.input-group {
+	display: inline-flex;
+	width: auto;
+}
+.input-group.password {
+	display: flex;
+}
+.input-group.password i.toggle_password {
+	cursor: pointer;
+}
+
+.radio-inline input[type=checkbox] {
+	position: absolute;
+	margin-left: -20px;
 }
 
 /* ---------- Separator ---------- */
@@ -527,7 +558,12 @@ body table.dataTable.table-hover > tbody > tr:hover > * {
    while ts-wrappers without form-control use Bootstrap's .form-select (font-size:1rem).
    Normalize all ts-wrappers to the same font size. */
 .ts-wrapper.form-control {
-	font-size: 1rem;
+	font-size: 0.90rem;
+}
+.form-inline .ts-wrapper.form-control {
+	display: flex !important;
+	height: auto;
+	padding: 0;
 }
 .ts-dropdown .option.selected::after {
 	content: '✔';
