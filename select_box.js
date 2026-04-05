@@ -46,6 +46,8 @@ class SelectBox {
 		}
 
 		const isMultiple = el.multiple;
+		const searchDisabled = el.dataset.search === 'false';
+		
 		const plugins = [];
 		if (isMultiple && (el.dataset.actionsBox || el.dataset.actions_box)) {
 			plugins.push('actions_box');
@@ -53,20 +55,20 @@ class SelectBox {
 		if (!isMultiple && el.dataset.allowClear !== 'false' && el.dataset.allow_clear !== 'false') {
 			plugins.push('clear_button');
 		}
-		if (!isMultiple && el.dataset.dropdownInput !== 'false' && el.dataset.dropdown_input !== 'false') {
-			plugins.push('dropdown_input');
-		}
 		if (isMultiple) {
 			plugins.push('remove_button');
 		}
+		if (!isMultiple && !searchDisabled && el.dataset.dropdownInput !== 'false' && el.dataset.dropdown_input !== 'false') {
+			plugins.push('dropdown_input');
+		}
 
-		const searchDisabled = el.dataset.search === 'false';
+		const placeholder = el.getAttribute('title') || 'Choisissez\u2026';
 		const maxOptions = el.dataset.maxOptions ?? el.dataset.max_options ?? null;
 
 		const ts = new TomSelect(el, {
 			maxOptions: maxOptions !== null ? parseInt(maxOptions, 10) : null,
 			allowEmptyOption: !isMultiple,
-			placeholder: el.getAttribute('title') || 'Choisissez\u2026',
+			placeholder: placeholder,
 			plugins,
 			wrapperClass: 'ts-wrapper' + (isMultiple ? ' multi' : ' single form-select'),
 			onItemAdd: isMultiple ? undefined : function() { this.setTextboxValue(''); this.blur(); },
@@ -85,6 +87,33 @@ class SelectBox {
 
 		if (!isMultiple && !el.querySelector('option[selected]')) {
 			ts.clear(true);
+		}
+
+		// Keep placeholder in the control, not in the dropdown search input
+		if (plugins.includes('dropdown_input')) {
+			const dropdownInput = ts.dropdown.querySelector('input');
+			if (dropdownInput) {
+				dropdownInput.placeholder = el.dataset.searchPlaceholder ?? el.dataset.search_placeholder ?? '';
+			}
+		}
+
+		// When search is disabled, Tom Select omits .items-placeholder — inject it manually
+		if (searchDisabled && !isMultiple) {
+			const placeholderEl = document.createElement('input');
+			placeholderEl.className = 'items-placeholder';
+			placeholderEl.placeholder = placeholder;
+			placeholderEl.readOnly = true;
+			placeholderEl.tabIndex = -1;
+			ts.control.appendChild(placeholderEl);
+			const syncPlaceholder = () => {
+				if (ts.getValue()) {
+					placeholderEl.remove();
+				} else if (!ts.control.contains(placeholderEl)) {
+					ts.control.appendChild(placeholderEl);
+				}
+			};
+			syncPlaceholder();
+			ts.on('change', syncPlaceholder);
 		}
 
 		if ((el.dataset.hide_if_empty || el.dataset.hideIfEmpty)) {

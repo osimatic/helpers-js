@@ -235,7 +235,7 @@ hr.md {
 /* ---------- Alignment ---------- */
 
 .center {
-	text-align:center;
+	text-align: center;
 }
 .floatLeft {
 	float: left;
@@ -569,6 +569,11 @@ body table.dataTable.table-hover > tbody > tr:hover > * {
 	content: '✔';
 	float: right;
 	font-weight: bold;
+}
+/* Tom Select hides .items-placeholder when dropdown is active OR has items.
+   Override to only hide it when an item is actually selected. */
+.plugin-dropdown_input.dropdown-active:not(.has-items) .items-placeholder {
+	display: block !important;
 }
 
 /* ---------- on-off switch ---------- */
